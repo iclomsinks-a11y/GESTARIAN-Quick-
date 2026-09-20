@@ -1,0 +1,6 @@
+{
+  "name": "Gestarian Quick",
+  "description": "Generador de facturas en hoja A4 con IVA del 21%, autocompletado inteligente de conceptos, validación Veri*Factu, generación de logotipos con IA y gestión de facturas recibidas con escaneo OCR por cámara mediante Gemini.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

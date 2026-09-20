@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@layer utilities {
+  @media print {
+    @page {
+      size: A4 portrait;
+      margin: 10mm 12mm;
+    }
+    body {
+      background-color: #ffffff !important;
+      color: #000000 !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .no-print {
+      display: none !important;
+    }
+    .a4-sheet {
+      box-shadow: none !important;
+      border: none !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      min-height: auto !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    input, textarea {
+      border: none !important;
+      background: transparent !important;
+      padding: 0 !important;
+    }
+  }
+}
+
+/* Hide number input arrows for clean typography */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Horizontal lateral swipe container utilities */
+.lateral-scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(251, 191, 36, 0.4) rgba(23, 23, 23, 0.8);
+}
+
+.lateral-scroll-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.lateral-scroll-container::-webkit-scrollbar-track {
+  background: rgba(23, 23, 23, 0.8);
+}
+
+.lateral-scroll-container::-webkit-scrollbar-thumb {
+  background-color: rgba(251, 191, 36, 0.4);
+  border-radius: 9999px;
+}
+
