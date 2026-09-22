@@ -94,6 +94,7 @@ import { InvoiceEditorModal } from './components/InvoiceEditorModal';
 import { PrintPreviewModal } from './components/PrintPreviewModal';
 import { ClientsScreen } from './components/ClientsScreen';
 import { ClientEditorModal } from './components/ClientEditorModal';
+import { ClientVariablesTreeModal } from './components/ClientVariablesTreeModal';
 import { IssuedInvoicesScreen } from './components/IssuedInvoicesScreen';
 import { getNextCorrelativeRectificativeInvoiceNumber } from './utils/formatters';
 
@@ -1034,6 +1035,21 @@ export default function App() {
     setIsComplexBudgetModalOpen(true);
   };
 
+  // State & Handlers for Client Concept Variables Tree Modal (up to 5 levels)
+  const [selectedClientForVariablesTree, setSelectedClientForVariablesTree] = useState<ClientData | null>(null);
+  const [isVariablesTreeModalOpen, setIsVariablesTreeModalOpen] = useState<boolean>(false);
+
+  const handleOpenClientVariablesTree = (client: ClientData) => {
+    setSelectedClientForVariablesTree(client);
+    setIsVariablesTreeModalOpen(true);
+  };
+
+  const handleSaveClientVariablesTree = (updatedClient: ClientData) => {
+    saveClientToDb(updatedClient);
+    setClients(getStoredClients());
+    showToast(`Árbol de variables actualizado para "${updatedClient.name}"`);
+  };
+
   const handleInsertComplexBudgetItem = async (item: InvoiceItem, targetClient?: ClientData | null) => {
     const activeClient = targetClient || selectedClientForComplexBudget;
 
@@ -1471,6 +1487,7 @@ export default function App() {
               products={products}
               onOpenProductsDb={handleOpenProductsDb}
               onOpenComplexInvoice={handleOpenComplexBudgetForClient}
+              onOpenClientVariablesTree={handleOpenClientVariablesTree}
               onSaveReceivedInvoice={handleSaveReceivedInvoice}
               providers={providers}
             />
@@ -1599,6 +1616,17 @@ export default function App() {
         onSelectClient={handleSelectClient}
         onOpenNewClientForm={() => setIsNewClientFormOpen(true)}
         onDeleteClient={handleDeleteClient}
+        onOpenClientVariablesTree={handleOpenClientVariablesTree}
+      />
+
+      <ClientVariablesTreeModal
+        isOpen={isVariablesTreeModalOpen}
+        onClose={() => {
+          setIsVariablesTreeModalOpen(false);
+          setSelectedClientForVariablesTree(null);
+        }}
+        client={selectedClientForVariablesTree}
+        onSaveClient={handleSaveClientVariablesTree}
       />
 
       <NewClientFullScreenForm

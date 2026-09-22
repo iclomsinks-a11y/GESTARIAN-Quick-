@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { ComplexBudgetVariant, VariantUnitType, InvoiceItem, ClientData } from '../types';
 import { formatCurrency } from '../utils/formatters';
+import { ClientConceptTreeSelector } from './ClientConceptTreeSelector';
 
 interface ComplexBudgetModalProps {
   isOpen: boolean;
@@ -251,6 +252,20 @@ export const ComplexBudgetModal: React.FC<ComplexBudgetModalProps> = ({
               ))}
             </div>
           </div>
+
+          {/* Generador Asistido de Árbol de Variables del Cliente (Nivel 1 a 5) */}
+          {client?.variableTrees && client.variableTrees.length > 0 && (
+            <ClientConceptTreeSelector
+              variableTrees={client.variableTrees}
+              clientName={client.name}
+              onApplyConcept={(conceptText, price) => {
+                setConceptTitle(conceptText);
+                if (price && price > 0) {
+                  setUnitPrice(price);
+                }
+              }}
+            />
+          )}
 
           {/* Main Title of the Service */}
           <div className="space-y-1.5">

@@ -13,6 +13,7 @@ import {
   Trash2,
   ExternalLink,
   MessageCircle,
+  FolderTree,
 } from 'lucide-react';
 import { ClientData } from '../types';
 
@@ -23,6 +24,7 @@ interface ClientsDatabaseModalProps {
   onSelectClient?: (client: ClientData) => void;
   onOpenNewClientForm: () => void;
   onDeleteClient: (id: string) => void;
+  onOpenClientVariablesTree?: (client: ClientData) => void;
   mode?: 'select' | 'manage';
 }
 
@@ -33,6 +35,7 @@ export const ClientsDatabaseModal: React.FC<ClientsDatabaseModalProps> = ({
   onSelectClient,
   onOpenNewClientForm,
   onDeleteClient,
+  onOpenClientVariablesTree,
   mode = 'select',
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -212,6 +215,21 @@ export const ClientsDatabaseModal: React.FC<ClientsDatabaseModalProps> = ({
 
                 {/* Actions */}
                 <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                  {onOpenClientVariablesTree && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onOpenClientVariablesTree(c);
+                        onClose();
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-extrabold text-amber-300 bg-amber-400/10 border border-amber-400/40 hover:bg-amber-400/20 transition-all shadow-sm active:scale-95 cursor-pointer"
+                      title="Configurar árbol de variables de 5 niveles para este cliente"
+                    >
+                      <FolderTree className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Variables (5 Niveles)</span>
+                    </button>
+                  )}
+
                   {onSelectClient && (
                     <button
                       type="button"
@@ -219,7 +237,7 @@ export const ClientsDatabaseModal: React.FC<ClientsDatabaseModalProps> = ({
                         onSelectClient(c);
                         onClose();
                       }}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-neutral-950 bg-amber-400 hover:bg-amber-300 transition-all shadow-sm active:scale-95"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-neutral-950 bg-amber-400 hover:bg-amber-300 transition-all shadow-sm active:scale-95 cursor-pointer"
                     >
                       <Check className="w-3.5 h-3.5" />
                       <span>Seleccionar</span>

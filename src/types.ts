@@ -32,6 +32,13 @@ export interface ClientConceptLine {
   param5Value?: string | number;
 }
 
+export interface ClientConceptVariableNode {
+  id: string;
+  name: string; // Texto/Nombre de la variable en este nivel
+  price?: number; // Precio unitario sugerido (opcional)
+  children?: ClientConceptVariableNode[]; // Hasta 5 sub-variables por nodo
+}
+
 export interface ClientData {
   id?: string;
   name: string;
@@ -46,6 +53,7 @@ export interface ClientData {
   enableComplexInvoice?: boolean; // Habilitar botón de Factura Compleja en tarjeta
   conceptLines?: ClientConceptLine[]; // Líneas de conceptos preconfiguradas para este cliente
   habitualProducts?: BillableProduct[]; // Productos habituales asignados a este cliente con foto/descripción
+  variableTrees?: ClientConceptVariableNode[]; // Estructura jerárquica de variables para Facturación Compleja (hasta 5 niveles)
   createdAt?: number;
 }
 
