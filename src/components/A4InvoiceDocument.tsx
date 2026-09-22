@@ -830,9 +830,8 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                         }
                       >
                         <MessageCircle
-                          className={`w-4 h-4 sm:w-5 sm:h-5 shrink-0 ${
-                            isSavedLocal ? 'text-neutral-950 fill-neutral-950' : 'text-neutral-400'
-                          }`}
+                          className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-[#25D366]"
+                          style={{ color: '#25D366' }}
                         />
                         <span className="truncate">Enviar por WhatsApp</span>
                       </button>

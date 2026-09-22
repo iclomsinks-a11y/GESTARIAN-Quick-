@@ -102,6 +102,19 @@ export const DEFAULT_PROVIDERS: ProviderData[] = [
 // Default initial clients (Clientes habituales)
 export const DEFAULT_CLIENTS: ClientData[] = [
   {
+    id: 'cli-arkedecor',
+    name: 'ARKEDECOR Interiorismo & Proyectos S.L.',
+    nif: 'B98765432',
+    address: 'Calle Velázquez 42, 28001 Madrid',
+    phone: '+34 914 312 800',
+    email: 'proyectos@arkedecor.es',
+    defaultSendWhatsApp: true,
+    defaultSendEmail: true,
+    preferredDispatchChannel: 'both',
+    lineasComplejas: [],
+    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 40,
+  },
+  {
     id: 'cli-reformas-iberica',
     name: 'Construcciones y Reformas Ibérica S.A.',
     nif: 'A28001122',
@@ -169,14 +182,43 @@ export function getStoredClients(): ClientData[] {
   try {
     const raw = localStorage.getItem(STORAGE_CLIENTS_KEY);
     if (!raw) {
-      // Seed initial clients
+      // Seed initial clients without default complex lines
       localStorage.setItem(STORAGE_CLIENTS_KEY, JSON.stringify(DEFAULT_CLIENTS));
       return sortClientsAlphabetically(DEFAULT_CLIENTS);
     }
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed) && parsed.length > 0) {
-      return sortClientsAlphabetically(parsed);
+      let updated = false;
+      const defaultIdsToRemove = new Set([
+        'lc-ark-cortina',
+        'lc-ark-estor',
+        'lc-ark-tapiceria',
+        'lc-ark-mural',
+      ]);
+
+      const cleaned = parsed.map((client: ClientData) => {
+        if (client.lineasComplejas && client.lineasComplejas.length > 0) {
+          const userOnly = client.lineasComplejas.filter(
+            (lc) => !defaultIdsToRemove.has(lc.id)
+          );
+          if (userOnly.length !== client.lineasComplejas.length) {
+            updated = true;
+            return {
+              ...client,
+              lineasComplejas: userOnly,
+            };
+          }
+        }
+        return client;
+      });
+
+      if (updated) {
+        localStorage.setItem(STORAGE_CLIENTS_KEY, JSON.stringify(cleaned));
+      }
+
+      return sortClientsAlphabetically(cleaned);
     }
+    localStorage.setItem(STORAGE_CLIENTS_KEY, JSON.stringify(DEFAULT_CLIENTS));
     return sortClientsAlphabetically(DEFAULT_CLIENTS);
   } catch (e) {
     console.error('Error loading clients db:', e);

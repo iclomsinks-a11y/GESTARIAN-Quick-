@@ -165,8 +165,8 @@ export const WhatsAppDispatchModal: React.FC<WhatsAppDispatchModalProps> = ({
         {/* Top Header */}
         <div className="px-5 sm:px-7 py-4 sm:py-5 border-b border-neutral-800 flex items-center justify-between bg-neutral-900/60">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-              <MessageCircle className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-[#25D366]">
+              <MessageCircle className="w-5 h-5 text-[#25D366]" style={{ color: '#25D366' }} />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -241,7 +241,7 @@ export const WhatsAppDispatchModal: React.FC<WhatsAppDispatchModalProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <div className="p-2.5 rounded-lg bg-neutral-950 border border-neutral-800 flex items-center justify-between">
                     <span className="text-neutral-400 flex items-center gap-1.5">
-                      <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                      <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" style={{ color: '#25D366' }} />
                       Gateway WhatsApp:
                     </span>
                     <span className="font-mono text-emerald-400 font-semibold">
@@ -294,7 +294,7 @@ export const WhatsAppDispatchModal: React.FC<WhatsAppDispatchModalProps> = ({
                   rel="noopener noreferrer"
                   className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors"
                 >
-                  <MessageCircle className="w-4 h-4" />
+                  <MessageCircle className="w-4 h-4 text-[#25D366]" style={{ color: '#25D366' }} />
                   <span>Abrir en WhatsApp (App / Web)</span>
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
@@ -392,7 +392,7 @@ export const WhatsAppDispatchModal: React.FC<WhatsAppDispatchModalProps> = ({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-neutral-300 flex items-center gap-1.5">
-                    <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                    <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" style={{ color: '#25D366' }} />
                     <span>Vista Previa del Mensaje de WhatsApp</span>
                   </span>
                   <button
@@ -450,7 +450,7 @@ export const WhatsAppDispatchModal: React.FC<WhatsAppDispatchModalProps> = ({
                     onClick={handleOpenDirectWhatsApp}
                     className="w-full py-3.5 px-4 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-neutral-950 font-black text-xs uppercase tracking-wide flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-[#25D366]/20 active:scale-[0.98] cursor-pointer"
                   >
-                    <MessageCircle className="w-4 h-4" />
+                    <MessageCircle className="w-4 h-4 text-[#25D366]" style={{ color: '#25D366' }} />
                     <span>Abrir WhatsApp Directo (Web / App)</span>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </button>

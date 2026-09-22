@@ -98,25 +98,43 @@ input[type="number"] {
 /* Botones: Línea azul y texto Gris 60%                                      */
 /* ------------------------------------------------------------------------- */
 
+#home-screen-minimalist h1,
+#home-screen-minimalist .home-title-gestarian {
+  color: #FEFCE9 !important;
+  font-weight: 100 !important;
+  -webkit-text-stroke: 2px #FEFCE9 !important;
+  paint-order: stroke fill !important;
+}
+
+#home-screen-minimalist span.home-subtitle-quick {
+  color: #808080 !important; /* Quick Gris 50% / Grosor 2px */
+  font-weight: 100 !important;
+  -webkit-text-stroke: 2px #808080 !important;
+  paint-order: stroke fill !important;
+  font-size: 1.2em !important;
+}
+
 [data-theme="light"] #home-screen-minimalist,
 [data-theme="light"] #page-screen-home {
   background-color: #faf7f2 !important; /* Blanco hueso */
   color: #0f172a !important;
 }
 
-[data-theme="light"] #home-screen-minimalist h1 {
-  color: #1d4ed8 !important; /* GESTARIAN COLOR AZUL */
-  font-weight: 700 !important;
+[data-theme="light"] #home-screen-minimalist h1,
+[data-theme="light"] #home-screen-minimalist .home-title-gestarian {
+  color: #1d4ed8 !important; /* GESTARIAN COLOR AZUL con grosor 2px */
+  font-weight: 100 !important;
   -webkit-text-stroke: 2px #1d4ed8 !important;
   paint-order: stroke fill !important;
 }
 
 [data-theme="light"] #home-screen-minimalist span.home-subtitle-quick,
 [data-theme="light"] #home-screen-minimalist span.text-amber-400 {
-  color: #0284c7 !important; /* Quick CELESTE */
-  font-weight: 800 !important;
-  -webkit-text-stroke: 3px #0284c7 !important;
+  color: #808080 !important; /* Quick Gris 50% con grosor 2px */
+  font-weight: 100 !important;
+  -webkit-text-stroke: 2px #808080 !important;
   paint-order: stroke fill !important;
+  font-size: 1.2em !important;
 }
 
 [data-theme="light"] #home-screen-minimalist button {
@@ -224,9 +242,54 @@ input[type="number"] {
   color: inherit;
 }
 
-[data-theme="light"] button svg,
-[data-theme="light"] [role="button"] svg {
-  color: #1d4ed8 !important; /* Iconos en azul oscuro */
+[data-theme="light"] button svg:not(.lucide-message-circle):not(.lucide-message-square):not(.lucide-trash):not(.lucide-trash-2):not(.lucide-edit):not(.lucide-edit-2):not(.lucide-edit-3):not(.lucide-pencil),
+[data-theme="light"] [role="button"] svg:not(.lucide-message-circle):not(.lucide-message-square):not(.lucide-trash):not(.lucide-trash-2):not(.lucide-edit):not(.lucide-edit-2):not(.lucide-edit-3):not(.lucide-pencil) {
+  color: #1d4ed8 !important; /* Iconos generales en azul oscuro */
+}
+
+/* ========================================================================= */
+/* COLORES UNIVERSALES: WhatsApp (Verde), Papelera (Rojo), Editar (Gris 50%) */
+/* ========================================================================= */
+
+svg.lucide-message-circle,
+svg.lucide-message-square,
+[data-theme="light"] svg.lucide-message-circle,
+[data-theme="light"] svg.lucide-message-square,
+[data-theme="light"] button svg.lucide-message-circle,
+[data-theme="light"] button svg.lucide-message-square,
+[data-theme="indigo"] svg.lucide-message-circle,
+[data-theme="indigo"] svg.lucide-message-square {
+  color: #25D366 !important;
+}
+
+svg.lucide-trash,
+svg.lucide-trash-2,
+[data-theme="light"] svg.lucide-trash,
+[data-theme="light"] svg.lucide-trash-2,
+[data-theme="light"] button svg.lucide-trash,
+[data-theme="light"] button svg.lucide-trash-2,
+[data-theme="indigo"] svg.lucide-trash,
+[data-theme="indigo"] svg.lucide-trash-2 {
+  color: #EF4444 !important;
+}
+
+svg.lucide-edit,
+svg.lucide-edit-2,
+svg.lucide-edit-3,
+svg.lucide-pencil,
+[data-theme="light"] svg.lucide-edit,
+[data-theme="light"] svg.lucide-edit-2,
+[data-theme="light"] svg.lucide-edit-3,
+[data-theme="light"] svg.lucide-pencil,
+[data-theme="light"] button svg.lucide-edit,
+[data-theme="light"] button svg.lucide-edit-2,
+[data-theme="light"] button svg.lucide-edit-3,
+[data-theme="light"] button svg.lucide-pencil,
+[data-theme="indigo"] svg.lucide-edit,
+[data-theme="indigo"] svg.lucide-edit-2,
+[data-theme="indigo"] svg.lucide-edit-3,
+[data-theme="indigo"] svg.lucide-pencil {
+  color: #808080 !important;
 }
 
 /* Rellenos antes sólidos convertidos a tonos pastel suaves / blanco hueso */

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ClientData, BillableProduct } from '../types';
+import { saveClientToDb } from '../utils/database';
 
 interface ProductosClienteModalProps {
   isOpen: boolean;
@@ -75,7 +76,9 @@ export const ProductosClienteModal: React.FC<ProductosClienteModalProps> = ({
     const updated = productos.filter((p) => p.id !== id);
     setProductos(updated);
     if (!client) return;
-    onSaveClient({ ...client, habitualProducts: updated });
+    const updatedClient = { ...client, habitualProducts: updated };
+    saveClientToDb(updatedClient);
+    onSaveClient(updatedClient);
   };
 
   const handleSaveProducto = () => {
@@ -98,8 +101,10 @@ export const ProductosClienteModal: React.FC<ProductosClienteModalProps> = ({
       nuevos = [...productos, nuevo];
     }
 
+    const updatedClient = { ...client, habitualProducts: nuevos };
     setProductos(nuevos);
-    onSaveClient({ ...client, habitualProducts: nuevos });
+    saveClientToDb(updatedClient);
+    onSaveClient(updatedClient);
 
     setSavedFeedback(true);
     setTimeout(() => setSavedFeedback(false), 2000);
@@ -116,8 +121,10 @@ export const ProductosClienteModal: React.FC<ProductosClienteModalProps> = ({
       createdAt: Date.now(),
     };
     const nuevos = [...productos, nuevo];
+    const updatedClient = { ...client, habitualProducts: nuevos };
     setProductos(nuevos);
-    onSaveClient({ ...client, habitualProducts: nuevos });
+    saveClientToDb(updatedClient);
+    onSaveClient(updatedClient);
   };
 
   if (!isOpen || !client) return null;

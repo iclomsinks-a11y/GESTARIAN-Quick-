@@ -515,10 +515,10 @@ export const IssuedInvoicesScreen: React.FC<IssuedInvoicesScreenProps> = ({
                                 onDeleteInvoice(inv.id || inv.number);
                               }
                             }}
-                            className="inline-flex items-center gap-2 text-sm sm:text-base text-red-400 hover:text-red-300 transition-colors py-1.5 px-3 rounded-lg hover:bg-red-950/50 cursor-pointer font-bold"
+                            className="inline-flex items-center gap-2 text-sm sm:text-base text-[#EF4444] hover:text-red-300 transition-colors py-1.5 px-3 rounded-lg hover:bg-red-950/50 cursor-pointer font-bold"
                             title="Eliminar factura"
                           >
-                            <Trash2 className="w-4.5 h-4.5" />
+                            <Trash2 className="w-4.5 h-4.5 text-[#EF4444]" style={{ color: '#EF4444' }} />
                             <span>Eliminar</span>
                           </button>
                         </div>

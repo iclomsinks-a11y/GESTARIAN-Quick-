@@ -595,19 +595,19 @@ export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
                                   onDeleteInvoice(inv.id);
                                 }
                               }}
-                              className="inline-flex items-center gap-2 text-sm sm:text-base text-red-400 hover:text-red-300 transition-colors py-1.5 px-3 rounded-lg hover:bg-red-950/50 cursor-pointer font-bold"
+                              className="inline-flex items-center gap-2 text-sm sm:text-base text-[#EF4444] hover:text-red-300 transition-colors py-1.5 px-3 rounded-lg hover:bg-red-950/50 cursor-pointer font-bold"
                               title="Eliminar factura recibida"
                             >
-                              <Trash2 className="w-4.5 h-4.5" />
+                              <Trash2 className="w-4.5 h-4.5 text-[#EF4444]" style={{ color: '#EF4444' }} />
                               <span>Eliminar</span>
                             </button>
 
                           <button
                             type="button"
                             onClick={() => handleEditInvoice(inv)}
-                            className="inline-flex items-center gap-2 text-sm sm:text-base text-amber-400 hover:text-amber-300 transition-colors py-1.5 px-3 rounded-lg hover:bg-amber-400/15 cursor-pointer font-bold"
+                            className="inline-flex items-center gap-2 text-sm sm:text-base text-[#808080] hover:text-neutral-300 transition-colors py-1.5 px-3 rounded-lg hover:bg-neutral-800/50 cursor-pointer font-bold"
                           >
-                            <Edit3 className="w-4.5 h-4.5 stroke-[2]" />
+                            <Edit3 className="w-4.5 h-4.5 stroke-[2] text-[#808080]" style={{ color: '#808080' }} />
                             <span>Editar datos</span>
                           </button>
                         </div>

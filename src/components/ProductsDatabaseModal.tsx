@@ -311,7 +311,7 @@ export const ProductsDatabaseModal: React.FC<ProductsDatabaseModalProps> = ({
                           onClick={() => setFormImageUrl('')}
                           className="px-2 py-1 rounded bg-red-600/80 hover:bg-red-600 text-white font-semibold text-[11px] flex items-center gap-1"
                         >
-                          <Trash2 className="w-3 h-3" /> Quitar
+                          <Trash2 className="w-3 h-3 text-[#EF4444]" style={{ color: '#EF4444' }} /> Quitar
                         </button>
                       </div>
                     </div>

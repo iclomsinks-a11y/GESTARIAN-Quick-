@@ -434,18 +434,18 @@ export const ProvidersScreen: React.FC<ProvidersScreenProps> = ({
                           <button
                             type="button"
                             onClick={() => setProviderToDelete(provider)}
-                            className="inline-flex items-center gap-2 text-sm sm:text-base text-rose-400 hover:text-rose-300 transition-colors py-1.5 px-2.5 rounded-lg hover:bg-rose-950/50 cursor-pointer font-medium"
+                            className="inline-flex items-center gap-2 text-sm sm:text-base text-[#EF4444] hover:text-red-400 transition-colors py-1.5 px-2.5 rounded-lg hover:bg-rose-950/50 cursor-pointer font-medium"
                           >
-                            <Trash2 className="w-4.5 h-4.5 stroke-[1.5]" />
+                            <Trash2 className="w-4.5 h-4.5 stroke-[1.5] text-[#EF4444]" style={{ color: '#EF4444' }} />
                             <span>Eliminar proveedor</span>
                           </button>
 
                           <button
                             type="button"
                             onClick={() => onEditProvider(provider)}
-                            className="inline-flex items-center gap-2 text-sm sm:text-base text-amber-400 hover:text-amber-300 transition-colors py-1.5 px-3 rounded-lg hover:bg-amber-400/15 cursor-pointer font-bold"
+                            className="inline-flex items-center gap-2 text-sm sm:text-base text-[#808080] hover:text-neutral-300 transition-colors py-1.5 px-3 rounded-lg hover:bg-neutral-800/50 cursor-pointer font-bold"
                           >
-                            <Edit3 className="w-4.5 h-4.5 stroke-[1.5]" />
+                            <Edit3 className="w-4.5 h-4.5 stroke-[1.5] text-[#808080]" style={{ color: '#808080' }} />
                             <span>Editar datos</span>
                           </button>
                         </div>

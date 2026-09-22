@@ -45,21 +45,25 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           >
             <div className="flex flex-col items-end mx-auto w-fit">
               <h1
-                className="text-[clamp(1.5rem,8vw,4.5rem)] font-[100] tracking-[0.1em] sm:tracking-[0.25em] uppercase leading-none select-none text-[#FEFCE9] text-center"
+                className="home-title-gestarian text-[clamp(1.8rem,9.6vw,5.4rem)] font-[100] tracking-[0.1em] sm:tracking-[0.25em] uppercase leading-none select-none text-[#FEFCE9] text-center"
                 style={{
                   fontFamily: "'Montserrat', sans-serif",
                   fontWeight: 100,
+                  WebkitTextStroke: '2px #FEFCE9',
+                  paintOrder: 'stroke fill',
                 }}
               >
                 GESTARIAN
               </h1>
               <span
-                className="home-subtitle-quick text-[12px] sm:text-base md:text-lg font-[100] tracking-[0.15em] sm:tracking-[0.25em] text-[#808080] text-right self-end mt-1.5"
+                className="home-subtitle-quick text-[14px] sm:text-lg md:text-xl font-[100] tracking-[0.15em] sm:tracking-[0.25em] text-[#808080] text-right self-end mt-1.5"
                 style={{
                   fontFamily: "'Montserrat', 'Plus Jakarta Sans', sans-serif",
                   fontWeight: 100,
                   color: '#808080',
                   fontSize: '1.2em',
+                  WebkitTextStroke: '2px #808080',
+                  paintOrder: 'stroke fill',
                 }}
               >
                 Quick

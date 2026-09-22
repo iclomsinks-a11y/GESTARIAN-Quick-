@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ClientData, LineasComplejasCliente, LineasNivel } from '../types';
+import { saveClientToDb } from '../utils/database';
 
 interface LineasComplejasModalProps {
   isOpen: boolean;
@@ -80,7 +81,9 @@ export const LineasComplejasModal: React.FC<LineasComplejasModalProps> = ({
     const updated = estructuras.filter((e) => e.id !== id);
     setEstructuras(updated);
     if (!client) return;
-    onSaveClient({ ...client, lineasComplejas: updated });
+    const updatedClient: ClientData = { ...client, lineasComplejas: updated };
+    saveClientToDb(updatedClient);
+    onSaveClient(updatedClient);
   };
 
   // Gestión de niveles
@@ -122,6 +125,46 @@ export const LineasComplejasModal: React.FC<LineasComplejasModalProps> = ({
 
   // Gestión de tags (valores del nivel)
   const handleTagInputChange = (nivelIdx: number, val: string) => {
+    // Si el texto introducido contiene coma(s), procesamos inmediatamente
+    if (val.includes(',')) {
+      const parts = val.split(',');
+      const trailing = parts.pop() || ''; // Lo que queda después de la última coma
+
+      const newTags = parts
+        .map((p) => p.replace(/,+$/, '').trim())
+        .filter((p) => p.length > 0);
+
+      if (newTags.length > 0) {
+        setNiveles((prevNiveles) => {
+          const updated = [...prevNiveles];
+          const currentValores = updated[nivelIdx]?.valores || [];
+          const existingSet = new Set(currentValores.map((v) => v.toLowerCase()));
+
+          const uniqueToAdd: string[] = [];
+          for (const tag of newTags) {
+            if (!existingSet.has(tag.toLowerCase()) && !uniqueToAdd.some((u) => u.toLowerCase() === tag.toLowerCase())) {
+              uniqueToAdd.push(tag);
+            }
+          }
+
+          if (uniqueToAdd.length > 0) {
+            updated[nivelIdx] = {
+              ...updated[nivelIdx],
+              valores: [...currentValores, ...uniqueToAdd],
+            };
+          }
+          return updated;
+        });
+      }
+
+      setTagInputs((prevInputs) => {
+        const updated = [...prevInputs];
+        updated[nivelIdx] = trailing;
+        return updated;
+      });
+      return;
+    }
+
     const updated = [...tagInputs];
     updated[nivelIdx] = val;
     setTagInputs(updated);
@@ -131,30 +174,58 @@ export const LineasComplejasModal: React.FC<LineasComplejasModalProps> = ({
     nivelIdx: number,
     e: React.KeyboardEvent<HTMLInputElement>
   ) => {
-    if ((e.key === 'Enter' || e.key === ',') && tagInputs[nivelIdx].trim()) {
+    const rawVal = tagInputs[nivelIdx] || '';
+    const cleanVal = rawVal.replace(/,+$/, '').trim();
+
+    if (e.key === ',' || e.code === 'Comma') {
       e.preventDefault();
-      addTagToNivel(nivelIdx, tagInputs[nivelIdx].trim());
+      if (cleanVal) {
+        addTagToNivel(nivelIdx, cleanVal);
+      }
+      return;
     }
+
+    if (e.key === 'Enter' || e.key === 'Tab') {
+      if (cleanVal) {
+        e.preventDefault();
+        addTagToNivel(nivelIdx, cleanVal);
+      }
+      return;
+    }
+
     if (
       e.key === 'Backspace' &&
-      !tagInputs[nivelIdx] &&
-      niveles[nivelIdx].valores.length > 0
+      !rawVal &&
+      niveles[nivelIdx]?.valores.length > 0
     ) {
       removeTagFromNivel(nivelIdx, niveles[nivelIdx].valores.length - 1);
     }
   };
 
   const addTagToNivel = (nivelIdx: number, value: string) => {
-    if (!value.trim() || niveles[nivelIdx].valores.includes(value.trim())) return;
-    const updated = [...niveles];
-    updated[nivelIdx] = {
-      ...updated[nivelIdx],
-      valores: [...updated[nivelIdx].valores, value.trim()],
-    };
-    setNiveles(updated);
-    const updatedInputs = [...tagInputs];
-    updatedInputs[nivelIdx] = '';
-    setTagInputs(updatedInputs);
+    const clean = value.replace(/,+$/, '').trim();
+    if (!clean) return;
+
+    setNiveles((prevNiveles) => {
+      const updated = [...prevNiveles];
+      const currentValores = updated[nivelIdx]?.valores || [];
+      const alreadyExists = currentValores.some(
+        (v) => v.toLowerCase() === clean.toLowerCase()
+      );
+      if (alreadyExists) return prevNiveles;
+
+      updated[nivelIdx] = {
+        ...updated[nivelIdx],
+        valores: [...currentValores, clean],
+      };
+      return updated;
+    });
+
+    setTagInputs((prevInputs) => {
+      const updated = [...prevInputs];
+      updated[nivelIdx] = '';
+      return updated;
+    });
   };
 
   const removeTagFromNivel = (nivelIdx: number, tagIdx: number) => {
@@ -169,7 +240,24 @@ export const LineasComplejasModal: React.FC<LineasComplejasModalProps> = ({
   const handleSaveEstructura = () => {
     if (!client) return;
     if (!troncal.trim()) return;
-    const nivelesValidos = niveles.filter((n) => n.nombre_nivel.trim() && n.valores.length > 0);
+
+    // Procesar cualquier valor pendiente en los inputs de tags antes de guardar
+    const nivelesConTagsPendientes = niveles.map((nivel, idx) => {
+      const pending = (tagInputs[idx] || '').replace(/,+$/, '').trim();
+      const currentValores = [...nivel.valores];
+      if (pending && !currentValores.some((v) => v.toLowerCase() === pending.toLowerCase())) {
+        currentValores.push(pending);
+      }
+      return {
+        ...nivel,
+        nombre_nivel: nivel.nombre_nivel.trim(),
+        valores: currentValores,
+      };
+    });
+
+    const nivelesValidos = nivelesConTagsPendientes.filter(
+      (n) => n.nombre_nivel.trim().length > 0 && n.valores.length > 0
+    );
     if (nivelesValidos.length === 0) return;
 
     let nuevas: LineasComplejasCliente[];
@@ -196,8 +284,10 @@ export const LineasComplejasModal: React.FC<LineasComplejasModalProps> = ({
       nuevas = [...estructuras, nueva];
     }
 
+    const updatedClient: ClientData = { ...client, lineasComplejas: nuevas };
     setEstructuras(nuevas);
-    onSaveClient({ ...client, lineasComplejas: nuevas });
+    saveClientToDb(updatedClient);
+    onSaveClient(updatedClient);
 
     setSavedFeedback(true);
     setTimeout(() => setSavedFeedback(false), 2000);
@@ -208,7 +298,11 @@ export const LineasComplejasModal: React.FC<LineasComplejasModalProps> = ({
 
   const canSave =
     troncal.trim().length > 0 &&
-    niveles.some((n) => n.nombre_nivel.trim() && n.valores.length > 0);
+    niveles.some((n, idx) => {
+      const hasName = n.nombre_nivel.trim().length > 0;
+      const hasValues = n.valores.length > 0 || (tagInputs[idx] && tagInputs[idx].trim().length > 0);
+      return hasName && hasValues;
+    });
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-4">
@@ -384,49 +478,63 @@ export const LineasComplejasModal: React.FC<LineasComplejasModalProps> = ({
                             <button
                               type="button"
                               onClick={() => handleRemoveNivel(idx)}
-                              className="p-1 text-neutral-600 hover:text-rose-400 transition-colors cursor-pointer shrink-0"
+                              className="p-1 text-[#EF4444] hover:text-red-400 transition-colors cursor-pointer shrink-0"
+                              style={{ color: '#EF4444' }}
                               title="Eliminar nivel"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <Trash2 className="w-3.5 h-3.5 text-[#EF4444]" style={{ color: '#EF4444' }} />
                             </button>
                           )}
                         </div>
 
                         {/* Tags de valores */}
                         <div>
-                          <p className="text-[10px] text-neutral-600 mb-1.5 flex items-center gap-1">
-                            <Tag className="w-3 h-3" />
-                            Valores (Enter o coma para añadir)
+                          <p className="text-[10px] text-neutral-500 mb-1.5 flex items-center gap-1">
+                            <Tag className="w-3 h-3 text-amber-400/80" />
+                            <span>Valores del nivel (escribe y pulsa <strong className="text-amber-300 font-bold">coma ,</strong> o <strong className="text-amber-300 font-bold">Enter</strong> para añadir)</span>
                           </p>
-                          <div className="flex flex-wrap gap-1.5 p-2 bg-neutral-900 border border-neutral-700 rounded-lg min-h-[36px]">
+                          <div className="flex flex-wrap items-center gap-1.5 p-2 bg-neutral-900 border border-neutral-700 rounded-lg min-h-[38px] focus-within:border-amber-400/60 transition-colors">
                             {nivel.valores.map((val, vi) => (
                               <span
                                 key={vi}
-                                className="inline-flex items-center gap-1 bg-amber-400/15 text-amber-300 border border-amber-400/30 rounded-full text-[11px] font-semibold px-2 py-0.5"
+                                className="inline-flex items-center gap-1 bg-amber-400/15 text-amber-300 border border-amber-400/30 rounded-full text-[11px] font-semibold px-2.5 py-0.5"
                               >
-                                {val}
+                                <span>{val}</span>
                                 <button
                                   type="button"
                                   onClick={() => removeTagFromNivel(idx, vi)}
-                                  className="text-amber-400/60 hover:text-rose-400 transition-colors cursor-pointer leading-none"
+                                  className="text-amber-400/60 hover:text-rose-400 transition-colors cursor-pointer leading-none text-xs ml-0.5"
+                                  title="Quitar valor"
                                 >
                                   ×
                                 </button>
                               </span>
                             ))}
-                            <input
-                              type="text"
-                              value={tagInputs[idx] || ''}
-                              onChange={(e) => handleTagInputChange(idx, e.target.value)}
-                              onKeyDown={(e) => handleTagInputKeyDown(idx, e)}
-                              onBlur={() => {
-                                if (tagInputs[idx]?.trim()) {
-                                  addTagToNivel(idx, tagInputs[idx].trim());
-                                }
-                              }}
-                              placeholder={nivel.valores.length === 0 ? 'Ej: Visillo, Opaco…' : ''}
-                              className="flex-1 min-w-[100px] bg-transparent text-xs text-neutral-300 placeholder-neutral-700 focus:outline-none"
-                            />
+                            <div className="flex-1 min-w-[120px] flex items-center gap-1">
+                              <input
+                                type="text"
+                                value={tagInputs[idx] || ''}
+                                onChange={(e) => handleTagInputChange(idx, e.target.value)}
+                                onKeyDown={(e) => handleTagInputKeyDown(idx, e)}
+                                onBlur={() => {
+                                  if (tagInputs[idx]?.trim()) {
+                                    addTagToNivel(idx, tagInputs[idx].trim());
+                                  }
+                                }}
+                                placeholder={nivel.valores.length === 0 ? 'Escribe y pulsa coma (ej: Seda, Lino…)' : 'Añadir otro (pulsa coma ,)'}
+                                className="w-full bg-transparent text-xs text-neutral-200 placeholder-neutral-600 focus:outline-none"
+                              />
+                              {tagInputs[idx]?.trim() ? (
+                                <button
+                                  type="button"
+                                  onClick={() => addTagToNivel(idx, tagInputs[idx].trim())}
+                                  className="p-1 rounded bg-amber-400 text-neutral-950 hover:bg-amber-300 transition-colors cursor-pointer shrink-0 shadow-sm"
+                                  title="Añadir valor"
+                                >
+                                  <Plus className="w-3 h-3 stroke-[2.5]" />
+                                </button>
+                              ) : null}
+                            </div>
                           </div>
                         </div>
                       </div>

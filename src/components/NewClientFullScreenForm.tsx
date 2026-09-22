@@ -240,7 +240,7 @@ export const NewClientFullScreenForm: React.FC<NewClientFullScreenFormProps> = (
                   />
                   <div>
                     <div className="flex items-center gap-1.5">
-                      <MessageCircle className="w-4 h-4 text-[#25D366]" />
+                      <MessageCircle className="w-4 h-4 text-[#25D366]" style={{ color: '#25D366' }} />
                       <span className="text-sm font-bold text-white">WhatsApp</span>
                     </div>
                     <p className="text-[11px] text-neutral-400 mt-0.5">Envío directo por chat de WhatsApp</p>

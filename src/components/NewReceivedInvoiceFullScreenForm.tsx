@@ -347,10 +347,11 @@ export const NewReceivedInvoiceFullScreenForm: React.FC<NewReceivedInvoiceFullSc
                   <button
                     type="button"
                     onClick={() => setCapturedImageUrl(undefined)}
-                    className="p-2 rounded-xl bg-neutral-800 hover:bg-red-950 text-neutral-400 hover:text-red-400 transition-colors cursor-pointer"
+                    className="p-2 rounded-xl bg-neutral-800 hover:bg-red-950 text-[#EF4444] hover:text-red-400 transition-colors cursor-pointer"
+                    style={{ color: '#EF4444' }}
                     title="Eliminar foto"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4 text-[#EF4444]" style={{ color: '#EF4444' }} />
                   </button>
                 </>
               ) : (
