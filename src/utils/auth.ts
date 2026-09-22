@@ -335,7 +335,7 @@ export async function loginWithEmail(
   }
 
   if (found.passwordHash !== simpleHash(cleanDni) && found.dni !== cleanDni) {
-    throw new Error('Contraseña o DNI incorrecto.');
+    throw new Error('Email o CIF/DNI incorrecto.');
   }
 
   const isDownloaded = isAppDownloadedOrStandalone();

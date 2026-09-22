@@ -85,7 +85,6 @@ import { ClientsDatabaseModal } from './components/ClientsDatabaseModal';
 import { NewClientFullScreenForm } from './components/NewClientFullScreenForm';
 import { NewReceivedInvoiceFullScreenForm } from './components/NewReceivedInvoiceFullScreenForm';
 import { ProvidersDatabaseModal } from './components/ProvidersDatabaseModal';
-import { ComplexBudgetModal } from './components/ComplexBudgetModal';
 import { AuthModal } from './components/AuthModal';
 import { WhatsAppDispatchModal } from './components/WhatsAppDispatchModal';
 import { EmailDispatchModal } from './components/EmailDispatchModal';
@@ -94,7 +93,6 @@ import { InvoiceEditorModal } from './components/InvoiceEditorModal';
 import { PrintPreviewModal } from './components/PrintPreviewModal';
 import { ClientsScreen } from './components/ClientsScreen';
 import { ClientEditorModal } from './components/ClientEditorModal';
-import { ClientVariablesTreeModal } from './components/ClientVariablesTreeModal';
 import { IssuedInvoicesScreen } from './components/IssuedInvoicesScreen';
 import { getNextCorrelativeRectificativeInvoiceNumber } from './utils/formatters';
 
@@ -476,7 +474,6 @@ export default function App() {
   const [isNewProviderFormOpen, setIsNewProviderFormOpen] = useState(false);
   const [selectedProviderToEdit, setSelectedProviderToEdit] = useState<ProviderData | null>(null);
   const [isComplexBudgetModalOpen, setIsComplexBudgetModalOpen] = useState(false);
-  const [selectedClientForComplexBudget, setSelectedClientForComplexBudget] = useState<ClientData | null>(null);
   const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [isProductsModalOpen, setIsProductsModalOpen] = useState(false);
@@ -870,13 +867,7 @@ export default function App() {
     setCurrentInvoice((prev) => ({
       ...prev,
       client: {
-        id: client.id,
-        name: client.name,
-        nif: client.nif,
-        address: client.address || '',
-        phone: client.phone || '',
-        email: client.email || '',
-        notes: client.notes || '',
+        ...client,
         preferredDispatchChannel: preferred,
         defaultSendWhatsApp: preferred === 'whatsapp',
         defaultSendEmail: preferred === 'email',
@@ -1026,116 +1017,6 @@ export default function App() {
   const handleEditProvider = (provider: ProviderData) => {
     setSelectedProviderToEdit(provider);
     setIsNewProviderFormOpen(true);
-  };
-
-  // --- COMPLEX BUDGET ITEM INSERTION ---
-
-  const handleOpenComplexBudgetForClient = (client: ClientData) => {
-    setSelectedClientForComplexBudget(client);
-    setIsComplexBudgetModalOpen(true);
-  };
-
-  // State & Handlers for Client Concept Variables Tree Modal (up to 5 levels)
-  const [selectedClientForVariablesTree, setSelectedClientForVariablesTree] = useState<ClientData | null>(null);
-  const [isVariablesTreeModalOpen, setIsVariablesTreeModalOpen] = useState<boolean>(false);
-
-  const handleOpenClientVariablesTree = (client: ClientData) => {
-    setSelectedClientForVariablesTree(client);
-    setIsVariablesTreeModalOpen(true);
-  };
-
-  const handleSaveClientVariablesTree = (updatedClient: ClientData) => {
-    saveClientToDb(updatedClient);
-    setClients(getStoredClients());
-    showToast(`Árbol de variables actualizado para "${updatedClient.name}"`);
-  };
-
-  const handleInsertComplexBudgetItem = async (item: InvoiceItem, targetClient?: ClientData | null) => {
-    const activeClient = targetClient || selectedClientForComplexBudget;
-
-    if (activeClient) {
-      // Direct invoice generation for this specific client
-      setIsInvoiceSaved(false);
-      const preferred =
-        activeClient.preferredDispatchChannel ||
-        (activeClient.defaultSendEmail && !activeClient.defaultSendWhatsApp ? 'email' : 'whatsapp');
-
-      const activeProvider = providers.find((p) => p.isDefault) || providers[0] || currentInvoice.company;
-      const { sequence: nextSeq, number: autoNumber } = getNextCorrelativeInvoiceNumber(invoices);
-
-      const newInvoice: Invoice = {
-        id: `inv-${Date.now()}`,
-        number: autoNumber,
-        date: getTodayIso(),
-        dueDate: '',
-        company: { ...activeProvider },
-        client: {
-          id: activeClient.id,
-          name: activeClient.name,
-          nif: activeClient.nif,
-          address: activeClient.address || '',
-          phone: activeClient.phone || '',
-          email: activeClient.email || '',
-          notes: activeClient.notes || '',
-          preferredDispatchChannel: preferred,
-          defaultSendWhatsApp: preferred === 'whatsapp',
-          defaultSendEmail: preferred === 'email',
-        },
-        items: [item],
-        ivaRate: currentInvoice.ivaRate ?? 21,
-        irpfRate: currentInvoice.irpfRate ?? 0,
-        paymentMethod: currentInvoice.paymentMethod || 'Transferencia bancaria',
-        status: 'emitida',
-        createdAt: Date.now(),
-        veriFactu: {
-          systemId: `VF-ES-${autoNumber}`,
-          qrPayload: '',
-          qrDataUrl: '',
-          verificationUrl: '',
-          chainHash: '',
-          timestamp: new Date().toISOString(),
-          isVerified: false,
-        },
-      };
-
-      const finalInvoice = await updateVeriFactu(newInvoice);
-      setCurrentInvoice(finalInvoice);
-      setSequence(nextSeq);
-      localStorage.setItem(STORAGE_SEQ_KEY, nextSeq.toString());
-      setSelectedClientForComplexBudget(null);
-      setIsFullScreenInvoiceOpen(true);
-      scrollToPage(2);
-
-      // Learn item title in memory
-      addConceptToMemory(item.concept);
-      setConcepts(loadConceptsMemory());
-
-      showToast(`Factura Compleja ${autoNumber} creada para "${activeClient.name}"`);
-    } else {
-      // If the invoice only has 1 item and it is empty, replace it; otherwise append
-      let updatedItems: InvoiceItem[];
-      if (
-        currentInvoice.items.length === 1 &&
-        !currentInvoice.items[0].concept &&
-        currentInvoice.items[0].total === 0
-      ) {
-        updatedItems = [item];
-      } else {
-        updatedItems = [...currentInvoice.items, item];
-      }
-
-      setCurrentInvoice((prev) => ({
-        ...prev,
-        items: updatedItems,
-      }));
-      setIsInvoiceSaved(false);
-
-      // Learn item title in memory
-      addConceptToMemory(item.concept);
-      setConcepts(loadConceptsMemory());
-
-      showToast('Línea de Factura Compleja insertada en la factura');
-    }
   };
 
   // --- BILLABLE PRODUCTS ACTIONS ---
@@ -1486,8 +1367,7 @@ export default function App() {
               onGoToInvoice={() => scrollToPage(2)}
               products={products}
               onOpenProductsDb={handleOpenProductsDb}
-              onOpenComplexInvoice={handleOpenComplexBudgetForClient}
-              onOpenClientVariablesTree={handleOpenClientVariablesTree}
+              onSaveClient={handleSaveEditedClient}
               onSaveReceivedInvoice={handleSaveReceivedInvoice}
               providers={providers}
             />
@@ -1575,7 +1455,6 @@ export default function App() {
               invoices={invoices}
               onOpenInvoicesDb={() => scrollToPage(2)}
               onOpenVeriFactuModal={() => setIsVeriFactuOpen(true)}
-              onOpenComplexBudgetModal={() => setIsComplexBudgetModalOpen(true)}
               currentSequence={sequence}
               onOpenConfigModal={() => setIsConfigOpen(true)}
               concepts={concepts}
@@ -1616,17 +1495,6 @@ export default function App() {
         onSelectClient={handleSelectClient}
         onOpenNewClientForm={() => setIsNewClientFormOpen(true)}
         onDeleteClient={handleDeleteClient}
-        onOpenClientVariablesTree={handleOpenClientVariablesTree}
-      />
-
-      <ClientVariablesTreeModal
-        isOpen={isVariablesTreeModalOpen}
-        onClose={() => {
-          setIsVariablesTreeModalOpen(false);
-          setSelectedClientForVariablesTree(null);
-        }}
-        client={selectedClientForVariablesTree}
-        onSaveClient={handleSaveClientVariablesTree}
       />
 
       <NewClientFullScreenForm
@@ -1644,7 +1512,6 @@ export default function App() {
           }}
           client={selectedClientToEdit}
           onSave={handleSaveEditedClient}
-          onOpenComplexInvoice={handleOpenComplexBudgetForClient}
         />
       )}
 
@@ -1656,16 +1523,6 @@ export default function App() {
         onSaveProvider={handleSaveProvider}
         onDeleteProvider={handleDeleteProvider}
         onSetDefaultProvider={handleSetDefaultProvider}
-      />
-
-      <ComplexBudgetModal
-        isOpen={isComplexBudgetModalOpen}
-        onClose={() => {
-          setIsComplexBudgetModalOpen(false);
-          setSelectedClientForComplexBudget(null);
-        }}
-        onInsertItem={handleInsertComplexBudgetItem}
-        client={selectedClientForComplexBudget}
       />
 
       <ProductsDatabaseModal
@@ -1835,7 +1692,6 @@ export default function App() {
                 setIsFullScreenInvoiceOpen(false);
                 scrollToPage(3);
               }}
-              onOpenComplexBudgetModal={() => setIsComplexBudgetModalOpen(true)}
               onOpenAttachProduct={handleOpenAttachProduct}
               onSaveInvoice={handleSaveInvoice}
               onOpenWhatsAppModal={() => setIsWhatsAppModalOpen(true)}

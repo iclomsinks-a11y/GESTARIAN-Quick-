@@ -16,7 +16,6 @@ import {
   Copy,
   Check,
   Package,
-  Sliders,
   Camera,
   Upload,
   Link,
@@ -29,6 +28,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ClientData, ClientDispatchChannel, BillableProduct, ReceivedInvoice, ProviderData } from '../types';
 import { formatCurrency } from '../utils/formatters';
 import { NewReceivedInvoiceFullScreenForm } from './NewReceivedInvoiceFullScreenForm';
+import { LineasComplejasModal } from './LineasComplejasModal';
+import { ProductosClienteModal } from './ProductosClienteModal';
 
 interface ClientsScreenProps {
   clients: ClientData[];
@@ -40,9 +41,8 @@ interface ClientsScreenProps {
   onGoToInvoice: () => void;
   products?: BillableProduct[];
   onOpenProductsDb?: () => void;
-  onOpenComplexInvoice?: (client: ClientData) => void;
-  onOpenClientVariablesTree?: (client: ClientData) => void;
-  onUpdateClientHabitualProducts?: (clientId: string, products: BillableProduct[]) => void;
+  /** Callback para que App.tsx guarde el cliente actualizado */
+  onSaveClient?: (updatedClient: ClientData) => void;
   onSaveReceivedInvoice?: (invoice: ReceivedInvoice) => void;
   providers?: ProviderData[];
 }
@@ -118,9 +118,7 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
   onUpdateClientPreferredChannel,
   products = [],
   onOpenProductsDb,
-  onOpenComplexInvoice,
-  onOpenClientVariablesTree,
-  onUpdateClientHabitualProducts,
+  onSaveClient,
   onSaveReceivedInvoice,
   providers = [],
 }) => {
@@ -128,6 +126,12 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
   const [expandedClientId, setExpandedClientId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [clientToDelete, setClientToDelete] = useState<ClientData | null>(null);
+
+  // Nuevos modales: Líneas Complejas y Productos por cliente
+  const [lineasComplejasClient, setLineasComplejasClient] = useState<ClientData | null>(null);
+  const [isLineasComplejasOpen, setIsLineasComplejasOpen] = useState(false);
+  const [productosClient, setProductosClient] = useState<ClientData | null>(null);
+  const [isProductosOpen, setIsProductosOpen] = useState(false);
 
   // Estado para formulario de Factura Recibida / Gasto activado mediante el botón +G
   const [clientForReceivedInvoice, setClientForReceivedInvoice] = useState<ClientData | null>(null);
@@ -543,39 +547,37 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
                   )}
                 </div>
 
-                {/* BOTONES DE FACTURA COMPLEJA Y VARIABLES EXCLUSIVAS DEL CLIENTE */}
+                {/* BOTONES: CONFIGURAR LÍNEAS COMPLEJAS Y PRODUCTOS DEL CLIENTE */}
                 <div className="w-full flex flex-wrap items-center justify-center gap-2 pb-3 px-3">
-                  {onOpenClientVariablesTree && (
-                    <button
-                      type="button"
-                      id={`btn-variables-tree-${clientId}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onOpenClientVariablesTree(client);
-                      }}
-                      className="flex-1 py-2 px-2.5 sm:px-3 rounded-xl border-2 border-blue-500/60 bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 hover:text-blue-200 font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
-                      title="Configurar variables de factura compleja exclusivas de este cliente (hasta 5 niveles)"
-                    >
-                      <FolderTree className="w-4 h-4 text-blue-400 shrink-0 stroke-[2.2]" />
-                      <span className="truncate">Variables (5 Niveles)</span>
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    id={`btn-lineas-complejas-${clientId}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLineasComplejasClient(client);
+                      setIsLineasComplejasOpen(true);
+                    }}
+                    className="flex-1 py-2 px-2.5 sm:px-3 rounded-xl border-2 border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 hover:text-amber-200 font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
+                    title="Configurar estructuras de concepto en niveles para este cliente"
+                  >
+                    <FolderTree className="w-4 h-4 text-amber-400 shrink-0 stroke-[2.2]" />
+                    <span className="truncate">Configurar Líneas Complejas</span>
+                  </button>
 
-                  {onOpenComplexInvoice && (
-                    <button
-                      type="button"
-                      id={`btn-complex-invoice-${clientId}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onOpenComplexInvoice(client);
-                      }}
-                      className="flex-1 py-2 px-2.5 sm:px-3 rounded-xl border-2 border-blue-500/60 bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
-                      title="Generar Factura Compleja para este cliente"
-                    >
-                      <Sliders className="w-4 h-4 text-blue-400 shrink-0 stroke-[2.2]" />
-                      <span className="truncate">Factura Compleja (+FC)</span>
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    id={`btn-productos-cliente-${clientId}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setProductosClient(client);
+                      setIsProductosOpen(true);
+                    }}
+                    className="flex-1 py-2 px-2.5 sm:px-3 rounded-xl border-2 border-amber-500/40 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
+                    title="Configurar productos habituales de este cliente para insertar en facturas"
+                  >
+                    <Package className="w-4 h-4 text-amber-400 shrink-0 stroke-[2.2]" />
+                    <span className="truncate">Configurar Productos</span>
+                  </button>
                 </div>
 
                 {/* ZONA EXPANDIBLE: Aparece de modo fluido al pulsar el nombre con texto aumentado x1.5 */}
@@ -712,20 +714,16 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
                           </div>
                         </div>
 
-                        {/* Estado Factura Compleja (Texto x1.5) */}
+                        {/* Estado: Líneas Complejas y Productos (reemplaza sección antigua) */}
                         <div className="flex items-center justify-between gap-3 pt-2 border-t border-neutral-850/80 text-sm sm:text-base">
                           <span className="font-bold text-neutral-400 flex items-center gap-1.5">
-                            <Sliders className="w-4 h-4 text-amber-400" />
-                            <span>Factura Compleja:</span>
+                            <FolderTree className="w-4 h-4 text-amber-400" />
+                            <span>Líneas Complejas:</span>
                           </span>
-                          <span
-                            className={`text-xs sm:text-sm font-semibold px-2.5 py-0.5 rounded-full border ${
-                              client.enableComplexInvoice
-                                ? 'bg-amber-400/15 text-amber-300 border-amber-400/30'
-                                : 'bg-neutral-800 text-neutral-400 border-neutral-700'
-                            }`}
-                          >
-                            {client.enableComplexInvoice ? 'Habilitada' : 'Deshabilitada (pulsa Editar para habilitar)'}
+                          <span className="text-xs sm:text-sm font-semibold px-2.5 py-0.5 rounded-full border bg-amber-400/10 text-amber-300 border-amber-400/20">
+                            {client.lineasComplejas && client.lineasComplejas.length > 0
+                              ? `${client.lineasComplejas.length} estructura(s)`
+                              : 'Sin configurar'}
                           </span>
                         </div>
 
@@ -1029,6 +1027,39 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
                 }
               : undefined
           }
+        />
+      )}
+
+      {/* Modal: Configurar Líneas Complejas del cliente */}
+      {isLineasComplejasOpen && lineasComplejasClient && (
+        <LineasComplejasModal
+          isOpen={isLineasComplejasOpen}
+          onClose={() => {
+            setIsLineasComplejasOpen(false);
+            setLineasComplejasClient(null);
+          }}
+          client={lineasComplejasClient}
+          onSaveClient={(updatedClient) => {
+            if (onSaveClient) onSaveClient(updatedClient);
+            setLineasComplejasClient(updatedClient);
+          }}
+        />
+      )}
+
+      {/* Modal: Configurar Productos del cliente */}
+      {isProductosOpen && productosClient && (
+        <ProductosClienteModal
+          isOpen={isProductosOpen}
+          onClose={() => {
+            setIsProductosOpen(false);
+            setProductosClient(null);
+          }}
+          client={productosClient}
+          onSaveClient={(updatedClient) => {
+            if (onSaveClient) onSaveClient(updatedClient);
+            setProductosClient(updatedClient);
+          }}
+          catalogProducts={products}
         />
       )}
     </div>

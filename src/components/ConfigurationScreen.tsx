@@ -77,7 +77,6 @@ interface ConfigurationScreenProps {
   invoices?: Invoice[];
   onOpenInvoicesDb?: () => void;
   onOpenVeriFactuModal?: () => void;
-  onOpenComplexBudgetModal?: () => void;
   currentSequence?: number;
   onOpenConfigModal?: () => void;
   concepts?: ConceptHistoryItem[];
@@ -113,7 +112,6 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
   invoices,
   onOpenInvoicesDb,
   onOpenVeriFactuModal,
-  onOpenComplexBudgetModal,
   currentSequence = 1,
   onOpenConfigModal,
   concepts = [],

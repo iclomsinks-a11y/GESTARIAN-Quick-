@@ -41,6 +41,8 @@ import { formatCurrency, formatDecimal, formatDate, getTodayIso } from '../utils
 import { ConceptAutocompleteInput } from './ConceptAutocompleteInput';
 import { PrintPreviewModal } from './PrintPreviewModal';
 import { ClientEditorModal, ClientInputField } from './ClientEditorModal';
+import { LineasComplejasDropdown } from './LineasComplejasDropdown';
+import { ProductosClienteDropdown } from './ProductosClienteDropdown';
 
 interface A4InvoiceDocumentProps {
   invoice: Invoice;
@@ -55,7 +57,6 @@ interface A4InvoiceDocumentProps {
   onOpenClientsSearch: () => void;
   onOpenNewClientForm: () => void;
   onOpenProvidersModal: () => void;
-  onOpenComplexBudgetModal: () => void;
   onOpenAttachProduct?: (lineIndex?: number) => void;
   onSaveInvoice?: () => void;
   onOpenWhatsAppModal?: () => void;
@@ -80,7 +81,6 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
   onOpenClientsSearch,
   onOpenNewClientForm,
   onOpenProvidersModal,
-  onOpenComplexBudgetModal,
   onOpenAttachProduct,
   onSaveInvoice,
   onOpenWhatsAppModal,
@@ -259,6 +259,24 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
     }
     const updatedItems = invoice.items.filter((_, idx) => idx !== index);
     onChangeInvoice({ ...invoice, items: updatedItems });
+  };
+
+  const handleAddItemWithConcept = (conceptText: string) => {
+    const newItem: InvoiceItem = {
+      id: `item-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      concept: conceptText,
+      units: 1,
+      unitPrice: 0,
+      total: 0,
+    };
+    
+    // If there is only one item and it is completely empty, replace it
+    if (invoice.items.length === 1 && !invoice.items[0].concept.trim() && invoice.items[0].total === 0) {
+      onChangeInvoice({ ...invoice, items: [newItem] });
+    } else {
+      onChangeInvoice({ ...invoice, items: [...invoice.items, newItem] });
+    }
+    onConceptCommitted(conceptText);
   };
 
   // Direct logo upload from A4 sheet
@@ -723,29 +741,15 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                 <span>Añadir línea de concepto</span>
               </button>
 
-              {onOpenAttachProduct && (
-                <button
-                  type="button"
-                  id="attach-product-line-btn"
-                  onClick={() => onOpenAttachProduct()}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-400 hover:border-amber-500 bg-amber-100/70 hover:bg-amber-200/80 text-amber-950 text-xs font-semibold transition-all shadow-xs cursor-pointer"
-                  title="Adjuntar producto facturable del catálogo para que su nombre se ponga en la línea de concepto"
-                >
-                  <Package className="w-3.5 h-3.5 text-amber-700" />
-                  <span>Adjuntar producto</span>
-                </button>
-              )}
+              <LineasComplejasDropdown
+                estructuras={invoice.client.lineasComplejas || []}
+                onSelect={handleAddItemWithConcept}
+              />
 
-              <button
-                type="button"
-                id="add-complex-invoice-line-btn"
-                onClick={onOpenComplexBudgetModal}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-300 hover:border-amber-400 bg-neutral-100 hover:bg-amber-50 text-neutral-700 hover:text-neutral-950 text-xs font-semibold transition-all shadow-xs cursor-pointer"
-                title="Añadir línea de factura compleja con variantes técnicas (m², ml, %)"
-              >
-                <Sliders className="w-3.5 h-3.5 text-amber-600" />
-                <span>Factura Compleja (Variantes)</span>
-              </button>
+              <ProductosClienteDropdown
+                productos={invoice.client.habitualProducts || []}
+                onSelect={handleAddItemWithConcept}
+              />
             </div>
           </div>
         </div>

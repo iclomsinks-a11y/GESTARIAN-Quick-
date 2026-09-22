@@ -45,7 +45,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           >
             <div className="flex flex-col items-end mx-auto w-fit">
               <h1
-                className="text-[clamp(2.4rem,7vw,4.5rem)] font-thin tracking-[0.25em] uppercase leading-none select-none text-[#FEFCE9] text-center"
+                className="text-[clamp(1.5rem,8vw,4.5rem)] font-thin tracking-[0.1em] sm:tracking-[0.25em] uppercase leading-none select-none text-[#FEFCE9] text-center"
                 style={{
                   fontFamily: "'Montserrat', 'Cinzel', sans-serif",
                 }}
@@ -53,7 +53,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 GESTARIAN
               </h1>
               <span
-                className="home-subtitle-quick text-xs sm:text-sm md:text-base font-semibold tracking-[0.25em] text-amber-400 text-right self-end mt-1.5"
+                className="home-subtitle-quick text-[10px] sm:text-sm md:text-base font-light tracking-[0.15em] sm:tracking-[0.25em] text-amber-400 text-right self-end mt-1.5"
                 style={{
                   fontFamily: "'Montserrat', 'Plus Jakarta Sans', sans-serif",
                 }}

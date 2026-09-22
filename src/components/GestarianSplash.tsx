@@ -93,7 +93,7 @@ export const GestarianSplash: React.FC<GestarianSplashProps> = ({
     try {
       if (authView === 'register') {
         if (!email.trim() || !password) {
-          throw new Error('Por favor completa el email y la contraseña.');
+          throw new Error('Por favor completa el email y CIF/DNI.');
         }
         const user = await registerWithEmail(name, email, password, rememberInDevice);
         onUserChange(user);
@@ -101,7 +101,7 @@ export const GestarianSplash: React.FC<GestarianSplashProps> = ({
         setAuthView('registered_success');
       } else if (authView === 'login') {
         if (!email.trim() || !password) {
-          throw new Error('Por favor ingresa tu email y contraseña.');
+          throw new Error('Por favor ingresa tu email y CIF/DNI.');
         }
         const user = await loginWithEmail(email, password, rememberInDevice);
         onUserChange(user);
@@ -188,7 +188,7 @@ export const GestarianSplash: React.FC<GestarianSplashProps> = ({
           >
             <div className="flex flex-col items-end mx-auto text-center w-fit">
               <h1
-                className="text-[clamp(3rem,8.5vw,7.5rem)] font-thin tracking-[0.25em] uppercase leading-none select-none text-[#FEFCE9] text-center"
+                className="text-[clamp(1.5rem,8vw,7.5rem)] font-thin tracking-[0.1em] sm:tracking-[0.25em] uppercase leading-none select-none text-[#FEFCE9] text-center"
                 style={{
                   fontFamily: "'Montserrat', 'Cinzel', sans-serif",
                 }}
@@ -196,7 +196,7 @@ export const GestarianSplash: React.FC<GestarianSplashProps> = ({
                 GESTARIAN
               </h1>
               <span
-                className="text-xs sm:text-sm font-semibold tracking-[0.25em] text-neutral-400"
+                className="text-[10px] sm:text-sm font-light tracking-[0.15em] sm:tracking-[0.25em] text-neutral-400"
                 style={{
                   fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
                   marginTop: '3px',
@@ -281,7 +281,7 @@ export const GestarianSplash: React.FC<GestarianSplashProps> = ({
                       )}
                     </button>
                     <p className="text-[10px] text-neutral-500 text-center mt-1">
-                      No volverá a solicitar usuario ni contraseña en este navegador
+                      No volverá a solicitar usuario ni CIF/DNI en este navegador
                     </p>
                   </div>
 
@@ -368,50 +368,7 @@ export const GestarianSplash: React.FC<GestarianSplashProps> = ({
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] uppercase font-mono tracking-wider text-amber-300 flex items-center gap-1.5 font-semibold">
                           <Sparkles className="w-3 h-3 text-amber-400" />
-                          Cuenta Google detectada en tu navegador
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
-                            <path
-                              fill="#4285F4"
-                              d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
-                            />
-                            <path
-                              fill="#34A853"
-                              d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.24v3.15C3.26 21.36 7.35 24 12 24z"
-                            />
-                            <path
-                              fill="#FBBC05"
-                              d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.24C.45 8.14 0 9.97 0 12s.45 3.86 1.24 5.42l4.04-3.15z"
-                            />
-                            <path
-                              fill="#EA4335"
-                              d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.26 2.64 1.24 6.58l4.04 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
-                            />
-                          </svg>
-                          <div className="truncate">
-                            <span className="text-xs font-semibold text-white truncate block">
-                              {detectedGoogle.email}
-                            </span>
-                            <span className="text-[10px] text-neutral-400">1 clic para entrar directamente</span>
-                          </div>
-                        </div>
-
-                        <button
-                          id="splash-google-direct-btn"
-                          type="button"
-                          onClick={() => handleGoogleLogin(detectedGoogle.email)}
-                          disabled={isLoading}
-                          className="shrink-0 px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-white text-neutral-950 font-bold text-xs transition-all shadow active:scale-95"
-                        >
-                          Entrar Directamente
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  {/* CASE B: BRAND NEW SESSION - ONLY EMAIL AND CIF/DNI ALLOWED */}
 
                   {/* BOTONES DE REGISTRO Y DE LOGIN (Solicitados explícitamente) */}
                   <div className="grid grid-cols-2 gap-2 pt-1">
@@ -444,36 +401,7 @@ export const GestarianSplash: React.FC<GestarianSplashProps> = ({
                     </button>
                   </div>
 
-                  {/* Generic Google Login button */}
-                  {(!detectedGoogle || authView === 'choice') && (
-                    <button
-                      id="splash-google-btn"
-                      type="button"
-                      onClick={() => handleGoogleLogin()}
-                      disabled={isLoading}
-                      className="w-full py-2.5 px-4 rounded-xl bg-neutral-900 hover:bg-neutral-850 border border-neutral-700 text-white text-xs font-semibold flex items-center justify-center gap-2.5 transition-all shadow-sm"
-                    >
-                      <svg className="w-4 h-4" viewBox="0 0 24 24">
-                        <path
-                          fill="#4285F4"
-                          d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
-                        />
-                        <path
-                          fill="#34A853"
-                          d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.24v3.15C3.26 21.36 7.35 24 12 24z"
-                        />
-                        <path
-                          fill="#FBBC05"
-                          d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.24C.45 8.14 0 9.97 0 12s.45 3.86 1.24 5.42l4.04-3.15z"
-                        />
-                        <path
-                          fill="#EA4335"
-                          d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.26 2.64 1.24 6.58l4.04 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
-                        />
-                      </svg>
-                      <span>Entrar con Google</span>
-                    </button>
-                  )}
+
 
                   {/* Form for Login or Register */}
                   {(authView === 'login' || authView === 'register') && (
@@ -522,7 +450,7 @@ export const GestarianSplash: React.FC<GestarianSplashProps> = ({
 
                       <div>
                         <label className="text-[11px] text-neutral-400 block mb-1">
-                          Contraseña
+                          CIF / DNI
                         </label>
                         <div className="relative">
                           <Lock className="w-4 h-4 text-neutral-500 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -578,17 +506,7 @@ export const GestarianSplash: React.FC<GestarianSplashProps> = ({
                     </form>
                   )}
 
-                  {/* Fallback link: Acceso como invitado sin cuenta */}
-                  <div className="pt-2 text-center">
-                    <button
-                      id="splash-continue-guest-btn"
-                      type="button"
-                      onClick={onEnter}
-                      className="text-xs text-neutral-400 hover:text-white transition-colors"
-                    >
-                      Continuar como invitado (Acceso rápido) →
-                    </button>
-                  </div>
+                  {/* (Removed Guest Link as per architecture constraint) */}
                 </div>
               )}
             </motion.div>

@@ -137,7 +137,7 @@ export function getNextCorrelativeRectificativeInvoiceNumber(
   if (Array.isArray(invoiceList)) {
     for (const inv of invoiceList) {
       if (inv && inv.number) {
-        const match = inv.number.match(new RegExp(`^R${yearTwoDigits}(\\d{4})$`, 'i'));
+        const match = inv.number.match(new RegExp(`^FR${yearTwoDigits}(\\d{4})$`, 'i'));
         if (match && match[1]) {
           const seq = parseInt(match[1], 10);
           if (!isNaN(seq) && seq > maxSeq) {
@@ -150,7 +150,7 @@ export function getNextCorrelativeRectificativeInvoiceNumber(
 
   const nextSequence = maxSeq + 1;
   const seqStr = nextSequence.toString().padStart(4, '0');
-  const number = `R${yearTwoDigits}${seqStr}`;
+  const number = `FR${yearTwoDigits}${seqStr}`;
   return { number, sequence: nextSequence };
 }
 

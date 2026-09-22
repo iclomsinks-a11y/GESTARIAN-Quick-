@@ -32,11 +32,27 @@ export interface ClientConceptLine {
   param5Value?: string | number;
 }
 
+// --- SISTEMA ANTIGUO (mantenido por compatibilidad de datos existentes) ---
 export interface ClientConceptVariableNode {
   id: string;
-  name: string; // Texto/Nombre de la variable en este nivel
-  price?: number; // Precio unitario sugerido (opcional)
-  children?: ClientConceptVariableNode[]; // Hasta 5 sub-variables por nodo
+  name: string;
+  price?: number;
+  children?: ClientConceptVariableNode[];
+}
+
+// --- NUEVO SISTEMA: Líneas Complejas tipo árbol plano ---
+export interface LineasNivel {
+  nombre_nivel: string; // Ej: "Material", "Tejido", "Color"
+  valores: string[];    // Ej: ["Visillo", "Opaco", "Translúcido"]
+}
+
+export interface LineasComplejasCliente {
+  id: string;
+  cliente_id: string;
+  concepto_troncal: string; // Ej: "Cortina", "Cojín"
+  niveles: LineasNivel[];   // Solo texto de concepto, sin precios
+  created_at?: number;
+  updated_at?: number;
 }
 
 export interface ClientData {
@@ -50,10 +66,11 @@ export interface ClientData {
   defaultSendWhatsApp?: boolean; // Casilla para activar WhatsApp por defecto
   defaultSendEmail?: boolean; // Casilla para activar Email por defecto
   preferredDispatchChannel?: ClientDispatchChannel; // Medio seleccionado por defecto
-  enableComplexInvoice?: boolean; // Habilitar botón de Factura Compleja en tarjeta
+  enableComplexInvoice?: boolean; // Mantenido por compatibilidad (sistema antiguo)
   conceptLines?: ClientConceptLine[]; // Líneas de conceptos preconfiguradas para este cliente
-  habitualProducts?: BillableProduct[]; // Productos habituales asignados a este cliente con foto/descripción
-  variableTrees?: ClientConceptVariableNode[]; // Estructura jerárquica de variables para Facturación Compleja (hasta 5 niveles)
+  habitualProducts?: BillableProduct[]; // Productos habituales (nuevo sistema: solo nombre+descripción)
+  variableTrees?: ClientConceptVariableNode[]; // Árbol antiguo (mantenido por compatibilidad)
+  lineasComplejas?: LineasComplejasCliente[]; // NUEVO: estructuras de árbol plano por troncal
   createdAt?: number;
 }
 

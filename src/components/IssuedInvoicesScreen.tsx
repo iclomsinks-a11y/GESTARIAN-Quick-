@@ -13,15 +13,18 @@ import {
   MapPin,
   Phone,
   Mail,
+  Edit3,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Invoice } from '../types';
 import { formatCurrency, formatDate } from '../utils/formatters';
+import { getStoredWhatsAppDispatches, getStoredEmailDispatches } from '../services/notificationService';
 
 interface IssuedInvoicesScreenProps {
   invoices: Invoice[];
   onNewInvoice: () => void;
   onViewInvoice: (invoice: Invoice) => void;
+  onEditInvoice: (invoice: Invoice) => void;
   onRectifyInvoice: (invoice: Invoice) => void;
   onDeleteInvoice: (id: string) => void;
   onOpenWhatsApp: (invoice: Invoice) => void;
@@ -63,6 +66,7 @@ export const IssuedInvoicesScreen: React.FC<IssuedInvoicesScreenProps> = ({
   invoices,
   onNewInvoice,
   onViewInvoice,
+  onEditInvoice,
   onRectifyInvoice,
   onDeleteInvoice,
   onOpenWhatsApp,
@@ -190,9 +194,14 @@ export const IssuedInvoicesScreen: React.FC<IssuedInvoicesScreenProps> = ({
             const isDimmed = hasAnyExpanded && !isExpanded;
             const totals = calculateTotals(inv);
             const isRectificative =
+              inv.number?.startsWith('FR') ||
               inv.number?.startsWith('R') ||
               inv.notes?.toLowerCase().includes('rectificativ') ||
               inv.items?.some((it) => it.concept?.toLowerCase().includes('rectificaci'));
+
+            const hasWhatsApp = getStoredWhatsAppDispatches().some((d) => d.invoiceId === invoiceId);
+            const hasEmail = getStoredEmailDispatches().some((d) => d.invoiceId === invoiceId);
+            const isSent = hasWhatsApp || hasEmail;
 
             return (
               <motion.div
@@ -241,19 +250,43 @@ export const IssuedInvoicesScreen: React.FC<IssuedInvoicesScreenProps> = ({
                   </div>
                 </div>
 
-                {/* LÍNEA 2: Fila de Iconos Grandes FLOTANTES SIN ENVOLTORIO (x1.5 más grandes, trazo 1.5px): Ver Factura, Rectificativa, WhatsApp, Imprimir, Eliminar */}
-                <div className="px-3 pt-1 pb-3.5 grid grid-cols-5 place-items-center gap-1">
-                  {/* Icono 1: Ver Factura (Abre el documento hoja A4 a toda pantalla) */}
+                {/* LÍNEA 2: Fila de Iconos Grandes FLOTANTES SIN ENVOLTORIO (x1.5 más grandes, trazo 1.5px): Ver, Editar, Rectificativa, WhatsApp, Imprimir, Eliminar */}
+                <div className="px-3 pt-1 pb-3.5 grid grid-cols-6 place-items-center gap-1">
+                  {/* Icono 1: Ver Factura (Abre vista de impresión/PDF) */}
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onViewInvoice(inv);
+                      onPrintInvoice(inv);
                     }}
                     className="p-1 text-amber-400 hover:text-amber-300 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
-                    title={`Ver factura ${inv.number} a pantalla completa`}
+                    title={`Ver factura ${inv.number} en PDF`}
                   >
                     <Eye className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm" />
+                  </button>
+
+                  {/* Icono 1.5: Editar Factura */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (isSent) {
+                        const confirmRectify = window.confirm(
+                          `La factura ${inv.number} ya ha sido enviada al cliente y está cerrada. No se puede editar.\n\n¿Quieres generar una nueva factura rectificativa copiando estos datos?`
+                        );
+                        if (confirmRectify) {
+                          onRectifyInvoice(inv);
+                        }
+                      } else {
+                        onEditInvoice(inv);
+                      }
+                    }}
+                    className={`p-1 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none ${
+                      isSent ? 'text-neutral-500 hover:text-neutral-400' : 'text-blue-400 hover:text-blue-300'
+                    }`}
+                    title={isSent ? `Factura enviada. Pulsar para crear Rectificativa` : `Editar factura ${inv.number}`}
+                  >
+                    <Edit3 className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm" />
                   </button>
 
                   {/* Icono 2: Factura Rectificativa */}

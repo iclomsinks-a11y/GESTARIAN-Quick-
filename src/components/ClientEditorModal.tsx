@@ -22,7 +22,6 @@ interface ClientEditorModalProps {
   client: ClientData;
   initialField?: ClientInputField;
   onSave: (updatedClient: ClientData) => void;
-  onOpenComplexInvoice?: (client: ClientData) => void;
 }
 
 export const ClientEditorModal: React.FC<ClientEditorModalProps> = ({
@@ -31,7 +30,6 @@ export const ClientEditorModal: React.FC<ClientEditorModalProps> = ({
   client,
   initialField = 'name',
   onSave,
-  onOpenComplexInvoice,
 }) => {
   const [formData, setFormData] = useState<ClientData>({
     ...client,
@@ -407,87 +405,6 @@ export const ClientEditorModal: React.FC<ClientEditorModalProps> = ({
                   </div>
                 </label>
               </div>
-            </div>
-          </div>
-
-          {/* BOTÓN Y CONFIGURACIÓN: HABILITAR FACTURA COMPLEJA */}
-          <div className="pt-1">
-            <div className="bg-neutral-900/90 border border-neutral-800 rounded-2xl p-4 sm:p-5 space-y-3">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-amber-500/10 border border-amber-400/20 text-amber-400">
-                    <Sliders className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-amber-400 block">
-                      Factura Compleja
-                    </span>
-                    <span className="text-[11px] text-neutral-400">
-                      Variantes técnicas, metros lineales ml, superficies m², fruncidos %
-                    </span>
-                  </div>
-                </div>
-
-                {/* Botón interactivo para habilitar/deshabilitar */}
-                <button
-                  type="button"
-                  id="btn-toggle-complex-invoice"
-                  onClick={() =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      enableComplexInvoice: !prev.enableComplexInvoice,
-                    }))
-                  }
-                  className={`px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer border select-none ${
-                    formData.enableComplexInvoice
-                      ? 'bg-amber-400 text-neutral-950 border-amber-300 shadow-md shadow-amber-400/20 active:scale-95'
-                      : 'bg-neutral-800/90 text-neutral-300 border-neutral-700 hover:text-white hover:bg-neutral-700 active:scale-95'
-                  }`}
-                >
-                  <div
-                    className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${
-                      formData.enableComplexInvoice
-                        ? 'bg-neutral-950 border-neutral-950 text-amber-400'
-                        : 'bg-neutral-600 border-neutral-500'
-                    }`}
-                  >
-                    {formData.enableComplexInvoice && <Check className="w-3 h-3 stroke-[3]" />}
-                  </div>
-                  <span>
-                    {formData.enableComplexInvoice ? 'Habilitada' : 'Habilitar Factura Compleja'}
-                  </span>
-                </button>
-              </div>
-
-              <p className="text-xs text-neutral-300 leading-relaxed">
-                Al habilitar esta opción, aparecerá el botón <strong>Factura Compleja (80% del ancho)</strong> directamente dentro de la tarjeta de este cliente para emitir partidas técnicas con cálculo dinámico.
-              </p>
-
-              {formData.enableComplexInvoice && (
-                <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-xl bg-amber-400/10 border border-amber-400/30 animate-in fade-in duration-200">
-                  <div className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span className="text-xs font-semibold text-amber-200">
-                      Botón activo en la tarjeta del cliente
-                    </span>
-                  </div>
-                  {onOpenComplexInvoice && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const updated = { ...formData, enableComplexInvoice: true };
-                        onSave(updated);
-                        onOpenComplexInvoice(updated);
-                        onClose();
-                      }}
-                      className="px-3.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow active:scale-95 cursor-pointer"
-                    >
-                      <Sliders className="w-3.5 h-3.5" />
-                      <span>Configurar Factura Compleja ahora</span>
-                    </button>
-                  )}
-                </div>
-              )}
             </div>
           </div>
 

@@ -361,6 +361,7 @@ export const ControlPanelScreen: React.FC<ControlPanelScreenProps> = ({
             invoices={invoices}
             onNewInvoice={onNewInvoice}
             onViewInvoice={onViewInvoice}
+            onEditInvoice={onViewInvoice}
             onRectifyInvoice={onRectifyInvoice}
             onDeleteInvoice={onDeleteInvoice}
             onOpenWhatsApp={onOpenWhatsApp}

@@ -24,7 +24,6 @@ interface ClientsDatabaseModalProps {
   onSelectClient?: (client: ClientData) => void;
   onOpenNewClientForm: () => void;
   onDeleteClient: (id: string) => void;
-  onOpenClientVariablesTree?: (client: ClientData) => void;
   mode?: 'select' | 'manage';
 }
 
@@ -35,7 +34,6 @@ export const ClientsDatabaseModal: React.FC<ClientsDatabaseModalProps> = ({
   onSelectClient,
   onOpenNewClientForm,
   onDeleteClient,
-  onOpenClientVariablesTree,
   mode = 'select',
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -215,20 +213,6 @@ export const ClientsDatabaseModal: React.FC<ClientsDatabaseModalProps> = ({
 
                 {/* Actions */}
                 <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                  {onOpenClientVariablesTree && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onOpenClientVariablesTree(c);
-                        onClose();
-                      }}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-extrabold text-blue-300 bg-blue-500/10 border border-blue-500/40 hover:bg-blue-500/20 transition-all shadow-sm active:scale-95 cursor-pointer"
-                      title="Configurar árbol de variables de 5 niveles para este cliente"
-                    >
-                      <FolderTree className="w-3.5 h-3.5 text-blue-400" />
-                      <span>Variables (5 Niveles)</span>
-                    </button>
-                  )}
 
                   {onSelectClient && (
                     <button
