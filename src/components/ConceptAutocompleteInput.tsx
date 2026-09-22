@@ -11,6 +11,8 @@ interface ConceptAutocompleteInputProps {
   placeholder?: string;
   id?: string;
   autoFocus?: boolean;
+  onFocusInput?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  onBlurInput?: (e: React.FocusEvent<HTMLInputElement>) => void;
 }
 
 export const ConceptAutocompleteInput: React.FC<ConceptAutocompleteInputProps> = ({
@@ -21,6 +23,8 @@ export const ConceptAutocompleteInput: React.FC<ConceptAutocompleteInputProps> =
   placeholder = 'Describa el concepto o servicio...',
   id,
   autoFocus = false,
+  onFocusInput,
+  onBlurInput,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -103,10 +107,14 @@ export const ConceptAutocompleteInput: React.FC<ConceptAutocompleteInputProps> =
           if (!isOpen) setIsOpen(true);
           setHighlightedIndex(-1);
         }}
-        onFocus={() => {
+        onFocus={(e) => {
           setIsOpen(true);
+          if (onFocusInput) onFocusInput(e);
         }}
-        onBlur={handleBlur}
+        onBlur={(e) => {
+          handleBlur();
+          if (onBlurInput) onBlurInput(e);
+        }}
         onKeyDown={handleKeyDown}
         className="w-full px-2.5 py-2 text-sm text-neutral-900 bg-transparent border border-transparent hover:border-neutral-300 focus:border-amber-400 focus:bg-amber-50/20 focus:ring-1 focus:ring-amber-300 focus:outline-none rounded transition-colors duration-150 print:border-none print:p-0 print:bg-transparent"
       />

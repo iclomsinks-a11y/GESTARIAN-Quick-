@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import {
   Plus,
   Trash2,
@@ -26,10 +26,8 @@ import {
   Check,
   Save,
   MessageCircle,
-  Printer,
-  Eye,
   Package,
-  Send,
+  ArrowLeft,
 } from 'lucide-react';
 import {
   Invoice,
@@ -64,6 +62,10 @@ interface A4InvoiceDocumentProps {
   onOpenEmailModal?: () => void;
   onPrint?: () => void;
   isSaved?: boolean;
+  isPrintPreviewOpen?: boolean;
+  onOpenPrintPreview?: () => void;
+  onClosePrintPreview?: () => void;
+  onBack?: () => void;
 }
 
 export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
@@ -85,13 +87,89 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
   onOpenEmailModal,
   onPrint,
   isSaved = false,
+  isPrintPreviewOpen: propIsPrintPreviewOpen,
+  onOpenPrintPreview,
+  onClosePrintPreview,
+  onBack,
 }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isClientDropdownOpen, setIsClientDropdownOpen] = useState(false);
   const [isSavedLocal, setIsSavedLocal] = useState<boolean>(Boolean(isSaved));
-  const [isPrintPreviewOpen, setIsPrintPreviewOpen] = useState<boolean>(false);
+  const [internalPrintPreviewOpen, setInternalPrintPreviewOpen] = useState<boolean>(false);
+
+  const isPrintPreviewOpen = propIsPrintPreviewOpen !== undefined ? propIsPrintPreviewOpen : internalPrintPreviewOpen;
+  const handleOpenPrintPreview = onOpenPrintPreview || (() => setInternalPrintPreviewOpen(true));
+  const handleClosePrintPreview = onClosePrintPreview || (() => setInternalPrintPreviewOpen(false));
+
   const [isClientEditorOpen, setIsClientEditorOpen] = useState<boolean>(false);
   const [clientEditorField, setClientEditorField] = useState<ClientInputField>('name');
+
+  const [activeInputLabel, setActiveInputLabel] = useState<string>('');
+  const a4SheetRef = useRef<HTMLDivElement>(null);
+  const blurTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Centra suavemente el campo activo en la zona superior del visor sobre el teclado del dispositivo
+  const centerInTop60Viewer = useCallback((el: HTMLElement | null) => {
+    if (!el) return;
+    setTimeout(() => {
+      let scrollContainer: HTMLElement | Window = window;
+      let parent = el.parentElement;
+      while (parent) {
+        const style = window.getComputedStyle(parent);
+        if (
+          (style.overflowY === 'auto' || style.overflowY === 'scroll') &&
+          parent.scrollHeight > parent.clientHeight
+        ) {
+          scrollContainer = parent;
+          break;
+        }
+        parent = parent.parentElement;
+      }
+
+      const elRect = el.getBoundingClientRect();
+      const elCenterY = elRect.top + elRect.height / 2;
+
+      // Centrado ergonómico para dejar espacio al teclado virtual nativo del dispositivo
+      const targetCenterY = window.innerHeight * 0.32;
+      const deltaY = elCenterY - targetCenterY;
+
+      if (Math.abs(deltaY) > 3) {
+        if (scrollContainer === window) {
+          window.scrollBy({ top: deltaY, behavior: 'smooth' });
+        } else {
+          (scrollContainer as HTMLElement).scrollBy({ top: deltaY, behavior: 'smooth' });
+        }
+      }
+    }, 40);
+  }, []);
+
+  const handleInputFocus = (e: React.FocusEvent<HTMLElement>, label: string) => {
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current);
+      blurTimeoutRef.current = null;
+    }
+    const el = e.currentTarget;
+    setActiveInputLabel(label);
+
+    // Centrar suavemente en el visor sobre el teclado nativo del dispositivo
+    centerInTop60Viewer(el);
+  };
+
+  const handleInputBlur = () => {
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current);
+    }
+    blurTimeoutRef.current = setTimeout(() => {
+      const activeEl = document.activeElement;
+      const isStillInDocInput =
+        activeEl &&
+        a4SheetRef.current?.contains(activeEl) &&
+        (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+
+      if (!isStillInDocInput) {
+        setActiveInputLabel('');
+      }
+    }, 250);
+  };
 
   const openClientEditor = (field: ClientInputField) => {
     setClientEditorField(field);
@@ -110,7 +188,6 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
   };
 
   const handlePrint = () => {
-    if (!isSavedLocal) return;
     if (onPrint) {
       onPrint();
     } else {
@@ -185,39 +262,34 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
   };
 
   // Direct logo upload from A4 sheet
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        alert('El logotipo debe ser menor de 2MB');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        onChangeInvoice({
-          ...invoice,
-          company: { ...invoice.company, logoUrl: result },
-        });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleRemoveLogo = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onChangeInvoice({
-      ...invoice,
-      company: { ...invoice.company, logoUrl: '' },
-    });
-  };
-
   return (
-    <div className="w-full flex justify-center py-4 sm:py-8 px-2 sm:px-4">
+    <div className="w-full flex flex-col items-center py-2 sm:py-4 px-2 sm:px-4 pb-4 transition-all">
+      {/* Botón Volver a Facturas Emitidas / Pantalla Principal */}
+      {onBack && (
+        <div className="w-full max-w-[840px] mb-3 sm:mb-4 flex items-center justify-between gap-3 bg-neutral-950/80 border border-neutral-800 rounded-2xl p-2.5 sm:p-3 backdrop-blur-md shadow-lg print:hidden">
+          <button
+            type="button"
+            onClick={onBack}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-stone-100 hover:text-white border border-neutral-700 font-bold text-xs sm:text-sm transition-all active:scale-95 cursor-pointer"
+            title="Volver a la lista de Facturas Emitidas"
+          >
+            <ArrowLeft className="w-4 h-4 text-amber-400" />
+            <span>Volver a Facturas Emitidas</span>
+          </button>
+
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs font-bold text-amber-300 bg-amber-400/10 px-2.5 py-1 rounded-lg border border-amber-400/30">
+              {invoice.number || 'Factura'}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* A4 Sheet Container: standardized 210mm x 297mm aspect ratio container */}
       <div
+        ref={a4SheetRef}
         id="a4-invoice-sheet"
-        className={`a4-sheet w-full max-w-[840px] min-h-[1180px] bg-white text-neutral-800 rounded-sm shadow-[0_15px_50px_-12px_rgba(0,0,0,0.18)] p-6 sm:p-12 md:p-14 flex flex-col justify-between border border-neutral-200/90 relative print:shadow-none print:border-none print:p-0 print:m-0 print:w-full print:min-h-0 ${
+        className={`a4-sheet w-full max-w-[840px] min-h-[1180px] bg-white text-neutral-800 rounded-sm shadow-[0_15px_50px_-12px_rgba(0,0,0,0.18)] p-6 sm:p-12 md:p-14 flex flex-col justify-between border border-neutral-200/90 relative transition-all duration-300 ease-out origin-center print:shadow-none print:border-none print:p-0 print:m-0 print:w-full print:min-h-0 ${
           isPrintPreviewOpen ? 'print:hidden' : ''
         }`}
         style={{
@@ -231,68 +303,18 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
           <div className="flex flex-col md:flex-row justify-between items-start gap-6 pb-6 border-b border-neutral-200">
             {/* Top Left: Logo on the left, and to the right of the logo the company data */}
             <div className="flex items-start gap-4 sm:gap-5 flex-1 max-w-xl">
-              {/* Logo: Located to the left, left-aligned */}
-              <div className="relative group shrink-0">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleLogoUpload}
-                  accept="image/*"
-                  className="hidden"
-                />
+              {/* Logo: Located to the left, left-aligned (Only displayed if user configured a custom logo) */}
+              {Boolean(invoice.company.logoUrl && invoice.company.logoUrl.trim() && !invoice.company.logoUrl.startsWith('data:image/svg+xml')) && (
+                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl border border-neutral-200 bg-white p-2 flex items-center justify-center shrink-0 shadow-xs overflow-hidden">
+                  <img
+                    src={invoice.company.logoUrl}
+                    alt="Logo Empresa"
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
+              )}
 
-                {invoice.company.logoUrl ? (
-                  <div
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl border border-neutral-200 bg-white p-2 flex items-center justify-center cursor-pointer hover:border-amber-400 transition-all shadow-xs relative group overflow-hidden print:border-none print:shadow-none print:p-0"
-                    title="Haz clic para cambiar el logotipo"
-                  >
-                    <img
-                      src={invoice.company.logoUrl}
-                      alt="Logo Empresa"
-                      className="max-w-full max-h-full object-contain"
-                    />
-                    {/* Hover Overlay Controls */}
-                    <div className="absolute inset-0 bg-neutral-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 text-white text-[10px] print:hidden">
-                      <span className="flex items-center gap-1">
-                        <Upload className="w-3 h-3" /> Cambiar
-                      </span>
-                      <button
-                        type="button"
-                        onClick={handleRemoveLogo}
-                        className="text-red-300 hover:text-red-100 mt-1 flex items-center gap-0.5"
-                      >
-                        <Trash2 className="w-3 h-3" /> Quitar
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl border-2 border-dashed border-neutral-300 hover:border-amber-500 bg-neutral-50/70 hover:bg-amber-50/30 flex flex-col items-center justify-center p-2 text-center cursor-pointer transition-all print:hidden"
-                    title="Subir logo de la empresa o generar con IA"
-                  >
-                    <Upload className="w-4 h-4 text-neutral-400 group-hover:text-amber-600 mb-0.5" />
-                    <span className="text-[11px] font-medium text-neutral-600 group-hover:text-amber-700 leading-tight">
-                      Subir Logo
-                    </span>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onOpenConfig();
-                      }}
-                      className="mt-1 px-1.5 py-0.5 rounded-full bg-amber-100 hover:bg-amber-200 text-amber-900 text-[9px] font-bold flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
-                      title="Generar logotipo con IA generativa"
-                    >
-                      <Sparkles className="w-2.5 h-2.5 text-amber-700" />
-                      <span>Con IA</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Company Fiscal & Contact Data (to the right of the logo, left-aligned) */}
+              {/* Company Fiscal & Contact Data (strictly left-aligned) */}
               <div className="text-left space-y-0.5 text-xs text-neutral-600 flex-1 min-w-0">
                 <div className="group relative">
                   <input
@@ -304,8 +326,10 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                         company: { ...invoice.company, name: e.target.value },
                       })
                     }
+                    onFocus={(e) => handleInputFocus(e, 'Nombre Emisor')}
+                    onBlur={handleInputBlur}
                     placeholder="Nombre o Razón Social"
-                    className="font-bold text-sm sm:text-base text-neutral-900 w-full text-left bg-transparent hover:bg-amber-50/50 rounded px-1 border border-transparent hover:border-neutral-200 focus:border-amber-400 focus:outline-none print:border-none print:p-0"
+                    className="font-bold text-sm sm:text-base text-neutral-900 w-full text-left bg-transparent hover:bg-amber-50/50 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:border-amber-500 rounded px-1.5 py-0.5 border border-transparent hover:border-neutral-200 focus:outline-none transition-all print:border-none print:p-0"
                   />
                 </div>
 
@@ -320,8 +344,10 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                         company: { ...invoice.company, cif: e.target.value.toUpperCase() },
                       })
                     }
+                    onFocus={(e) => handleInputFocus(e, 'CIF Emisor')}
+                    onBlur={handleInputBlur}
                     placeholder="CIF de la empresa"
-                    className="font-mono text-neutral-800 font-semibold uppercase text-left bg-transparent hover:bg-amber-50/50 rounded px-1 border border-transparent hover:border-neutral-200 focus:border-amber-400 focus:outline-none w-32 print:border-none print:p-0"
+                    className="font-mono text-neutral-800 font-semibold uppercase text-left bg-transparent hover:bg-amber-50/50 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:border-amber-500 rounded px-1.5 py-0.5 border border-transparent hover:border-neutral-200 focus:outline-none w-32 transition-all print:border-none print:p-0"
                   />
                 </div>
 
@@ -335,72 +361,61 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                         company: { ...invoice.company, address: e.target.value },
                       })
                     }
+                    onFocus={(e) => handleInputFocus(e, 'Domicilio Fiscal Emisor')}
+                    onBlur={handleInputBlur}
                     placeholder="Domicilio fiscal emisor"
-                    className="text-neutral-600 w-full text-left bg-transparent hover:bg-amber-50/50 rounded px-1 border border-transparent hover:border-neutral-200 focus:border-amber-400 focus:outline-none print:border-none print:p-0"
+                    className="text-neutral-600 w-full text-left bg-transparent hover:bg-amber-50/50 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:border-amber-500 rounded px-1.5 py-0.5 border border-transparent hover:border-neutral-200 focus:outline-none transition-all print:border-none print:p-0"
                   />
                 </div>
 
-                {invoice.company.phone && (
-                  <div className="flex items-center gap-1">
-                    <span className="text-neutral-400 font-normal shrink-0">Tel:</span>
-                    <input
-                      type="text"
-                      value={invoice.company.phone}
-                      onChange={(e) =>
-                        onChangeInvoice({
-                          ...invoice,
-                          company: { ...invoice.company, phone: e.target.value },
-                        })
-                      }
-                      placeholder="Teléfono emisor"
-                      className="text-neutral-600 text-left bg-transparent hover:bg-amber-50/50 rounded px-1 border border-transparent hover:border-neutral-200 focus:border-amber-400 focus:outline-none w-36 print:border-none print:p-0"
-                    />
-                  </div>
-                )}
+                <div className="flex items-center gap-1">
+                  <span className="text-neutral-400 font-normal shrink-0">Tel:</span>
+                  <input
+                    type="text"
+                    value={invoice.company.phone || ''}
+                    onChange={(e) =>
+                      onChangeInvoice({
+                        ...invoice,
+                        company: { ...invoice.company, phone: e.target.value },
+                      })
+                    }
+                    onFocus={(e) => handleInputFocus(e, 'Teléfono Emisor')}
+                    onBlur={handleInputBlur}
+                    placeholder="Teléfono emisor"
+                    className="text-neutral-600 text-left bg-transparent hover:bg-amber-50/50 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:border-amber-500 rounded px-1.5 py-0.5 border border-transparent hover:border-neutral-200 focus:outline-none w-36 transition-all print:border-none print:p-0"
+                  />
+                </div>
 
-                {invoice.company.email && (
-                  <div className="flex items-center gap-1">
-                    <input
-                      type="email"
-                      value={invoice.company.email}
-                      onChange={(e) =>
-                        onChangeInvoice({
-                          ...invoice,
-                          company: { ...invoice.company, email: e.target.value },
-                        })
-                      }
-                      placeholder="Email emisor"
-                      className="text-neutral-600 text-left bg-transparent hover:bg-amber-50/50 rounded px-1 border border-transparent hover:border-neutral-200 focus:border-amber-400 focus:outline-none w-52 print:border-none print:p-0"
-                    />
-                  </div>
-                )}
+                <div className="flex items-center gap-1">
+                  <span className="text-neutral-400 font-normal shrink-0">Email:</span>
+                  <input
+                    type="email"
+                    value={invoice.company.email || ''}
+                    onChange={(e) =>
+                      onChangeInvoice({
+                        ...invoice,
+                        company: { ...invoice.company, email: e.target.value },
+                      })
+                    }
+                    onFocus={(e) => handleInputFocus(e, 'Email Emisor')}
+                    onBlur={handleInputBlur}
+                    placeholder="Email emisor"
+                    className="text-neutral-600 text-left bg-transparent hover:bg-amber-50/50 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:border-amber-500 rounded px-1.5 py-0.5 border border-transparent hover:border-neutral-200 focus:outline-none w-52 transition-all print:border-none print:p-0"
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Top Right: FACTURA Title, Print Preview Button, Invoice Number & Dates */}
+            {/* Top Right: FACTURA Title, Invoice Number & Dates */}
             <div className="space-y-2 self-start md:self-auto flex flex-col items-start md:items-end text-left md:text-right shrink-0">
-              <div className="flex items-center gap-3 flex-wrap md:justify-end">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500 print:hidden" />
-                  <h1
-                    className="text-3xl sm:text-4xl font-extrabold tracking-tight text-neutral-900 uppercase"
-                    style={{ fontFamily: "'Montserrat', sans-serif" }}
-                  >
-                    FACTURA
-                  </h1>
-                </div>
-
-                {/* Botón de vista de impresión (a la derecha del título Factura) */}
-                <button
-                  type="button"
-                  id="a4-btn-vista-impresion"
-                  onClick={() => setIsPrintPreviewOpen(true)}
-                  className="no-print print:hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-neutral-700 hover:text-neutral-950 bg-neutral-100 hover:bg-amber-100 hover:border-amber-400 border border-neutral-300/90 shadow-xs transition-all active:scale-95 cursor-pointer"
-                  title="Mostrar vista de impresión de la hoja A4"
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 print:hidden" />
+                <h1
+                  className="text-3xl sm:text-4xl font-extrabold tracking-tight text-neutral-900 uppercase"
+                  style={{ fontFamily: "'Montserrat', sans-serif" }}
                 >
-                  <Eye className="w-3.5 h-3.5 text-amber-600" />
-                  <span>Vista de impresión</span>
-                </button>
+                  FACTURA
+                </h1>
               </div>
 
               {/* Correlative invoice number & Dates (Right side of document) */}
@@ -413,7 +428,9 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                     type="text"
                     value={invoice.number}
                     onChange={(e) => onChangeInvoice({ ...invoice, number: e.target.value.toUpperCase() })}
-                    className="font-mono text-base sm:text-lg font-bold text-neutral-900 bg-amber-50/50 hover:bg-amber-50 px-2 py-0.5 rounded border border-amber-200/70 focus:border-amber-400 focus:bg-white focus:outline-none w-36 text-left md:text-right transition-colors print:border-none print:p-0 print:bg-transparent"
+                    onFocus={(e) => handleInputFocus(e, 'Nº de Factura')}
+                    onBlur={handleInputBlur}
+                    className="font-mono text-base sm:text-lg font-bold text-neutral-900 bg-amber-50/50 hover:bg-amber-50 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:border-amber-500 px-2 py-0.5 rounded border border-amber-200/70 focus:outline-none w-36 text-left md:text-right transition-all print:border-none print:p-0 print:bg-transparent"
                     title="Número correlativo (F + año en curso + 4 dígitos)"
                   />
                 </div>
@@ -425,7 +442,9 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                     type="date"
                     value={invoice.date}
                     onChange={(e) => onChangeInvoice({ ...invoice, date: e.target.value })}
-                    className="px-1.5 py-0.5 text-xs text-neutral-800 bg-transparent hover:bg-neutral-100 rounded border border-transparent hover:border-neutral-200 focus:border-amber-400 focus:outline-none text-left md:text-right print:border-none print:p-0"
+                    onFocus={(e) => handleInputFocus(e, 'Fecha de Emisión')}
+                    onBlur={handleInputBlur}
+                    className="px-1.5 py-0.5 text-xs text-neutral-800 bg-transparent hover:bg-neutral-100 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:border-amber-500 rounded border border-transparent hover:border-neutral-200 focus:outline-none text-left md:text-right transition-all print:border-none print:p-0"
                   />
                 </div>
 
@@ -436,7 +455,9 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                       type="date"
                       value={invoice.dueDate}
                       onChange={(e) => onChangeInvoice({ ...invoice, dueDate: e.target.value })}
-                      className="px-1.5 py-0.5 text-xs text-neutral-800 bg-transparent hover:bg-neutral-100 rounded border border-transparent hover:border-neutral-200 focus:border-amber-400 focus:outline-none text-left md:text-right print:border-none print:p-0"
+                      onFocus={(e) => handleInputFocus(e, 'Fecha de Vencimiento')}
+                      onBlur={handleInputBlur}
+                      className="px-1.5 py-0.5 text-xs text-neutral-800 bg-transparent hover:bg-neutral-100 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:border-amber-500 rounded border border-transparent hover:border-neutral-200 focus:outline-none text-left md:text-right transition-all print:border-none print:p-0"
                     />
                   </div>
                 )}
@@ -488,11 +509,16 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                   <input
                     type="text"
                     value={invoice.client.name}
-                    readOnly
-                    onClick={() => openClientEditor('name')}
-                    onFocus={() => openClientEditor('name')}
-                    placeholder="Nombre completo o Razón Social del cliente (Pulsar para editar)..."
-                    className="font-bold text-sm sm:text-base text-neutral-900 w-full bg-amber-50/50 hover:bg-amber-50 focus:bg-amber-50 rounded px-2 py-1.5 border border-amber-200/80 cursor-pointer transition-colors print:p-0 print:border-none print:bg-transparent"
+                    onChange={(e) =>
+                      onChangeInvoice({
+                        ...invoice,
+                        client: { ...invoice.client, name: e.target.value },
+                      })
+                    }
+                    onFocus={(e) => handleInputFocus(e, 'Nombre del Cliente')}
+                    onBlur={handleInputBlur}
+                    placeholder="Nombre completo o Razón Social del cliente..."
+                    className="font-bold text-sm sm:text-base text-neutral-900 w-full bg-amber-50/50 hover:bg-amber-50 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:border-amber-500 rounded px-2.5 py-1.5 border border-amber-200/80 transition-all print:p-0 print:border-none print:bg-transparent"
                   />
                 </div>
 
@@ -503,11 +529,16 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                     <input
                       type="text"
                       value={invoice.client.nif}
-                      readOnly
-                      onClick={() => openClientEditor('nif')}
-                      onFocus={() => openClientEditor('nif')}
+                      onChange={(e) =>
+                        onChangeInvoice({
+                          ...invoice,
+                          client: { ...invoice.client, nif: e.target.value.toUpperCase() },
+                        })
+                      }
+                      onFocus={(e) => handleInputFocus(e, 'NIF / CIF del Cliente')}
+                      onBlur={handleInputBlur}
                       placeholder="Ej. B88776655"
-                      className="font-mono text-xs uppercase font-semibold text-neutral-800 bg-amber-50/50 hover:bg-amber-50 focus:bg-amber-50 rounded px-2 py-1 border border-amber-200/80 cursor-pointer flex-1 print:p-0 print:border-none print:bg-transparent"
+                      className="font-mono text-xs uppercase font-semibold text-neutral-800 bg-amber-50/50 hover:bg-amber-50 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:border-amber-500 rounded px-2 py-1 border border-amber-200/80 flex-1 transition-all print:p-0 print:border-none print:bg-transparent"
                     />
                   </div>
                 </div>
@@ -519,11 +550,16 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                     <input
                       type="text"
                       value={invoice.client.address}
-                      readOnly
-                      onClick={() => openClientEditor('address')}
-                      onFocus={() => openClientEditor('address')}
+                      onChange={(e) =>
+                        onChangeInvoice({
+                          ...invoice,
+                          client: { ...invoice.client, address: e.target.value },
+                        })
+                      }
+                      onFocus={(e) => handleInputFocus(e, 'Domicilio del Cliente')}
+                      onBlur={handleInputBlur}
                       placeholder="Dirección fiscal del cliente..."
-                      className="text-xs text-neutral-700 bg-amber-50/50 hover:bg-amber-50 focus:bg-amber-50 rounded px-2 py-1 border border-amber-200/80 cursor-pointer flex-1 print:p-0 print:border-none print:bg-transparent"
+                      className="text-xs text-neutral-700 bg-amber-50/50 hover:bg-amber-50 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:border-amber-500 rounded px-2 py-1 border border-amber-200/80 flex-1 transition-all print:p-0 print:border-none print:bg-transparent"
                     />
                   </div>
                 </div>
@@ -536,11 +572,16 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                     <input
                       type="tel"
                       value={invoice.client.phone}
-                      readOnly
-                      onClick={() => openClientEditor('phone')}
-                      onFocus={() => openClientEditor('phone')}
+                      onChange={(e) =>
+                        onChangeInvoice({
+                          ...invoice,
+                          client: { ...invoice.client, phone: e.target.value },
+                        })
+                      }
+                      onFocus={(e) => handleInputFocus(e, 'Teléfono del Cliente')}
+                      onBlur={handleInputBlur}
                       placeholder="Teléfono del cliente"
-                      className="text-xs text-neutral-800 bg-white/70 hover:bg-white rounded px-1.5 py-1 border border-amber-200 cursor-pointer flex-1"
+                      className="text-xs text-neutral-800 bg-white/70 hover:bg-white focus:bg-white focus:ring-2 focus:ring-amber-400 focus:border-amber-500 rounded px-1.5 py-1 border border-amber-200 flex-1 transition-all"
                     />
                   </div>
                 </div>
@@ -553,91 +594,17 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                     <input
                       type="email"
                       value={invoice.client.email}
-                      readOnly
-                      onClick={() => openClientEditor('email')}
-                      onFocus={() => openClientEditor('email')}
+                      onChange={(e) =>
+                        onChangeInvoice({
+                          ...invoice,
+                          client: { ...invoice.client, email: e.target.value },
+                        })
+                      }
+                      onFocus={(e) => handleInputFocus(e, 'Email del Cliente')}
+                      onBlur={handleInputBlur}
                       placeholder="correo@cliente.com"
-                      className="text-xs text-neutral-800 bg-white/70 hover:bg-white rounded px-1.5 py-1 border border-amber-200 cursor-pointer flex-1"
+                      className="text-xs text-neutral-800 bg-white/70 hover:bg-white focus:bg-white focus:ring-2 focus:ring-amber-400 focus:border-amber-500 rounded px-1.5 py-1 border border-amber-200 flex-1 transition-all"
                     />
-                  </div>
-                </div>
-
-                {/* Canal de Envío de Documentos Preferente (VISIBLE SOLO EN PANTALLA) */}
-                <div className="print:hidden">
-                  <div className="flex flex-wrap items-center justify-between gap-1.5 px-2 py-1 rounded bg-amber-50/70 border border-amber-200/60 text-[11px]">
-                    <div className="flex items-center gap-1.5 text-neutral-700 font-medium">
-                      <Send className="w-3 h-3 text-neutral-500" />
-                      <span>Envío preferente:</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      {/* Toggle rápido de WhatsApp */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const nextWhatsApp = !invoice.client.defaultSendWhatsApp;
-                          const nextEmail = Boolean(invoice.client.defaultSendEmail);
-                          const nextChannel =
-                            nextWhatsApp && nextEmail
-                              ? 'both'
-                              : nextWhatsApp
-                              ? 'whatsapp'
-                              : nextEmail
-                              ? 'email'
-                              : undefined;
-                          onChangeInvoice({
-                            ...invoice,
-                            client: {
-                              ...invoice.client,
-                              defaultSendWhatsApp: nextWhatsApp,
-                              preferredDispatchChannel: nextChannel,
-                            },
-                          });
-                        }}
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
-                          invoice.client.defaultSendWhatsApp
-                            ? 'bg-[#25D366] text-neutral-950 shadow-sm'
-                            : 'bg-neutral-200/90 text-neutral-500 hover:bg-neutral-300'
-                        }`}
-                        title="Activar o desactivar WhatsApp por defecto para este cliente"
-                      >
-                        <MessageCircle className="w-2.5 h-2.5 fill-current" />
-                        <span>WhatsApp</span>
-                      </button>
-
-                      {/* Toggle rápido de Email */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const nextEmail = !invoice.client.defaultSendEmail;
-                          const nextWhatsApp = Boolean(invoice.client.defaultSendWhatsApp);
-                          const nextChannel =
-                            nextEmail && nextWhatsApp
-                              ? 'both'
-                              : nextEmail
-                              ? 'email'
-                              : nextWhatsApp
-                              ? 'whatsapp'
-                              : undefined;
-                          onChangeInvoice({
-                            ...invoice,
-                            client: {
-                              ...invoice.client,
-                              defaultSendEmail: nextEmail,
-                              preferredDispatchChannel: nextChannel,
-                            },
-                          });
-                        }}
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
-                          invoice.client.defaultSendEmail
-                            ? 'bg-sky-500 text-neutral-950 shadow-sm'
-                            : 'bg-neutral-200/90 text-neutral-500 hover:bg-neutral-300'
-                        }`}
-                        title="Activar o desactivar Email por defecto para este cliente"
-                      >
-                        <Mail className="w-2.5 h-2.5" />
-                        <span>Email</span>
-                      </button>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -671,6 +638,8 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                               onConceptCommitted={onConceptCommitted}
                               allConcepts={concepts}
                               placeholder="Escriba concepto (con memoria inteligente)..."
+                              onFocusInput={(e) => handleInputFocus(e, `Concepto (Línea ${index + 1})`)}
+                              onBlurInput={handleInputBlur}
                             />
                           </div>
                           {onOpenAttachProduct && (
@@ -695,8 +664,10 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                           min="0"
                           value={item.units === 0 ? '' : item.units}
                           onChange={(e) => handleItemChange(index, 'units', e.target.value)}
+                          onFocus={(e) => handleInputFocus(e, `Unidades (Línea ${index + 1})`)}
+                          onBlur={handleInputBlur}
                           placeholder="1"
-                          className="w-20 text-center font-mono py-1 px-1.5 rounded border border-transparent hover:border-neutral-300 focus:border-amber-400 focus:outline-none bg-transparent focus:bg-white print:border-none print:p-0"
+                          className="w-20 text-center font-mono py-1 px-1.5 rounded border border-transparent hover:border-neutral-300 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:outline-none transition-all print:border-none print:p-0"
                         />
                       </td>
 
@@ -709,8 +680,10 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                             min="0"
                             value={item.unitPrice === 0 ? '' : item.unitPrice}
                             onChange={(e) => handleItemChange(index, 'unitPrice', e.target.value)}
+                            onFocus={(e) => handleInputFocus(e, `Precio Ud. (Línea ${index + 1})`)}
+                            onBlur={handleInputBlur}
                             placeholder="0.00"
-                            className="w-24 text-right font-mono py-1 px-1.5 rounded border border-transparent hover:border-neutral-300 focus:border-amber-400 focus:outline-none bg-transparent focus:bg-white print:border-none print:p-0"
+                            className="w-24 text-right font-mono py-1 px-1.5 rounded border border-transparent hover:border-neutral-300 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:outline-none transition-all print:border-none print:p-0"
                           />
                           <span className="text-neutral-400 text-xs ml-1 font-mono">€</span>
                         </div>
@@ -912,151 +885,114 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
               Documento emitido conforme a la legislación fiscal española. Gestarian Quick · Soluciones de Facturación Inteligente.
             </p>
           </div>
+        </div>
 
-          {/* PIE DE LA HOJA A4: BOTONES DE GUARDAR, ENVIAR POR WHATSAPP E IMPRIMIR (Ocultos al imprimir) */}
-          <div className="pt-4 border-t-2 border-neutral-200 print:hidden space-y-2.5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-              {/* 1. Botón de Guardar Factura */}
-              <button
-                type="button"
-                id="a4-footer-save-btn"
-                onClick={handleSave}
-                className={`w-full py-3.5 px-3 rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border shadow-md transition-all active:scale-[0.98] cursor-pointer ${
-                  isSavedLocal
-                    ? 'bg-neutral-900 text-emerald-400 border-emerald-500/50 hover:bg-neutral-850'
-                    : 'bg-neutral-900 hover:bg-neutral-850 text-stone-100 border-neutral-700 hover:shadow-xl'
-                }`}
-                title="Guardar factura actual en la Base de Datos"
-              >
-                {isSavedLocal ? (
-                  <>
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Factura Guardada</span>
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Guardar Factura</span>
-                  </>
-                )}
-              </button>
+          {/* PIE DE LA HOJA A4: BOTONES DE GUARDAR, IMPRIMIR Y ENVIAR POR WHATSAPP O EMAIL SEGÚN ENVÍO PREFERENTE */}
+          <div className="pt-4 border-t-2 border-neutral-200 print:hidden space-y-3">
+            {/* Canales de envío preferente del cliente */}
+            {(() => {
+              const preferredChannel =
+                invoice.client.preferredDispatchChannel ||
+                (invoice.client.defaultSendEmail && !invoice.client.defaultSendWhatsApp ? 'email' : 'whatsapp');
 
-              {/* 2. Botón de Enviar por WhatsApp (Inactivo y gris hasta que se guarde) */}
-              <button
-                type="button"
-                id="a4-footer-whatsapp-btn"
-                disabled={!isSavedLocal}
-                onClick={handleWhatsApp}
-                className={`relative w-full py-3.5 px-3 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
-                  isSavedLocal
-                    ? invoice.client.defaultSendWhatsApp
-                      ? 'bg-[#25D366] hover:bg-[#20bd5a] text-neutral-950 shadow-lg hover:shadow-[#25D366]/30 active:scale-[0.98] cursor-pointer ring-2 ring-[#25D366]/40'
-                      : 'bg-[#25D366]/80 hover:bg-[#25D366] text-neutral-950 shadow-md active:scale-[0.98] cursor-pointer'
-                    : 'bg-neutral-200 text-neutral-400 border border-neutral-300 cursor-not-allowed shadow-none'
-                }`}
-                title={
-                  isSavedLocal
-                    ? 'Enviar factura por WhatsApp a través de notificaciones.gestarian.com'
-                    : 'Debes guardar la factura primero para poder enviarla por WhatsApp'
-                }
-              >
-                <MessageCircle
-                  className={`w-4 h-4 sm:w-5 sm:h-5 shrink-0 ${
-                    isSavedLocal ? 'text-neutral-950 fill-neutral-950' : 'text-neutral-400'
-                  }`}
-                />
-                <span className="truncate">Enviar WhatsApp</span>
-                {invoice.client.defaultSendWhatsApp && isSavedLocal && (
-                  <span className="text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 bg-black/25 text-neutral-950 rounded-md">
-                    Defecto
-                  </span>
-                )}
-              </button>
+              return (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* 1. Botón de Guardar Factura */}
+                    <button
+                      type="button"
+                      id="a4-footer-save-btn"
+                      onClick={handleSave}
+                      className={`w-full py-3.5 px-4 rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border shadow-md transition-all active:scale-[0.98] cursor-pointer ${
+                        isSavedLocal
+                          ? 'bg-neutral-900 text-emerald-400 border-emerald-500/50 hover:bg-neutral-850'
+                          : 'bg-neutral-900 hover:bg-neutral-850 text-stone-100 border-neutral-700 hover:shadow-xl'
+                      }`}
+                      title="Guardar factura y activar el botón de envío"
+                    >
+                      {isSavedLocal ? (
+                        <>
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <span>Factura Guardada</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <span>Guardar Factura</span>
+                        </>
+                      )}
+                    </button>
 
-              {/* 3. Botón de Enviar por Email (Inactivo y gris hasta que se guarde) */}
-              <button
-                type="button"
-                id="a4-footer-email-btn"
-                disabled={!isSavedLocal}
-                onClick={handleEmail}
-                className={`relative w-full py-3.5 px-3 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
-                  isSavedLocal
-                    ? invoice.client.defaultSendEmail
-                      ? 'bg-sky-400 hover:bg-sky-300 text-neutral-950 shadow-lg hover:shadow-sky-400/30 active:scale-[0.98] cursor-pointer ring-2 ring-sky-400/40'
-                      : 'bg-sky-500 hover:bg-sky-400 text-neutral-950 shadow-md active:scale-[0.98] cursor-pointer'
-                    : 'bg-neutral-200 text-neutral-400 border border-neutral-300 cursor-not-allowed shadow-none'
-                }`}
-                title={
-                  isSavedLocal
-                    ? 'Enviar factura por Correo Electrónico al cliente'
-                    : 'Debes guardar la factura primero para poder enviarla por Email'
-                }
-              >
-                <Mail
-                  className={`w-4 h-4 sm:w-5 sm:h-5 shrink-0 ${
-                    isSavedLocal ? 'text-neutral-950' : 'text-neutral-400'
-                  }`}
-                />
-                <span className="truncate">Enviar Email</span>
-                {invoice.client.defaultSendEmail && isSavedLocal && (
-                  <span className="text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 bg-black/25 text-neutral-950 rounded-md">
-                    Defecto
-                  </span>
-                )}
-              </button>
+                    {/* 2. Botón de Enviar por WhatsApp O Enviar por Email según esté configurado el cliente */}
+                    {preferredChannel === 'whatsapp' ? (
+                      <button
+                        type="button"
+                        id="a4-footer-send-btn"
+                        disabled={!isSavedLocal}
+                        onClick={handleWhatsApp}
+                        className={`w-full py-3.5 px-4 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
+                          isSavedLocal
+                            ? 'bg-[#25D366] hover:bg-[#20bd5a] text-neutral-950 shadow-lg hover:shadow-[#25D366]/30 active:scale-[0.98] cursor-pointer ring-2 ring-[#25D366]/40'
+                            : 'bg-neutral-200 text-neutral-400 border border-neutral-300 cursor-not-allowed shadow-none'
+                        }`}
+                        title={
+                          isSavedLocal
+                            ? 'Enviar factura por WhatsApp al cliente'
+                            : 'Debes pulsar "Guardar Factura" para activar el botón de envío por WhatsApp'
+                        }
+                      >
+                        <MessageCircle
+                          className={`w-4 h-4 sm:w-5 sm:h-5 shrink-0 ${
+                            isSavedLocal ? 'text-neutral-950 fill-neutral-950' : 'text-neutral-400'
+                          }`}
+                        />
+                        <span className="truncate">Enviar por WhatsApp</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        id="a4-footer-send-btn"
+                        disabled={!isSavedLocal}
+                        onClick={handleEmail}
+                        className={`w-full py-3.5 px-4 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
+                          isSavedLocal
+                            ? 'bg-sky-400 hover:bg-sky-300 text-neutral-950 shadow-lg hover:shadow-sky-400/30 active:scale-[0.98] cursor-pointer ring-2 ring-sky-400/40'
+                            : 'bg-neutral-200 text-neutral-400 border border-neutral-300 cursor-not-allowed shadow-none'
+                        }`}
+                        title={
+                          isSavedLocal
+                            ? 'Enviar factura por Correo Electrónico al cliente'
+                            : 'Debes pulsar "Guardar Factura" para activar el botón de envío por Email'
+                        }
+                      >
+                        <Mail
+                          className={`w-4 h-4 sm:w-5 sm:h-5 shrink-0 ${
+                            isSavedLocal ? 'text-neutral-950' : 'text-neutral-400'
+                          }`}
+                        />
+                        <span className="truncate">Enviar por Email</span>
+                      </button>
+                    )}
+                  </div>
 
-              {/* 4. Botón de Imprimir Factura */}
-              <button
-                type="button"
-                id="a4-footer-print-btn"
-                disabled={!isSavedLocal}
-                onClick={handlePrint}
-                className={`w-full py-3.5 px-3 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
-                  isSavedLocal
-                    ? 'bg-amber-400 hover:bg-amber-300 text-neutral-950 shadow-lg hover:shadow-amber-400/30 active:scale-[0.98] cursor-pointer'
-                    : 'bg-neutral-200 text-neutral-400 border border-neutral-300 cursor-not-allowed shadow-none'
-                }`}
-                title={
-                  isSavedLocal
-                    ? 'Imprimir factura o guardar como PDF'
-                    : 'Debes guardar la factura primero para poder imprimirla'
-                }
-              >
-                <Printer
-                  className={`w-4 h-4 sm:w-5 sm:h-5 shrink-0 ${
-                    isSavedLocal ? 'text-neutral-950' : 'text-neutral-400'
-                  }`}
-                />
-                <span className="truncate">Imprimir Factura</span>
-              </button>
-            </div>
-
-            {/* Aviso informativo de activación tras guardar */}
-            <div className="text-center text-[11px] pt-1">
-              {!isSavedLocal ? (
-                <span className="text-neutral-400 italic">
-                  * Pulsa <strong>"Guardar Factura"</strong> para activar los botones de envío (WhatsApp / Email) e Impresión.
-                </span>
-              ) : (
-                <span className="text-emerald-700 font-semibold inline-flex flex-wrap items-center justify-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>
-                    Factura guardada correctamente. Medio preferente:{' '}
-                    <strong>
-                      {invoice.client.defaultSendWhatsApp && invoice.client.defaultSendEmail
-                        ? 'WhatsApp y Email'
-                        : invoice.client.defaultSendEmail
-                        ? 'Correo Electrónico (Email)'
-                        : invoice.client.defaultSendWhatsApp
-                        ? 'WhatsApp'
-                        : 'WhatsApp / Email'}
-                    </strong>
-                    . Botones de envío e impresión activados y listos.
-                  </span>
-                </span>
-              )}
-            </div>
-          </div>
+                  {/* Informative helper text */}
+                  <div className="flex items-center justify-between text-[11px] text-neutral-500 pt-1 px-1">
+                    <div>
+                      {!isSavedLocal ? (
+                        <span className="text-amber-700 font-medium">
+                          * Pulsa <strong>"Guardar Factura"</strong> para activar el envío por {preferredChannel === 'whatsapp' ? 'WhatsApp' : 'Email'}.
+                        </span>
+                      ) : (
+                        <span className="text-emerald-700 font-bold inline-flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 inline" />
+                          <span>Factura guardada. Envío por {preferredChannel === 'whatsapp' ? 'WhatsApp' : 'Email'} activado y listo.</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
         </div>
       </div>
 
@@ -1064,10 +1000,10 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
       {isPrintPreviewOpen && (
         <PrintPreviewModal
           invoice={invoice}
-          onClose={() => setIsPrintPreviewOpen(false)}
-          onPrint={() => {
+          onClose={handleClosePrintPreview}
+          onPrint={onPrint || (() => {
             window.print();
-          }}
+          })}
         />
       )}
 

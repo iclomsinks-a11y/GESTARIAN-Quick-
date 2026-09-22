@@ -38,11 +38,120 @@ export function generateInvoiceNumber(sequence: number = 0, customYear?: number)
  * Parse sequence number from invoice number like "F260004" -> 4
  */
 export function parseInvoiceSequence(invoiceNum: string): number {
+  if (!invoiceNum) return 0;
   const match = invoiceNum.match(/^F\d{2}(\d{4})$/i);
   if (match && match[1]) {
     return parseInt(match[1], 10);
   }
   return 0;
+}
+
+/**
+ * Calculates the next official correlative invoice number based on existing invoice history
+ * and saved sequence counter.
+ * If no invoices exist for the current year, it starts at sequence 1 (e.g. F260001).
+ */
+export function getNextCorrelativeInvoiceNumber(
+  existingInvoices?: Array<{ number?: string }>,
+  customYear?: number
+): { number: string; sequence: number } {
+  const currentYear = customYear || new Date().getFullYear();
+  const yearTwoDigits = currentYear.toString().slice(-2);
+
+  let maxSeq = 0;
+
+  let invoiceList = existingInvoices;
+  if (!invoiceList || invoiceList.length === 0) {
+    try {
+      const raw = localStorage.getItem('gestarian_invoices_history');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          invoiceList = parsed;
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  // 1. Scan existing invoices for the highest sequence in the current year
+  if (Array.isArray(invoiceList)) {
+    for (const inv of invoiceList) {
+      if (inv && inv.number) {
+        const match = inv.number.match(new RegExp(`^F${yearTwoDigits}(\\d{4})$`, 'i'));
+        if (match && match[1]) {
+          const seq = parseInt(match[1], 10);
+          if (!isNaN(seq) && seq > maxSeq) {
+            maxSeq = seq;
+          }
+        }
+      }
+    }
+  }
+
+  // 2. Also check localStorage sequence tracker
+  try {
+    const saved = localStorage.getItem('gestarian_invoice_sequence');
+    if (saved) {
+      const parsed = parseInt(saved, 10);
+      if (!isNaN(parsed) && parsed > maxSeq) {
+        maxSeq = parsed;
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  const nextSequence = maxSeq + 1;
+  const number = generateInvoiceNumber(nextSequence, currentYear);
+  return { number, sequence: nextSequence };
+}
+
+/**
+ * Calculates the next official correlative rectificative invoice number (e.g. R260001, R260002)
+ */
+export function getNextCorrelativeRectificativeInvoiceNumber(
+  existingInvoices?: Array<{ number?: string }>,
+  customYear?: number
+): { number: string; sequence: number } {
+  const currentYear = customYear || new Date().getFullYear();
+  const yearTwoDigits = currentYear.toString().slice(-2);
+
+  let maxSeq = 0;
+  let invoiceList = existingInvoices;
+  if (!invoiceList || invoiceList.length === 0) {
+    try {
+      const raw = localStorage.getItem('gestarian_invoices_history');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          invoiceList = parsed;
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  if (Array.isArray(invoiceList)) {
+    for (const inv of invoiceList) {
+      if (inv && inv.number) {
+        const match = inv.number.match(new RegExp(`^R${yearTwoDigits}(\\d{4})$`, 'i'));
+        if (match && match[1]) {
+          const seq = parseInt(match[1], 10);
+          if (!isNaN(seq) && seq > maxSeq) {
+            maxSeq = seq;
+          }
+        }
+      }
+    }
+  }
+
+  const nextSequence = maxSeq + 1;
+  const seqStr = nextSequence.toString().padStart(4, '0');
+  const number = `R${yearTwoDigits}${seqStr}`;
+  return { number, sequence: nextSequence };
 }
 
 /**

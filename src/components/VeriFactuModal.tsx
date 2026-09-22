@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Invoice } from '../types';
 import { formatCurrency, formatDate } from '../utils/formatters';
+import { notifyVeriFactuVerificationSuccess } from '../services/notificationService';
 
 interface VeriFactuModalProps {
   isOpen: boolean;
@@ -26,9 +27,20 @@ export const VeriFactuModal: React.FC<VeriFactuModalProps> = ({
 }) => {
   const [copied, setCopied] = React.useState(false);
 
-  if (!isOpen) return null;
+  const total = invoice ? invoice.items.reduce((s, it) => s + (it.total || 0), 0) * (1 + invoice.ivaRate / 100) : 0;
 
-  const total = invoice.items.reduce((s, it) => s + (it.total || 0), 0) * (1 + invoice.ivaRate / 100);
+  React.useEffect(() => {
+    if (isOpen && invoice?.number) {
+      notifyVeriFactuVerificationSuccess({
+        invoiceNumber: invoice.number,
+        clientName: invoice.client?.name,
+        totalAmount: total,
+        chainHash: invoice.veriFactu?.chainHash,
+      });
+    }
+  }, [isOpen, invoice?.number]);
+
+  if (!isOpen) return null;
 
   const handleCopyHash = () => {
     if (invoice.veriFactu.chainHash) {

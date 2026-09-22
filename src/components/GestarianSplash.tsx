@@ -171,26 +171,24 @@ export const GestarianSplash: React.FC<GestarianSplashProps> = ({
         <div className="w-full flex flex-col items-center justify-center my-auto">
           <motion.div
             initial={{
-              scale: 0.92,
+              scale: 0.2,
               opacity: 0,
-              filter: 'blur(8px)',
-              y: 20,
+              filter: 'blur(10px)',
             }}
             animate={{
               scale: 1,
               opacity: 1,
               filter: 'blur(0px)',
-              y: 0,
             }}
             transition={{
-              duration: 1.8,
+              duration: 2.0,
               ease: [0.16, 1, 0.3, 1],
             }}
             className="w-full flex flex-col items-center justify-center relative text-center"
           >
-            <div className="relative inline-block mx-auto text-center">
+            <div className="flex flex-col items-end mx-auto text-center w-fit">
               <h1
-                className="text-[clamp(3rem,8.5vw,7.5rem)] font-thin tracking-[0.25em] uppercase leading-none select-none text-neutral-400 text-center"
+                className="text-[clamp(3rem,8.5vw,7.5rem)] font-thin tracking-[0.25em] uppercase leading-none select-none text-[#FEFCE9] text-center"
                 style={{
                   fontFamily: "'Montserrat', 'Cinzel', sans-serif",
                 }}
@@ -198,12 +196,13 @@ export const GestarianSplash: React.FC<GestarianSplashProps> = ({
                 GESTARIAN
               </h1>
               <span
-                className="absolute bottom-0 right-1 text-xs sm:text-sm font-light tracking-[0.35em] uppercase text-[#FAF6EE]"
+                className="text-xs sm:text-sm font-semibold tracking-[0.25em] text-neutral-400"
                 style={{
                   fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
+                  marginTop: '3px',
                 }}
               >
-                QUICK
+                Quick
               </span>
             </div>
           </motion.div>

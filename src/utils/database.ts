@@ -68,8 +68,7 @@ export const DEFAULT_PROVIDERS: ProviderData[] = [
     address: 'Paseo de la Castellana 120, 28046 Madrid',
     phone: '+34 914 556 789',
     email: 'administracion@gestarian.com',
-    logoUrl:
-      'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><circle cx="50" cy="50" r="46" fill="%23171717"/><path d="M30 35 L70 35 L70 45 L45 45 L45 55 L65 55 L65 65 L45 65 L45 80 L30 80 Z" fill="%23FAF6EE"/><circle cx="70" cy="75" r="7" fill="%23F59E0B"/></svg>',
+    logoUrl: '',
     iban: 'ES76 2100 0418 4502 0005 1332',
     bankName: 'CaixaBank',
     isDefault: true,
@@ -81,8 +80,7 @@ export const DEFAULT_PROVIDERS: ProviderData[] = [
     address: 'Calle Toledo 45, 28005 Madrid',
     phone: '+34 913 658 900',
     email: 'taller@cortinajessanjuan.es',
-    logoUrl:
-      'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><rect width="100" height="100" rx="20" fill="%231E293B"/><text x="50" y="60" font-family="sans-serif" font-size="34" font-weight="bold" fill="%23F59E0B" text-anchor="middle">CS</text></svg>',
+    logoUrl: '',
     iban: 'ES44 0182 1234 5602 0008 9911',
     bankName: 'BBVA',
     isDefault: false,
@@ -94,8 +92,7 @@ export const DEFAULT_PROVIDERS: ProviderData[] = [
     address: 'Polígono Industrial El Campillo 8, 41020 Sevilla',
     phone: '+34 954 112 233',
     email: 'info@instalacionesibericas.es',
-    logoUrl:
-      'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><rect width="100" height="100" rx="20" fill="%230F172A"/><text x="50" y="62" font-family="sans-serif" font-size="30" font-weight="bold" fill="%2338BDF8" text-anchor="middle">ICI</text></svg>',
+    logoUrl: '',
     iban: 'ES12 0049 1500 0512 3456 7890',
     bankName: 'Banco Santander',
     isDefault: false,
@@ -200,7 +197,16 @@ export function saveClientToDb(client: ClientData): ClientData {
     createdAt: client.createdAt || Date.now(),
   };
 
-  const existingIdx = all.findIndex((c) => c.id === id || (c.nif && c.nif.toUpperCase() === client.nif.toUpperCase()));
+  const normalizedNif = client.nif ? client.nif.trim().toUpperCase() : '';
+  const normalizedName = client.name ? client.name.trim().toLowerCase() : '';
+
+  const existingIdx = all.findIndex((c) => {
+    if (c.id && id && c.id === id) return true;
+    if (normalizedNif && c.nif && c.nif.trim().toUpperCase() === normalizedNif) return true;
+    if (!normalizedNif && normalizedName && c.name && c.name.trim().toLowerCase() === normalizedName) return true;
+    return false;
+  });
+
   let updated: ClientData[];
 
   if (existingIdx >= 0) {
@@ -216,7 +222,7 @@ export function saveClientToDb(client: ClientData): ClientData {
 
 export function deleteClientFromDb(id: string): ClientData[] {
   const all = getStoredClients();
-  const filtered = all.filter((c) => c.id !== id);
+  const filtered = all.filter((c) => c.id !== id && (c.nif ? c.nif !== id : true) && (c.name ? c.name !== id : true));
   localStorage.setItem(STORAGE_CLIENTS_KEY, JSON.stringify(filtered));
   return filtered;
 }
@@ -232,7 +238,14 @@ export function getStoredProviders(): ProviderData[] {
     }
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed) && parsed.length > 0) {
-      return parsed;
+      // Clean legacy mock SVG default logos so no default logo is displayed
+      const cleaned = parsed.map((p: ProviderData) => {
+        if (p.logoUrl && p.logoUrl.startsWith('data:image/svg+xml')) {
+          return { ...p, logoUrl: '' };
+        }
+        return p;
+      });
+      return cleaned;
     }
     return DEFAULT_PROVIDERS;
   } catch (e) {
@@ -249,7 +262,16 @@ export function saveProviderToDb(provider: ProviderData): ProviderData {
     id,
   };
 
-  const existingIdx = all.findIndex((p) => p.id === id || (p.cif && p.cif.toUpperCase() === provider.cif.toUpperCase()));
+  const normalizedCif = provider.cif ? provider.cif.trim().toUpperCase() : '';
+  const normalizedName = provider.name ? provider.name.trim().toLowerCase() : '';
+
+  const existingIdx = all.findIndex((p) => {
+    if (p.id && id && p.id === id) return true;
+    if (normalizedCif && p.cif && p.cif.trim().toUpperCase() === normalizedCif) return true;
+    if (!normalizedCif && normalizedName && p.name && p.name.trim().toLowerCase() === normalizedName) return true;
+    return false;
+  });
+
   let updated: ProviderData[];
 
   if (existingIdx >= 0) {
@@ -264,7 +286,7 @@ export function saveProviderToDb(provider: ProviderData): ProviderData {
 
 export function deleteProviderFromDb(id: string): ProviderData[] {
   const all = getStoredProviders();
-  const filtered = all.filter((p) => p.id !== id);
+  const filtered = all.filter((p) => p.id !== id && (p.cif ? p.cif !== id : true) && (p.name ? p.name !== id : true));
   localStorage.setItem(STORAGE_PROVIDERS_KEY, JSON.stringify(filtered));
   return filtered;
 }
@@ -310,7 +332,7 @@ export function saveInvoiceToDb(invoice: Invoice): Invoice[] {
 
 export function deleteInvoiceFromDb(id: string): Invoice[] {
   const all = getStoredInvoices();
-  const filtered = all.filter((inv) => inv.id !== id);
+  const filtered = all.filter((inv) => inv.id !== id && inv.number !== id);
   localStorage.setItem(STORAGE_INVOICES_KEY, JSON.stringify(filtered));
   return filtered;
 }

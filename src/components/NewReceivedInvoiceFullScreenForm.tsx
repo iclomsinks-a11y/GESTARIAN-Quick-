@@ -1,24 +1,6 @@
-import React, { useState } from 'react';
-import { motion } from 'motion/react';
-import {
-  X,
-  Receipt,
-  Building2,
-  Calendar,
-  DollarSign,
-  Percent,
-  Check,
-  ArrowLeft,
-  ShieldCheck,
-  Sparkles,
-  FileText,
-  Phone,
-  Mail,
-  MapPin,
-  CreditCard,
-} from 'lucide-react';
-import { ReceivedInvoice, ProviderData } from '../types';
-import { formatCurrency } from '../utils/formatters';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Check, Camera, Trash2, Building2, UserCheck } from 'lucide-react';
+import { ReceivedInvoice, ProviderData, CompanyData } from '../types';
 
 interface NewReceivedInvoiceFullScreenFormProps {
   isOpen: boolean;
@@ -27,6 +9,7 @@ interface NewReceivedInvoiceFullScreenFormProps {
   providers?: ProviderData[];
   initialData?: Partial<ReceivedInvoice>;
   isEditing?: boolean;
+  company?: CompanyData;
 }
 
 export const NewReceivedInvoiceFullScreenForm: React.FC<NewReceivedInvoiceFullScreenFormProps> = ({
@@ -36,6 +19,7 @@ export const NewReceivedInvoiceFullScreenForm: React.FC<NewReceivedInvoiceFullSc
   providers = [],
   initialData,
   isEditing = false,
+  company,
 }) => {
   const [supplierName, setSupplierName] = useState(initialData?.supplierName || '');
   const [supplierCif, setSupplierCif] = useState(initialData?.supplierCif || '');
@@ -57,6 +41,65 @@ export const NewReceivedInvoiceFullScreenForm: React.FC<NewReceivedInvoiceFullSc
   const [capturedImageUrl, setCapturedImageUrl] = useState<string | undefined>(
     initialData?.capturedImageUrl
   );
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Synchronize state when initialData or isOpen changes
+  useEffect(() => {
+    if (isOpen) {
+      setSupplierName(initialData?.supplierName || '');
+      setSupplierCif(initialData?.supplierCif || '');
+      setSupplierPhone(initialData?.supplierPhone || '');
+      setSupplierEmail(initialData?.supplierEmail || '');
+      setSupplierAddress(initialData?.supplierAddress || '');
+      setInvoiceNumber(initialData?.invoiceNumber || `FAC-${Date.now().toString().slice(-6)}`);
+      setDate(initialData?.date || new Date().toISOString().split('T')[0]);
+      setConcept(initialData?.concept || '');
+      setCategory(initialData?.category || 'Suministros');
+      setBaseImponible(initialData?.baseImponible ?? '');
+      setIvaRate(initialData?.ivaRate ?? 21);
+      setIrpfRate(initialData?.irpfRate ?? 0);
+      setNotes(initialData?.notes || '');
+      setCapturedImageUrl(initialData?.capturedImageUrl);
+    }
+  }, [isOpen, initialData]);
+
+  const handlePhotoCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      // Comprimir usando canvas para aligerar memoria y almacenamiento
+      const img = new window.Image();
+      img.onload = () => {
+        const maxDim = 1280;
+        let width = img.width;
+        let height = img.height;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL('image/jpeg', 0.82);
+          setCapturedImageUrl(compressed);
+        } else {
+          setCapturedImageUrl(result);
+        }
+      };
+      img.src = result;
+    };
+    reader.readAsDataURL(file);
+  };
 
   const numBase = typeof baseImponible === 'number' ? baseImponible : 0;
   const computedIvaAmount = Number(((numBase * ivaRate) / 100).toFixed(2));
@@ -65,22 +108,10 @@ export const NewReceivedInvoiceFullScreenForm: React.FC<NewReceivedInvoiceFullSc
 
   if (!isOpen) return null;
 
-  // Handle provider selection shortcut
-  const handleSelectProviderPreset = (provId: string) => {
-    const prov = providers.find((p) => p.id === provId);
-    if (prov) {
-      setSupplierName(prov.name);
-      setSupplierCif(prov.cif);
-      setSupplierPhone(prov.phone || '');
-      setSupplierEmail(prov.email || '');
-      setSupplierAddress(prov.address || '');
-    }
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!supplierName.trim()) {
-      alert('Por favor, indica el nombre del proveedor o emisor.');
+      alert('Por favor, indica el nombre.');
       return;
     }
     if (numBase <= 0) {
@@ -116,296 +147,255 @@ export const NewReceivedInvoiceFullScreenForm: React.FC<NewReceivedInvoiceFullSc
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-neutral-950/90 backdrop-blur-md overflow-y-auto flex flex-col animate-in fade-in duration-200">
-      {/* Top Navigation Bar */}
-      <div className="sticky top-0 z-20 bg-neutral-950/95 border-b border-neutral-800 px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-3 py-1.5 rounded-xl text-neutral-400 hover:text-white hover:bg-neutral-900 transition-colors flex items-center gap-1.5 text-xs font-medium"
+    <div className="fixed inset-0 z-50 bg-neutral-950 text-white flex flex-col overflow-y-auto animate-in fade-in duration-200">
+      {/* Top Bar: GESTARIAN Quick & Close */}
+      <div className="px-6 py-4 flex items-center justify-between border-b border-neutral-800 shrink-0 bg-neutral-950">
+        <div className="flex flex-col items-start">
+          <h1
+            className="text-lg sm:text-xl font-thin tracking-[0.25em] uppercase leading-none select-none text-[#FEFCE9]"
+            style={{ fontFamily: "'Montserrat', 'Cinzel', sans-serif" }}
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Volver</span>
-          </button>
-          <div className="h-4 w-[1px] bg-neutral-800" />
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">
-              {isEditing ? 'Editar Factura Recibida' : 'Nueva Factura Recibida / Gasto (Ficha A4)'}
-            </span>
-          </div>
+            GESTARIAN
+          </h1>
+          <span
+            className="text-[10px] font-semibold tracking-[0.25em] text-neutral-400 self-end"
+            style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", marginTop: '2px' }}
+          >
+            Quick
+          </span>
         </div>
-
         <button
           type="button"
           onClick={onClose}
-          className="p-2 rounded-xl text-neutral-400 hover:text-white hover:bg-neutral-900 transition-colors"
+          className="p-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white transition-colors cursor-pointer"
         >
-          <X className="w-5 h-5" />
+          <X className="w-6 h-6" />
         </button>
       </div>
 
-      {/* A4 Paper Document Container */}
-      <motion.div
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="flex-1 w-full max-w-[210mm] mx-auto p-4 sm:p-8 my-4 sm:my-8 bg-white text-neutral-950 shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-lg relative flex flex-col justify-between"
-      >
-        <div className="space-y-8">
-          {/* Document Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b-2 border-neutral-900 pb-6 gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold tracking-widest uppercase text-amber-600 bg-amber-50 px-2.5 py-1 rounded border border-amber-200">
-                  Registro de Gasto Fiscal
-                </span>
-                <span className="text-[11px] text-neutral-400 flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  Veri*Factu Ready
-                </span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-extralight uppercase tracking-wider text-neutral-900 mt-2">
-                Factura Recibida
-              </h1>
+      {/* Main Content: Minimalist Form, No Wrappers, Double Font Sizes */}
+      <div className="flex-1 max-w-4xl w-full mx-auto p-6 sm:p-12 space-y-8">
+        {/* Banner informativo de Receptores / Emisores */}
+        <div className="p-4 rounded-2xl border border-neutral-800 bg-neutral-900/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0">
+              <UserCheck className="w-5 h-5 stroke-[2]" />
             </div>
-            <div className="text-right sm:text-left">
-              <span className="text-[11px] font-mono text-neutral-500 block">DOCUMENTO FISCAL</span>
-              <span className="text-xs font-bold text-neutral-800">REMITENTE / EMISOR</span>
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">
+                CLIENTE / DESTINATARIO DE LA FACTURA (NOSOTROS)
+              </span>
+              <h4 className="text-sm sm:text-base font-extrabold text-white">
+                {company?.name || 'Nuestra Empresa (Gestarian)'}
+              </h4>
+              <p className="text-xs text-neutral-400 font-mono">
+                CIF: {company?.cif || 'CIF Propio'} | {company?.address || 'Domicilio Fiscal'}
+              </p>
+            </div>
+          </div>
+          <span className="px-3 py-1 rounded-xl bg-amber-400/10 border border-amber-400/30 text-amber-300 text-xs font-bold uppercase tracking-wider shrink-0">
+            Cliente Fijo
+          </span>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Nombre / Emisor */}
+          <div className="relative flex items-center justify-between w-full rounded-2xl border border-neutral-800 bg-neutral-900 focus-within:border-sky-400 focus-within:bg-sky-950/20 p-4 transition-all">
+            <input
+              type="text"
+              value={supplierName}
+              onChange={(e) => setSupplierName(e.target.value)}
+              placeholder="Nombre del proveedor o emisor"
+              className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-xl sm:text-2xl font-extrabold text-white placeholder-neutral-600 pr-3"
+              autoFocus
+            />
+            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-400 shrink-0 pl-3 border-l border-neutral-800 select-none pointer-events-none">
+              Nombre / Emisor
+            </span>
+          </div>
+
+          {/* DNI/CIF/NIF */}
+          <div className="relative flex items-center justify-between w-full rounded-2xl border border-neutral-800 bg-neutral-900 focus-within:border-sky-400 focus-within:bg-sky-950/20 p-4 transition-all">
+            <input
+              type="text"
+              value={supplierCif}
+              onChange={(e) => setSupplierCif(e.target.value.toUpperCase())}
+              placeholder="DNI, CIF o NIF"
+              className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-xl sm:text-2xl font-mono font-extrabold text-amber-300 uppercase placeholder-neutral-600 pr-3"
+            />
+            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-400 shrink-0 pl-3 border-l border-neutral-800 select-none pointer-events-none">
+              CIF / NIF
+            </span>
+          </div>
+
+          {/* Teléfono */}
+          <div className="relative flex items-center justify-between w-full rounded-2xl border border-neutral-800 bg-neutral-900 focus-within:border-sky-400 focus-within:bg-sky-950/20 p-4 transition-all">
+            <input
+              type="tel"
+              value={supplierPhone}
+              onChange={(e) => setSupplierPhone(e.target.value)}
+              placeholder="Teléfono"
+              className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-xl sm:text-2xl font-mono font-extrabold text-emerald-300 placeholder-neutral-600 pr-3"
+            />
+            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-400 shrink-0 pl-3 border-l border-neutral-800 select-none pointer-events-none">
+              Teléfono
+            </span>
+          </div>
+
+          {/* Email */}
+          <div className="relative flex items-center justify-between w-full rounded-2xl border border-neutral-800 bg-neutral-900 focus-within:border-sky-400 focus-within:bg-sky-950/20 p-4 transition-all">
+            <input
+              type="email"
+              value={supplierEmail}
+              onChange={(e) => setSupplierEmail(e.target.value)}
+              placeholder="Correo electrónico"
+              className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-xl sm:text-2xl font-extrabold text-sky-300 placeholder-neutral-600 pr-3"
+            />
+            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-400 shrink-0 pl-3 border-l border-neutral-800 select-none pointer-events-none">
+              Email
+            </span>
+          </div>
+
+          {/* Dirección */}
+          <div className="relative flex items-center justify-between w-full rounded-2xl border border-neutral-800 bg-neutral-900 focus-within:border-sky-400 focus-within:bg-sky-950/20 p-4 transition-all">
+            <input
+              type="text"
+              value={supplierAddress}
+              onChange={(e) => setSupplierAddress(e.target.value)}
+              placeholder="Dirección fiscal"
+              className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-xl sm:text-2xl font-extrabold text-white placeholder-neutral-600 pr-3"
+            />
+            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-400 shrink-0 pl-3 border-l border-neutral-800 select-none pointer-events-none">
+              Dirección
+            </span>
+          </div>
+
+          {/* Domicilio fiscal / Concepto / Importe */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="relative flex items-center justify-between w-full rounded-2xl border border-neutral-800 bg-neutral-900 focus-within:border-sky-400 focus-within:bg-sky-950/20 p-4 transition-all">
+              <input
+                type="text"
+                value={concept}
+                onChange={(e) => setConcept(e.target.value)}
+                placeholder="Concepto de la factura"
+                className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-lg sm:text-xl font-extrabold text-white placeholder-neutral-600 pr-3"
+              />
+              <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-400 shrink-0 pl-3 border-l border-neutral-800 select-none pointer-events-none">
+                Concepto
+              </span>
+            </div>
+
+            <div className="relative flex items-center justify-between w-full rounded-2xl border border-neutral-800 bg-neutral-900 focus-within:border-sky-400 focus-within:bg-sky-950/20 p-4 transition-all">
+              <input
+                type="number"
+                step="0.01"
+                value={baseImponible}
+                onChange={(e) =>
+                  setBaseImponible(e.target.value === '' ? '' : parseFloat(e.target.value))
+                }
+                placeholder="0.00"
+                className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-xl sm:text-2xl font-mono font-extrabold text-amber-300 placeholder-neutral-600 pr-3"
+              />
+              <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-400 shrink-0 pl-3 border-l border-neutral-800 select-none pointer-events-none">
+                Base (€)
+              </span>
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Quick Provider Select if providers exist */}
-            {providers.length > 0 && !isEditing && (
-              <div className="p-4 rounded-xl bg-amber-50/60 border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span className="text-xs font-bold text-neutral-800">
-                    Autocompletar con Proveedor Registrado:
-                  </span>
-                </div>
-                <select
-                  onChange={(e) => handleSelectProviderPreset(e.target.value)}
-                  defaultValue=""
-                  className="px-3 py-2 bg-white border border-amber-300 rounded-lg text-xs font-semibold text-neutral-900 focus:outline-none focus:border-amber-500 w-full sm:w-64"
-                >
-                  <option value="" disabled>
-                    -- Seleccionar proveedor --
-                  </option>
-                  {providers.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} ({p.cif})
-                    </option>
-                  ))}
-                </select>
+          {/* Botón de Cámara para tomar foto de la factura recibida */}
+          <div className="rounded-2xl border border-neutral-800 bg-neutral-900/90 p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5 w-full sm:w-auto">
+              <div className="w-12 h-12 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center shrink-0 text-amber-400">
+                <Camera className="w-6 h-6 stroke-[2]" />
               </div>
-            )}
-
-            {/* Row 1: Proveedor y CIF */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="md:col-span-2 space-y-2">
-                <label className="text-xs font-bold text-neutral-700 uppercase tracking-wider flex items-center gap-1.5">
-                  <Building2 className="w-3.5 h-3.5 text-amber-600" />
-                  <span>Nombre del Proveedor / Emisor *</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={supplierName}
-                  onChange={(e) => setSupplierName(e.target.value)}
-                  placeholder="Ej. Endesa Energía S.A.U."
-                  className="w-full px-4 py-3.5 bg-neutral-50 border border-neutral-300 rounded-xl text-xl md:text-2xl font-mono font-semibold tracking-tight text-neutral-900 focus:outline-none focus:border-amber-500 focus:bg-white transition-colors"
-                  autoFocus
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-neutral-700 uppercase tracking-wider flex items-center gap-1.5">
-                  <CreditCard className="w-3.5 h-3.5 text-amber-600" />
-                  <span>CIF / NIF Proveedor</span>
-                </label>
-                <input
-                  type="text"
-                  value={supplierCif}
-                  onChange={(e) => setSupplierCif(e.target.value.toUpperCase())}
-                  placeholder="Ej. A81992288"
-                  className="w-full px-4 py-3.5 bg-neutral-50 border border-neutral-300 rounded-xl text-xl md:text-2xl font-mono uppercase font-bold tracking-tight text-neutral-900 focus:outline-none focus:border-amber-500 focus:bg-white transition-colors"
-                />
+              <div>
+                <h4 className="text-base font-bold text-white">Foto del Comprobante / Factura</h4>
+                <p className="text-xs text-neutral-400">
+                  {capturedImageUrl
+                    ? 'Foto capturada y lista para guardar.'
+                    : 'Toma una foto con la cámara para guardarla junto a los datos.'}
+                </p>
               </div>
             </div>
 
-            {/* Row 2: Dirección y Contacto */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-neutral-700 uppercase tracking-wider flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-amber-600" />
-                <span>Dirección del Proveedor</span>
-              </label>
-              <input
-                type="text"
-                value={supplierAddress}
-                onChange={(e) => setSupplierAddress(e.target.value)}
-                placeholder="Calle, número, ciudad..."
-                className="w-full px-4 py-3.5 bg-neutral-50 border border-neutral-300 rounded-xl text-xl md:text-2xl font-mono font-semibold tracking-tight text-neutral-900 focus:outline-none focus:border-amber-500 focus:bg-white transition-colors"
-              />
-            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handlePhotoCapture}
+              className="hidden"
+            />
 
-            {/* Row 3: Nº Factura, Fecha y Categoría */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-neutral-700 uppercase tracking-wider flex items-center gap-1.5">
-                  <Receipt className="w-3.5 h-3.5 text-amber-600" />
-                  <span>Número de Factura *</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={invoiceNumber}
-                  onChange={(e) => setInvoiceNumber(e.target.value)}
-                  placeholder="Ej. REC-2026-009"
-                  className="w-full px-4 py-3.5 bg-neutral-50 border border-neutral-300 rounded-xl text-xl md:text-2xl font-mono font-bold tracking-tight text-neutral-900 focus:outline-none focus:border-amber-500 focus:bg-white transition-colors"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-neutral-700 uppercase tracking-wider flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-amber-600" />
-                  <span>Fecha de Emisión *</span>
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="w-full px-4 py-3.5 bg-neutral-50 border border-neutral-300 rounded-xl text-xl md:text-2xl font-mono font-bold tracking-tight text-neutral-900 focus:outline-none focus:border-amber-500 focus:bg-white transition-colors"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-neutral-700 uppercase tracking-wider flex items-center gap-1.5">
-                  <FileText className="w-3.5 h-3.5 text-amber-600" />
-                  <span>Categoría de Gasto</span>
-                </label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-4 py-3.5 bg-neutral-50 border border-neutral-300 rounded-xl text-xl md:text-2xl font-mono font-semibold tracking-tight text-neutral-900 focus:outline-none focus:border-amber-500 focus:bg-white transition-colors"
-                >
-                  <option value="Suministros">Suministros (Luz, Agua, Gas)</option>
-                  <option value="Materiales">Materiales y Mercancías</option>
-                  <option value="Servicios Profesionales">Servicios Profesionales</option>
-                  <option value="Software">Software y Licencias</option>
-                  <option value="Alquileres">Alquileres</option>
-                  <option value="Otros Gastos">Otros Gastos</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Row 4: Concepto */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-neutral-700 uppercase tracking-wider flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5 text-amber-600" />
-                <span>Concepto o Descripción del Gasto *</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={concept}
-                onChange={(e) => setConcept(e.target.value)}
-                placeholder="Ej. Factura consumo eléctrico periodo febreromarzo"
-                className="w-full px-4 py-3.5 bg-neutral-50 border border-neutral-300 rounded-xl text-xl md:text-2xl font-mono font-semibold tracking-tight text-neutral-900 focus:outline-none focus:border-amber-500 focus:bg-white transition-colors"
-              />
-            </div>
-
-            {/* Row 5: Importes y Desglose Económico (A4 Box) */}
-            <div className="p-6 rounded-2xl bg-neutral-50 border border-neutral-300 space-y-4">
-              <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-wider flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-amber-600" />
-                <span>Desglose Económico e Importes Fiscales</span>
-              </h3>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Base Imponible */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral-700 uppercase block">
-                    Base Imponible (€) *
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    required
-                    value={baseImponible}
-                    onChange={(e) =>
-                      setBaseImponible(e.target.value === '' ? '' : parseFloat(e.target.value))
-                    }
-                    placeholder="0.00"
-                    className="w-full px-4 py-3.5 bg-white border border-neutral-300 rounded-xl text-2xl md:text-3xl font-bold font-mono tracking-tight text-neutral-900 focus:outline-none focus:border-amber-500"
+            <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+              {capturedImageUrl ? (
+                <>
+                  <img
+                    src={capturedImageUrl}
+                    alt="Factura"
+                    className="w-12 h-12 rounded-xl object-cover border-2 border-amber-400 shadow-md cursor-pointer hover:scale-105 transition-transform"
+                    onClick={() => fileInputRef.current?.click()}
+                    title="Pulsar para cambiar o repetir foto"
                   />
-                </div>
-
-                {/* Tipo de IVA */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral-700 uppercase block">
-                    Tipo de IVA (%)
-                  </label>
-                  <select
-                    value={ivaRate}
-                    onChange={(e) => setIvaRate(Number(e.target.value))}
-                    className="w-full px-4 py-3.5 bg-white border border-neutral-300 rounded-xl text-xl md:text-2xl font-bold font-mono tracking-tight text-neutral-900 focus:outline-none focus:border-amber-500"
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-3.5 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-amber-300 font-bold text-xs border border-neutral-700 transition-colors cursor-pointer"
                   >
-                    <option value={21}>21% (General)</option>
-                    <option value={10}>10% (Reducido)</option>
-                    <option value={4}>4% (Superreducido)</option>
-                    <option value={0}>0% (Exento)</option>
-                  </select>
-                </div>
-
-                {/* Cuota IVA (calculada) */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral-600 uppercase block">
-                    Cuota IVA ({ivaRate}%)
-                  </label>
-                  <div className="w-full px-4 py-3 bg-white border border-neutral-300 rounded-xl text-sm font-bold font-mono text-amber-700 flex items-center justify-between">
-                    <span>{formatCurrency(computedIvaAmount)}</span>
-                    <span className="text-[10px] text-neutral-400">Automático</span>
-                  </div>
-                </div>
-
-                {/* Total Factura */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-black text-amber-700 uppercase block tracking-wider">
-                    Total Factura (€)
-                  </label>
-                  <div className="w-full px-4 py-3 bg-amber-500 text-neutral-950 rounded-xl text-base font-black font-mono flex items-center justify-between shadow-sm">
-                    <span>{formatCurrency(computedTotal)}</span>
-                    <Check className="w-5 h-5 text-neutral-950" />
-                  </div>
-                </div>
-              </div>
+                    Repetir Foto
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCapturedImageUrl(undefined)}
+                    className="p-2 rounded-xl bg-neutral-800 hover:bg-red-950 text-neutral-400 hover:text-red-400 transition-colors cursor-pointer"
+                    title="Eliminar foto"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  id="btn-form-take-photo"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-extrabold text-xs sm:text-sm shadow-md transition-all active:scale-95 cursor-pointer"
+                >
+                  <Camera className="w-4 h-4" />
+                  <span>Tomar Foto con Cámara</span>
+                </button>
+              )}
             </div>
+          </div>
 
-            {/* Action Buttons */}
-            <div className="pt-6 border-t border-neutral-200 flex items-center justify-between gap-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-6 py-3 rounded-xl text-xs font-medium text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 transition-colors"
-              >
-                Cancelar
-              </button>
+          {/* Total calculated display */}
+          <div className="p-6 bg-neutral-900 rounded-2xl flex items-center justify-between">
+            <span className="text-sm font-bold uppercase tracking-wider text-neutral-400">
+              Total Factura (IVA Incluido)
+            </span>
+            <span className="text-3xl sm:text-5xl font-mono font-black text-amber-400">
+              {computedTotal.toFixed(2)} €
+            </span>
+          </div>
 
-              <button
-                type="submit"
-                className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-xl text-xs font-bold text-neutral-950 bg-amber-400 hover:bg-amber-300 transition-all shadow-md active:scale-95 cursor-pointer"
-              >
-                <Check className="w-4 h-4" />
-                <span>{isEditing ? 'Actualizar Factura' : 'Guardar Factura Recibida'}</span>
-              </button>
-            </div>
-          </form>
-        </div>
-      </motion.div>
+          {/* Action Buttons */}
+          <div className="pt-8 flex flex-col sm:flex-row items-center justify-end gap-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full sm:w-auto px-6 py-4 rounded-xl text-sm font-medium text-neutral-400 hover:text-white transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-10 py-4 rounded-2xl text-base font-black text-neutral-950 bg-amber-400 hover:bg-amber-300 transition-all shadow-xl active:scale-95"
+            >
+              <Check className="w-5 h-5" />
+              <span>Guardar Factura Recibida</span>
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

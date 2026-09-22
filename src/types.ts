@@ -17,6 +17,21 @@ export type ProviderData = CompanyData;
 
 export type ClientDispatchChannel = 'whatsapp' | 'email' | 'both';
 
+export interface ClientConceptLine {
+  id: string;
+  // Parámetro 1: Concepto / Descripción
+  concept: string;
+  // Parámetro 2: Cantidad / Unidades
+  quantity: number;
+  // Parámetro 3: Precio / Tarifa Unitario (€)
+  unitPrice: number;
+  // Parámetro 4: % IVA (e.g. 21, 10, 4, 0)
+  ivaRate: number;
+  // Parámetro 5: Parámetro configurable (Unidad de medida / % Descuento / IRPF / Categoría)
+  param5Type?: 'unit' | 'discount' | 'irpf' | 'custom';
+  param5Value?: string | number;
+}
+
 export interface ClientData {
   id?: string;
   name: string;
@@ -28,6 +43,9 @@ export interface ClientData {
   defaultSendWhatsApp?: boolean; // Casilla para activar WhatsApp por defecto
   defaultSendEmail?: boolean; // Casilla para activar Email por defecto
   preferredDispatchChannel?: ClientDispatchChannel; // Medio seleccionado por defecto
+  enableComplexInvoice?: boolean; // Habilitar botón de Factura Compleja en tarjeta
+  conceptLines?: ClientConceptLine[]; // Líneas de conceptos preconfiguradas para este cliente
+  habitualProducts?: BillableProduct[]; // Productos habituales asignados a este cliente con foto/descripción
   createdAt?: number;
 }
 
@@ -120,9 +138,11 @@ export interface AuthUser {
   id: string;
   name: string;
   email: string;
+  dni?: string;
   avatarUrl?: string;
-  provider: 'google' | 'email';
+  provider: 'google' | 'email' | 'dni';
   rememberDevice: boolean;
+  isAppDownloaded?: boolean;
   createdAt: number;
   lastLogin: number;
 }
@@ -154,4 +174,6 @@ export interface ReceivedInvoice {
   notes?: string;
   createdAt: number;
 }
+
+export type AppTheme = 'dark' | 'light' | 'indigo';
 

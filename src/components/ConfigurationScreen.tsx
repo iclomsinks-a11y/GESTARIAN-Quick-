@@ -1,10 +1,6 @@
 import React, { useState, useRef } from 'react';
 import {
   Building2,
-  Users,
-  Search,
-  UserPlus,
-  History,
   Sliders,
   ShieldCheck,
   Hash,
@@ -14,27 +10,29 @@ import {
   Upload,
   Trash2,
   CheckCircle2,
-  ArrowRight,
   CreditCard,
   Phone,
   Mail,
   MapPin,
-  FileText,
   KeyRound,
   ExternalLink,
-  ChevronRight,
-  Database,
-  RefreshCw,
   MessageCircle,
-  Plus,
-  Printer,
   Play,
   Flame,
-  Send,
   Wand2,
   Loader2,
-  Receipt,
-  Package,
+  Database,
+  History,
+  Sun,
+  Moon,
+  Palette,
+  Check,
+  Bell,
+  BellRing,
+  AlertTriangle,
+  CalendarClock,
+  RefreshCw,
+  BellOff,
 } from 'lucide-react';
 import {
   CompanyData,
@@ -44,10 +42,19 @@ import {
   ConceptHistoryItem,
   AuthUser,
   BillableProduct,
+  AppTheme,
+  ReceivedInvoice,
 } from '../types';
 import {
   getStoredWhatsAppDispatches,
   WhatsAppNotificationRecord,
+  getBrowserNotificationPermission,
+  requestBrowserNotificationPermission,
+  notifyVeriFactuVerificationSuccess,
+  notifyPaymentDueDateUpcoming,
+  checkAndNotifyUpcomingPayments,
+  getBrowserNotificationLogs,
+  BrowserNotificationLog,
 } from '../services/notificationService';
 import {
   generateLogoWithAI,
@@ -58,24 +65,26 @@ import { formatCurrency } from '../utils/formatters';
 interface ConfigurationScreenProps {
   company: CompanyData;
   onSaveCompany: (data: CompanyData) => void;
+  currentTheme?: AppTheme;
+  onSelectTheme?: (theme: AppTheme) => void;
   // Databases & Actions
-  providers: ProviderData[];
-  onOpenProvidersDb: () => void;
-  clients: ClientData[];
-  onOpenClientsDb: () => void;
-  onOpenClientsSearch: () => void;
-  onOpenNewClientForm: () => void;
-  invoices: Invoice[];
-  onOpenInvoicesDb: () => void;
-  onOpenVeriFactuModal: () => void;
-  onOpenComplexBudgetModal: () => void;
-  currentSequence: number;
-  onOpenConfigModal: () => void;
-  concepts: ConceptHistoryItem[];
-  currentUser: AuthUser | null;
-  onOpenAuthModal: () => void;
-  onSaveDeviceData: () => void;
-  onGoToInvoice: () => void;
+  providers?: ProviderData[];
+  onOpenProvidersDb?: () => void;
+  clients?: ClientData[];
+  onOpenClientsDb?: () => void;
+  onOpenClientsSearch?: () => void;
+  onOpenNewClientForm?: () => void;
+  invoices?: Invoice[];
+  onOpenInvoicesDb?: () => void;
+  onOpenVeriFactuModal?: () => void;
+  onOpenComplexBudgetModal?: () => void;
+  currentSequence?: number;
+  onOpenConfigModal?: () => void;
+  concepts?: ConceptHistoryItem[];
+  currentUser?: AuthUser | null;
+  onOpenAuthModal?: () => void;
+  onSaveDeviceData?: () => void;
+  onGoToInvoice?: () => void;
   onGoToReceivedInvoices?: () => void;
   receivedInvoicesCount?: number;
   products?: BillableProduct[];
@@ -87,11 +96,14 @@ interface ConfigurationScreenProps {
   onReplaySplash?: () => void;
   onOpenWhatsAppModal?: () => void;
   onOpenEmailModal?: () => void;
+  receivedInvoices?: ReceivedInvoice[];
 }
 
 export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
   company,
   onSaveCompany,
+  currentTheme = 'dark',
+  onSelectTheme,
   providers,
   onOpenProvidersDb,
   clients,
@@ -102,9 +114,9 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
   onOpenInvoicesDb,
   onOpenVeriFactuModal,
   onOpenComplexBudgetModal,
-  currentSequence,
+  currentSequence = 1,
   onOpenConfigModal,
-  concepts,
+  concepts = [],
   currentUser,
   onOpenAuthModal,
   onSaveDeviceData,
@@ -119,6 +131,7 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
   onReplaySplash,
   onOpenWhatsAppModal,
   onOpenEmailModal,
+  receivedInvoices = [],
 }) => {
   // Local state for full company editing
   const [formData, setFormData] = useState<CompanyData>({ ...company });
@@ -126,12 +139,90 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
   const [dispatches, setDispatches] = useState<WhatsAppNotificationRecord[]>(() => getStoredWhatsAppDispatches());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Web Browser Notifications state
+  const [notifPermission, setNotifPermission] = useState<string>(() => getBrowserNotificationPermission());
+  const [notifLogs, setNotifLogs] = useState<BrowserNotificationLog[]>(() => getBrowserNotificationLogs());
+  const [testNotifFeedback, setTestNotifFeedback] = useState<string | null>(null);
+
+  const handleEnableBrowserNotifications = async () => {
+    const perm = await requestBrowserNotificationPermission();
+    setNotifPermission(perm);
+    setNotifLogs(getBrowserNotificationLogs());
+    if (perm === 'granted') {
+      setTestNotifFeedback('Notificaciones del navegador activadas con éxito.');
+    } else if (perm === 'denied') {
+      setTestNotifFeedback('El permiso fue denegado. Para activarlo, permite las notificaciones en la barra del navegador.');
+    } else {
+      setTestNotifFeedback('Permiso de notificaciones no configurado.');
+    }
+    setTimeout(() => setTestNotifFeedback(null), 4000);
+  };
+
+  const handleTestVeriFactuNotif = () => {
+    notifyVeriFactuVerificationSuccess({
+      invoiceNumber: currentInvoice?.number || 'F260001',
+      clientName: currentInvoice?.client?.name || 'Cliente Prueba S.L.',
+      totalAmount: 1250.00,
+      chainHash: '8F9A2B3C4D5E6F70123456789ABCDEF0',
+    });
+    setNotifLogs(getBrowserNotificationLogs());
+    setTestNotifFeedback('Notificación de Veri*Factu enviada al navegador.');
+    setTimeout(() => setTestNotifFeedback(null), 3500);
+  };
+
+  const handleTestPaymentDueNotif = () => {
+    notifyPaymentDueDateUpcoming({
+      invoiceNumber: 'FAC-2026-0891',
+      entityName: 'Construcciones y Reformas Ibérica S.A.',
+      totalAmount: 2450.00,
+      dueDate: new Date(Date.now() + 2 * 86400000).toLocaleDateString('es-ES'),
+      daysRemaining: 2,
+      type: 'issued',
+    });
+    setNotifLogs(getBrowserNotificationLogs());
+    setTestNotifFeedback('Notificación de Vencimiento de Pago enviada al navegador.');
+    setTimeout(() => setTestNotifFeedback(null), 3500);
+  };
+
+  const handleScanUpcomingPayments = () => {
+    const count = checkAndNotifyUpcomingPayments(invoices || [], receivedInvoices || [], true);
+    setNotifLogs(getBrowserNotificationLogs());
+    if (count > 0) {
+      setTestNotifFeedback(`Se enviaron ${count} alerta(s) de vencimiento de cobro/pago al navegador.`);
+    } else {
+      setTestNotifFeedback('Escaneo completado: No se detectaron facturas con vencimiento próximo en los siguientes 3 días.');
+    }
+    setTimeout(() => setTestNotifFeedback(null), 4500);
+  };
+
   // State for AI Logo Generation
   const [isAiLogoOpen, setIsAiLogoOpen] = useState(false);
   const [aiLogoPrompt, setAiLogoPrompt] = useState('');
   const [isAiLogoGenerating, setIsAiLogoGenerating] = useState(false);
   const [aiLogoError, setAiLogoError] = useState<string | null>(null);
   const [aiLogoSuccess, setAiLogoSuccess] = useState<string | null>(null);
+
+  // Logo 3-second long press state
+  const [logoPressTimer, setLogoPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [isLogoPressing, setIsLogoPressing] = useState(false);
+  const [showLogoLongPressActions, setShowLogoLongPressActions] = useState(false);
+
+  const handleLogoTouchStart = () => {
+    setIsLogoPressing(true);
+    const timer = setTimeout(() => {
+      setIsLogoPressing(false);
+      setShowLogoLongPressActions(true);
+    }, 3000);
+    setLogoPressTimer(timer);
+  };
+
+  const handleLogoTouchEnd = () => {
+    if (logoPressTimer) {
+      clearTimeout(logoPressTimer);
+      setLogoPressTimer(null);
+    }
+    setIsLogoPressing(false);
+  };
 
   // Keep local state in sync if company changes outside
   React.useEffect(() => {
@@ -205,313 +296,28 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
   };
 
   return (
-    <div className="min-h-full bg-neutral-950 text-neutral-100 py-6 sm:py-10 px-4 sm:px-8">
-      <div className="max-w-6xl mx-auto space-y-10">
-        {/* Header with Navigation Link to Invoice */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-neutral-800">
+    <div className="min-h-full bg-neutral-950 text-neutral-100 pt-4 sm:pt-6 pb-8 px-4 sm:px-8">
+      <div className="max-w-6xl mx-auto space-y-8">
+        {/* Encabezado limpio de la página de Configuración */}
+        <div className="flex items-center justify-between pb-4 border-b border-neutral-800/80">
           <div>
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
               <span className="text-[11px] font-mono uppercase tracking-widest text-amber-400 font-semibold">
-                PÁGINA 4 · CONFIGURACIÓN Y GESTIÓN
+                CONFIGURACIÓN Y AJUSTES
               </span>
             </div>
             <h1
               className="text-2xl sm:text-3xl font-light tracking-wide text-neutral-100 mt-1 uppercase"
               style={{ fontFamily: "'Montserrat', sans-serif" }}
             >
-              PANEL DE CONTROL <span className="text-neutral-500 font-normal">& AJUSTES</span>
+              CONFIGURACIÓN <span className="text-neutral-500 font-normal">& AJUSTES</span>
             </h1>
           </div>
-
-          <div className="flex flex-wrap items-center gap-2.5">
-            {onGoToReceivedInvoices && (
-              <button
-                type="button"
-                id="config-goto-received-invoices-btn"
-                onClick={onGoToReceivedInvoices}
-                className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-neutral-850 hover:bg-neutral-800 text-neutral-200 font-bold text-xs transition-all border border-neutral-700 shadow-md active:scale-95 cursor-pointer"
-              >
-                <Receipt className="w-4 h-4 text-amber-400" />
-                <span>Facturas Recibidas ({receivedInvoicesCount})</span>
-                <ArrowRight className="w-3.5 h-3.5 text-neutral-400" />
-              </button>
-            )}
-
-            <button
-              type="button"
-              id="config-goto-invoice-btn"
-              onClick={onGoToInvoice}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs transition-all shadow-lg hover:shadow-amber-400/20 active:scale-95 cursor-pointer"
-            >
-              <FileText className="w-4 h-4" />
-              <span>Ver Factura A4</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
         </div>
 
         {/* ========================================================================= */}
-        {/* SECCIÓN 1 (ARRIBA DEL TODO): LO QUE MÁS INTERESA AL USUARIO              */}
-        {/* Botones sencillos sin explicación ninguna, solamente los que ejecutan la acción */}
-        {/* ========================================================================= */}
-        <div className="space-y-6">
-          {/* Bloque 1: Operaciones de Facturación */}
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
-                <FileText className="w-4 h-4 text-amber-400" />
-                <span>Operaciones de Factura</span>
-              </h2>
-              {currentInvoice && (
-                <span className="text-[11px] font-mono text-neutral-400">
-                  Activa: <strong className="text-amber-400">{currentInvoice.number}</strong>
-                </span>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-              {/* 1. Nueva Factura */}
-              <button
-                type="button"
-                id="config-btn-new-invoice"
-                onClick={onNewInvoice}
-                className="p-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md hover:shadow-amber-400/20 active:scale-95 transition-all cursor-pointer"
-              >
-                <Plus className="w-4 h-4 stroke-[3]" />
-                <span>+ Nueva Factura</span>
-              </button>
-
-              {/* 2. Ver Factura A4 */}
-              <button
-                type="button"
-                id="config-btn-goto-invoice-action"
-                onClick={onGoToInvoice}
-                className="p-3.5 rounded-xl bg-neutral-900 hover:bg-neutral-850 border border-neutral-700 hover:border-amber-400/60 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all cursor-pointer"
-              >
-                <FileText className="w-4 h-4 text-amber-400" />
-                <span>Ver Factura A4</span>
-              </button>
-
-              {/* 3. Enviar por WhatsApp */}
-              <button
-                type="button"
-                id="config-btn-whatsapp-invoice"
-                onClick={onOpenWhatsAppModal}
-                className="p-3.5 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-neutral-950 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md hover:shadow-[#25D366]/20 active:scale-95 transition-all cursor-pointer"
-              >
-                <MessageCircle className="w-4 h-4 fill-current" />
-                <span>Enviar WhatsApp</span>
-              </button>
-
-              {/* 4. Enviar por Email */}
-              <button
-                type="button"
-                id="config-btn-email-invoice"
-                onClick={onOpenEmailModal}
-                className="p-3.5 rounded-xl bg-sky-400 hover:bg-sky-300 text-neutral-950 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md hover:shadow-sky-400/20 active:scale-95 transition-all cursor-pointer"
-              >
-                <Mail className="w-4 h-4" />
-                <span>Enviar Email</span>
-              </button>
-
-              {/* 5. Imprimir / PDF */}
-              <button
-                type="button"
-                id="config-btn-print-invoice"
-                onClick={onPrintInvoice}
-                className="p-3.5 rounded-xl bg-neutral-900 hover:bg-neutral-850 border border-neutral-700 hover:border-amber-400/60 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all cursor-pointer"
-              >
-                <Printer className="w-4 h-4 text-amber-400" />
-                <span>Imprimir / PDF</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Bloque 2: Bases de Datos y Registros */}
-          <div className="space-y-2.5">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-300 flex items-center gap-2">
-              <Database className="w-4 h-4 text-amber-400" />
-              <span>Bases de Datos y Registros</span>
-            </h2>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              {/* Facturas Emitidas */}
-              <button
-                type="button"
-                id="config-btn-invoices-db"
-                onClick={onOpenInvoicesDb}
-                className="p-3.5 rounded-xl bg-neutral-900 hover:bg-neutral-850 border border-neutral-700 hover:border-amber-400/60 text-white font-semibold text-xs flex items-center justify-between gap-2 transition-all active:scale-95 cursor-pointer"
-              >
-                <div className="flex items-center gap-2.5">
-                  <History className="w-4 h-4 text-amber-400" />
-                  <span>Facturas Emitidas</span>
-                </div>
-                <span className="font-mono text-[11px] font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
-                  {invoices.length}
-                </span>
-              </button>
-
-              {/* Facturas Recibidas / Gastos */}
-              {onGoToReceivedInvoices && (
-                <button
-                  type="button"
-                  id="config-btn-received-invoices"
-                  onClick={onGoToReceivedInvoices}
-                  className="p-3.5 rounded-xl bg-neutral-900 hover:bg-neutral-850 border border-neutral-700 hover:border-amber-400/60 text-white font-semibold text-xs flex items-center justify-between gap-2 transition-all active:scale-95 cursor-pointer"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Receipt className="w-4 h-4 text-amber-400" />
-                    <span>Facturas Recibidas</span>
-                  </div>
-                  <span className="font-mono text-[11px] font-bold text-neutral-950 bg-amber-400 px-2 py-0.5 rounded-full">
-                    {receivedInvoicesCount}
-                  </span>
-                </button>
-              )}
-
-              {/* Base de Clientes */}
-              <button
-                type="button"
-                id="config-btn-clients-db"
-                onClick={onOpenClientsDb}
-                className="p-3.5 rounded-xl bg-neutral-900 hover:bg-neutral-850 border border-neutral-700 hover:border-amber-400/60 text-white font-semibold text-xs flex items-center justify-between gap-2 transition-all active:scale-95 cursor-pointer"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Users className="w-4 h-4 text-amber-400" />
-                  <span>Base de Clientes</span>
-                </div>
-                <span className="font-mono text-[11px] font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
-                  {clients.length}
-                </span>
-              </button>
-
-              {/* + Nuevo Cliente */}
-              <button
-                type="button"
-                id="config-btn-new-client"
-                onClick={onOpenNewClientForm}
-                className="p-3.5 rounded-xl bg-neutral-900 hover:bg-neutral-850 border border-neutral-700 hover:border-amber-400/60 text-white font-semibold text-xs flex items-center gap-2.5 transition-all active:scale-95 cursor-pointer"
-              >
-                <UserPlus className="w-4 h-4 text-amber-400" />
-                <span>+ Nuevo Cliente</span>
-              </button>
-
-              {/* Buscar Cliente */}
-              <button
-                type="button"
-                id="config-btn-search-client"
-                onClick={onOpenClientsSearch}
-                className="p-3.5 rounded-xl bg-neutral-900 hover:bg-neutral-850 border border-neutral-700 hover:border-amber-400/60 text-white font-semibold text-xs flex items-center gap-2.5 transition-all active:scale-95 cursor-pointer"
-              >
-                <Search className="w-4 h-4 text-amber-400" />
-                <span>Buscar Cliente</span>
-              </button>
-
-              {/* Proveedores / Emisores */}
-              <button
-                type="button"
-                id="config-btn-providers-db"
-                onClick={onOpenProvidersDb}
-                className="p-3.5 rounded-xl bg-neutral-900 hover:bg-neutral-850 border border-neutral-700 hover:border-amber-400/60 text-white font-semibold text-xs flex items-center justify-between gap-2 transition-all active:scale-95 cursor-pointer"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Building2 className="w-4 h-4 text-amber-400" />
-                  <span>Proveedores / Emisores</span>
-                </div>
-                <span className="font-mono text-[11px] font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
-                  {providers.length}
-                </span>
-              </button>
-
-              {/* Productos Facturables */}
-              {onOpenProductsDb && (
-                <button
-                  type="button"
-                  id="config-btn-products-db"
-                  onClick={onOpenProductsDb}
-                  className="p-3.5 rounded-xl bg-neutral-900 hover:bg-neutral-850 border border-neutral-700 hover:border-amber-400/60 text-white font-semibold text-xs flex items-center justify-between gap-2 transition-all active:scale-95 cursor-pointer"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Package className="w-4 h-4 text-amber-400" />
-                    <span>Productos Facturables</span>
-                  </div>
-                  <span className="font-mono text-[11px] font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
-                    {products.length}
-                  </span>
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Bloque 3: Herramientas Fiscales y Ajustes */}
-          <div className="space-y-2.5">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-300 flex items-center gap-2">
-              <Sliders className="w-4 h-4 text-amber-400" />
-              <span>Herramientas Fiscales y Cuenta</span>
-            </h2>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-              {/* Factura Compleja */}
-              <button
-                type="button"
-                id="config-btn-complex-invoice"
-                onClick={onOpenComplexBudgetModal}
-                className="p-3.5 rounded-xl bg-neutral-900 hover:bg-neutral-850 border border-neutral-700 hover:border-amber-400/60 text-white font-semibold text-xs flex items-center gap-2.5 transition-all active:scale-95 cursor-pointer"
-              >
-                <Sliders className="w-4 h-4 text-amber-400" />
-                <span>Factura Compleja (m²/ml)</span>
-              </button>
-
-              {/* Veri*Factu AEAT */}
-              <button
-                type="button"
-                id="config-btn-verifactu"
-                onClick={onOpenVeriFactuModal}
-                className="p-3.5 rounded-xl bg-neutral-900 hover:bg-neutral-850 border border-neutral-700 hover:border-emerald-400/60 text-white font-semibold text-xs flex items-center gap-2.5 transition-all active:scale-95 cursor-pointer"
-              >
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>Veri*Factu AEAT</span>
-              </button>
-
-              {/* Serie y Numeración */}
-              <button
-                type="button"
-                id="config-btn-sequence"
-                onClick={onOpenConfigModal}
-                className="p-3.5 rounded-xl bg-neutral-900 hover:bg-neutral-850 border border-neutral-700 hover:border-amber-400/60 text-white font-semibold text-xs flex items-center gap-2.5 transition-all active:scale-95 cursor-pointer"
-              >
-                <Hash className="w-4 h-4 text-amber-400" />
-                <span>Serie y Numeración</span>
-              </button>
-
-              {/* Sesión de Usuario */}
-              <button
-                type="button"
-                id="config-btn-user-session"
-                onClick={onOpenAuthModal}
-                className="p-3.5 rounded-xl bg-neutral-900 hover:bg-neutral-850 border border-neutral-700 hover:border-amber-400/60 text-white font-semibold text-xs flex items-center gap-2.5 transition-all active:scale-95 cursor-pointer"
-              >
-                <KeyRound className="w-4 h-4 text-amber-400" />
-                <span className="truncate">{currentUser ? currentUser.name : 'Sesión / Login'}</span>
-              </button>
-
-              {/* Guardar en Dispositivo */}
-              <button
-                type="button"
-                id="config-btn-save-device"
-                onClick={onSaveDeviceData}
-                className="p-3.5 rounded-xl bg-neutral-900 hover:bg-neutral-850 border border-neutral-700 hover:border-amber-400/60 text-amber-300 font-semibold text-xs flex items-center gap-2.5 transition-all active:scale-95 cursor-pointer"
-              >
-                <Smartphone className="w-4 h-4 text-amber-400" />
-                <span>Guardar en Dispositivo</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* ========================================================================= */}
-        {/* SECCIÓN 2 (EN MEDIO): DATOS FISCALES DE LA EMPRESA & LOGOTIPO             */}
+        {/* SECCIÓN 1 (LO PRIMERO): DATOS FISCALES DE LA EMPRESA & LOGOTIPO           */}
         {/* ========================================================================= */}
         <div className="bg-neutral-900/80 border border-neutral-800 rounded-3xl p-6 sm:p-10 shadow-2xl space-y-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-neutral-800">
@@ -819,12 +625,73 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
                   ) : formData.logoUrl ? (
                     /* VISTA 2: LOGO CARGADO (CON BOTÓN PARA GENERAR CON IA O CAMBIAR) */
                     <div className="w-full flex flex-col items-center space-y-4">
-                      <div className="w-36 h-36 rounded-2xl bg-white p-3 border border-neutral-300 shadow-xl flex items-center justify-center overflow-hidden">
+                      <div
+                        onMouseDown={handleLogoTouchStart}
+                        onMouseUp={handleLogoTouchEnd}
+                        onMouseLeave={handleLogoTouchEnd}
+                        onTouchStart={handleLogoTouchStart}
+                        onTouchEnd={handleLogoTouchEnd}
+                        onTouchCancel={handleLogoTouchEnd}
+                        className={`w-36 h-36 rounded-2xl bg-white p-3 border ${
+                          isLogoPressing ? 'border-amber-400 ring-4 ring-amber-400/30 scale-105' : 'border-neutral-300'
+                        } shadow-xl flex items-center justify-center overflow-hidden relative transition-all cursor-pointer select-none`}
+                        title="Mantén pulsado 3 segundos para editar o eliminar el logotipo"
+                      >
                         <img
                           src={formData.logoUrl}
                           alt="Logo de Empresa"
-                          className="max-w-full max-h-full object-contain"
+                          className="max-w-full max-h-full object-contain pointer-events-none"
                         />
+
+                        {isLogoPressing && (
+                          <div className="absolute inset-0 bg-neutral-950/50 flex items-center justify-center backdrop-blur-[1px] transition-all animate-pulse">
+                            <span className="text-[10px] font-bold text-amber-300 bg-neutral-900/90 px-2 py-1 rounded-lg border border-amber-400/40 text-center leading-tight">
+                              Mantén 3s para opciones...
+                            </span>
+                          </div>
+                        )}
+
+                        {showLogoLongPressActions && (
+                          <div className="absolute inset-0 bg-neutral-950/95 flex flex-col items-center justify-center p-3 gap-2.5 z-20 animate-fadeIn">
+                            <p className="text-[10px] font-bold text-amber-300 uppercase tracking-widest text-center">
+                              Logotipo
+                            </p>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowLogoLongPressActions(false);
+                                fileInputRef.current?.click();
+                              }}
+                              className="w-full py-1.5 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-neutral-950 text-xs font-bold flex items-center justify-center gap-1.5 shadow transition-transform active:scale-95 cursor-pointer"
+                            >
+                              <Upload className="w-3.5 h-3.5" />
+                              <span>Editar Logotipo</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowLogoLongPressActions(false);
+                                handleRemoveLogo();
+                              }}
+                              className="w-full py-1.5 px-3 rounded-lg bg-red-950 hover:bg-red-900 border border-red-700 text-red-300 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Eliminar Logotipo</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowLogoLongPressActions(false);
+                              }}
+                              className="text-[10px] text-neutral-400 hover:text-white underline mt-0.5 cursor-pointer"
+                            >
+                              Cerrar
+                            </button>
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex flex-wrap items-center justify-center gap-2">
@@ -943,7 +810,345 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
         </div>
 
         {/* ========================================================================= */}
-        {/* SECCIÓN 3 (AL FINAL): DETALLES TÉCNICOS Y CONEXIONES EN LA NUBE            */}
+        {/* SECCIÓN 2: TEMAS DE LA APLICACIÓN (Debajo de Guardar datos de la empresa) */}
+        {/* ========================================================================= */}
+        <div className="bg-neutral-900/80 border border-neutral-800 rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-neutral-800">
+            <div>
+              <div className="flex items-center gap-2">
+                <Palette className="w-4 h-4 text-amber-400" />
+                <span className="text-[11px] font-mono uppercase tracking-widest text-amber-400 font-bold">
+                  APARIENCIA Y PERSONALIZACIÓN
+                </span>
+              </div>
+              <h3 className="text-lg sm:text-xl font-bold text-neutral-100 mt-1">
+                Selector de Tema de la Aplicación
+              </h3>
+              <p className="text-xs text-neutral-400 mt-0.5">
+                Cambia el tema cromático en toda la aplicación (excepto la página de inicio que permanece intacta).
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+            {/* Opción 1: Tema Oscuro */}
+            <button
+              type="button"
+              id="theme-btn-dark"
+              onClick={() => onSelectTheme && onSelectTheme('dark')}
+              className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between gap-4 ${
+                currentTheme === 'dark'
+                  ? 'bg-neutral-950 border-amber-400 shadow-lg shadow-amber-400/10 ring-2 ring-amber-400/30'
+                  : 'bg-neutral-950/60 border-neutral-800 hover:border-neutral-700 hover:bg-neutral-950'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-neutral-900 border border-amber-400/40 flex items-center justify-center text-amber-400">
+                    <Moon className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white uppercase tracking-wider">Tema Oscuro</h4>
+                    <span className="text-[10px] text-amber-400 font-mono font-semibold">Carbón & Ámbar</span>
+                  </div>
+                </div>
+                {currentTheme === 'dark' && (
+                  <span className="p-1 rounded-full bg-amber-400 text-neutral-950 font-bold">
+                    <Check className="w-3.5 h-3.5" />
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-neutral-400 leading-relaxed">
+                Apariencia original en tonos oscuros carbón, negro elegante y detalles dorados en ámbar.
+              </p>
+              <div className="flex items-center gap-2 pt-1 border-t border-neutral-800/80">
+                <span className="w-3.5 h-3.5 rounded-full bg-neutral-950 border border-neutral-700" />
+                <span className="w-3.5 h-3.5 rounded-full bg-neutral-850 border border-neutral-700" />
+                <span className="w-3.5 h-3.5 rounded-full bg-amber-400" />
+              </div>
+            </button>
+
+            {/* Opción 2: Tema Claro */}
+            <button
+              type="button"
+              id="theme-btn-light"
+              onClick={() => onSelectTheme && onSelectTheme('light')}
+              className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between gap-4 ${
+                currentTheme === 'light'
+                  ? 'bg-white border-sky-500 text-neutral-900 shadow-lg shadow-sky-500/10 ring-2 ring-sky-400/30'
+                  : 'bg-neutral-950/60 border-neutral-800 hover:border-neutral-700 hover:bg-neutral-950'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-sky-100 border border-sky-300 flex items-center justify-center text-sky-600">
+                    <Sun className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className={`text-sm font-bold uppercase tracking-wider ${currentTheme === 'light' ? 'text-neutral-900' : 'text-white'}`}>
+                      Tema Claro
+                    </h4>
+                    <span className="text-[10px] text-sky-500 font-mono font-semibold">Blanco Hueso & Celeste</span>
+                  </div>
+                </div>
+                {currentTheme === 'light' && (
+                  <span className="p-1 rounded-full bg-sky-500 text-white font-bold">
+                    <Check className="w-3.5 h-3.5" />
+                  </span>
+                )}
+              </div>
+              <p className={`text-xs leading-relaxed ${currentTheme === 'light' ? 'text-neutral-600' : 'text-neutral-400'}`}>
+                Fondo blanco, tarjetas blanco hueso, textos oscuros y líneas y botones en tonos azul y celeste.
+              </p>
+              <div className="flex items-center gap-2 pt-1 border-t border-neutral-200">
+                <span className="w-3.5 h-3.5 rounded-full bg-white border border-neutral-300" />
+                <span className="w-3.5 h-3.5 rounded-full bg-[#f8fafc] border border-neutral-300" />
+                <span className="w-3.5 h-3.5 rounded-full bg-sky-500" />
+              </div>
+            </button>
+
+            {/* Opción 3: Tema Cobalto Tech */}
+            <button
+              type="button"
+              id="theme-btn-indigo"
+              onClick={() => onSelectTheme && onSelectTheme('indigo')}
+              className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between gap-4 ${
+                currentTheme === 'indigo'
+                  ? 'bg-[#0b1120] border-cyan-400 shadow-lg shadow-cyan-400/10 ring-2 ring-cyan-400/30'
+                  : 'bg-neutral-950/60 border-neutral-800 hover:border-neutral-700 hover:bg-neutral-950'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-[#1e293b] border border-cyan-400/40 flex items-center justify-center text-cyan-400">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white uppercase tracking-wider">Cobalto Tech</h4>
+                    <span className="text-[10px] text-cyan-400 font-mono font-semibold">Azul Noche & Cian</span>
+                  </div>
+                </div>
+                {currentTheme === 'indigo' && (
+                  <span className="p-1 rounded-full bg-cyan-400 text-neutral-950 font-bold">
+                    <Check className="w-3.5 h-3.5" />
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-neutral-400 leading-relaxed">
+                Estilo marino tech en azul noche slate con contrastes en cian, índigo y esmeralda.
+              </p>
+              <div className="flex items-center gap-2 pt-1 border-t border-neutral-800">
+                <span className="w-3.5 h-3.5 rounded-full bg-[#0b1120] border border-neutral-700" />
+                <span className="w-3.5 h-3.5 rounded-full bg-[#1e293b] border border-neutral-700" />
+                <span className="w-3.5 h-3.5 rounded-full bg-cyan-400" />
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* ========================================================================= */}
+        {/* SECCIÓN 3: NOTIFICACIONES DEL NAVEGADOR (VERI*FACTU & VENCIMIENTO PAGOS)  */}
+        {/* ========================================================================= */}
+        <div className="bg-neutral-900/80 border border-neutral-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-800">
+            <div>
+              <div className="flex items-center gap-2">
+                <BellRing className="w-4 h-4 text-amber-400 animate-bounce" />
+                <span className="text-[11px] font-mono uppercase tracking-widest text-amber-400 font-bold">
+                  NOTIFICACIONES DEL NAVEGADOR
+                </span>
+              </div>
+              <h3 className="text-lg sm:text-xl font-bold text-neutral-100 mt-1 flex items-center gap-2">
+                Alertas en Pantalla (Veri*Factu & Vencimiento de Pagos)
+              </h3>
+              <p className="text-xs text-neutral-400 mt-0.5">
+                Recibe alertas automáticas en tu escritorio o móvil cuando una factura sea verificada en la AEAT o cuando un cobro/pago esté próximo a vencer.
+              </p>
+            </div>
+
+            {/* Badge de Estado del Permiso */}
+            <div className="flex items-center gap-2 shrink-0">
+              {notifPermission === 'granted' ? (
+                <div className="px-3 py-1.5 rounded-xl bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-xs font-bold flex items-center gap-1.5 shadow-md">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span>Permiso Concedido</span>
+                </div>
+              ) : notifPermission === 'denied' ? (
+                <div className="px-3 py-1.5 rounded-xl bg-red-950/80 border border-red-500/50 text-red-300 text-xs font-bold flex items-center gap-1.5 shadow-md">
+                  <BellOff className="w-4 h-4 text-red-400" />
+                  <span>Permiso Denegado</span>
+                </div>
+              ) : (
+                <div className="px-3 py-1.5 rounded-xl bg-amber-950/80 border border-amber-500/50 text-amber-300 text-xs font-bold flex items-center gap-1.5 shadow-md">
+                  <AlertTriangle className="w-4 h-4 text-amber-400" />
+                  <span>Permiso Pendiente</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Feedback temporal */}
+          {testNotifFeedback && (
+            <div className="p-3.5 rounded-2xl bg-amber-950/60 border border-amber-500/50 text-amber-200 text-xs font-semibold flex items-center justify-between gap-2 animate-fadeIn">
+              <div className="flex items-center gap-2">
+                <BellRing className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>{testNotifFeedback}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTestNotifFeedback(null)}
+                className="text-amber-400 hover:text-white font-bold text-sm"
+              >
+                ×
+              </button>
+            </div>
+          )}
+
+          {/* Grid de Controles de Notificación */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Control 1: Activar permiso */}
+            <div className="p-4 rounded-2xl bg-neutral-950/90 border border-neutral-800 space-y-3 flex flex-col justify-between">
+              <div>
+                <div className="w-9 h-9 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 mb-2">
+                  <Bell className="w-5 h-5" />
+                </div>
+                <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                  Permiso del Navegador
+                </h4>
+                <p className="text-[11px] text-neutral-400 mt-1 leading-snug">
+                  Habilita el permiso del sistema para recibir avisos nativos.
+                </p>
+              </div>
+              <button
+                type="button"
+                id="btn-enable-browser-notifications"
+                onClick={handleEnableBrowserNotifications}
+                className="w-full py-2.5 px-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-md"
+              >
+                <BellRing className="w-3.5 h-3.5 text-neutral-950" />
+                <span>{notifPermission === 'granted' ? 'Revisar Permiso' : 'Activar Notificaciones'}</span>
+              </button>
+            </div>
+
+            {/* Control 2: Probar Notificación Veri*Factu */}
+            <div className="p-4 rounded-2xl bg-neutral-950/90 border border-neutral-800 space-y-3 flex flex-col justify-between">
+              <div>
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-2">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                  Alerta Veri*Factu
+                </h4>
+                <p className="text-[11px] text-neutral-400 mt-1 leading-snug">
+                  Prueba la notificación nativa de verificación correcta en la AEAT.
+                </p>
+              </div>
+              <button
+                type="button"
+                id="btn-test-verifactu-notification"
+                onClick={handleTestVeriFactuNotif}
+                className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-md"
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Probar Veri*Factu</span>
+              </button>
+            </div>
+
+            {/* Control 3: Probar Notificación Vencimiento de Pago */}
+            <div className="p-4 rounded-2xl bg-neutral-950/90 border border-neutral-800 space-y-3 flex flex-col justify-between">
+              <div>
+                <div className="w-9 h-9 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 mb-2">
+                  <CalendarClock className="w-5 h-5" />
+                </div>
+                <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                  Alerta Vencimiento
+                </h4>
+                <p className="text-[11px] text-neutral-400 mt-1 leading-snug">
+                  Prueba el aviso de facturas o pagos próximos a su fecha límite.
+                </p>
+              </div>
+              <button
+                type="button"
+                id="btn-test-payment-due-notification"
+                onClick={handleTestPaymentDueNotif}
+                className="w-full py-2.5 px-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-md"
+              >
+                <CalendarClock className="w-3.5 h-3.5" />
+                <span>Probar Vencimiento</span>
+              </button>
+            </div>
+
+            {/* Control 4: Escanear todas las facturas y alertar */}
+            <div className="p-4 rounded-2xl bg-neutral-950/90 border border-neutral-800 space-y-3 flex flex-col justify-between">
+              <div>
+                <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 mb-2">
+                  <RefreshCw className="w-5 h-5" />
+                </div>
+                <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                  Escanear Facturas
+                </h4>
+                <p className="text-[11px] text-neutral-400 mt-1 leading-snug">
+                  Escanea cobros y pagos para enviar alertas de vencimientos en 3 días.
+                </p>
+              </div>
+              <button
+                type="button"
+                id="btn-scan-upcoming-payments"
+                onClick={handleScanUpcomingPayments}
+                className="w-full py-2.5 px-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-md"
+              >
+                <RefreshCw className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Comprobar Facturas</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Registro Histórico de Notificaciones Lanzadas */}
+          {notifLogs.length > 0 && (
+            <div className="pt-4 border-t border-neutral-800/80 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-neutral-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <Bell className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Historial de Notificaciones de Pantalla ({notifLogs.length})</span>
+                </span>
+                <span className="text-[10px] text-neutral-500">
+                  Web Notifications API
+                </span>
+              </div>
+
+              <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                {notifLogs.slice(0, 6).map((log) => (
+                  <div
+                    key={log.id}
+                    className="p-3 rounded-xl bg-neutral-950 border border-neutral-800/80 flex items-start justify-between gap-3 text-xs"
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <div className="w-6 h-6 rounded-lg bg-neutral-900 border border-neutral-800 flex items-center justify-center shrink-0 mt-0.5">
+                        {log.type === 'verifactu' ? (
+                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                        ) : log.type === 'payment_due' ? (
+                          <CalendarClock className="w-3.5 h-3.5 text-amber-400" />
+                        ) : (
+                          <Bell className="w-3.5 h-3.5 text-sky-400" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-bold text-white text-xs">{log.title}</p>
+                        <p className="text-[11px] text-neutral-400 mt-0.5 leading-snug">{log.body}</p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-neutral-500 font-mono shrink-0">
+                      {new Date(log.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ========================================================================= */}
+        {/* SECCIÓN 4: DETALLES TÉCNICOS Y CONEXIONES EN LA NUBE                       */}
         {/* Conexiones con Supabase, notificaciones.gestarian.com, Resend, Firebase... */}
         {/* ========================================================================= */}
         <div className="bg-neutral-900/40 border border-neutral-800/80 rounded-3xl p-6 sm:p-8 space-y-6">
@@ -1123,6 +1328,70 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
             <span>Memoria inteligente: <strong>{concepts.length} conceptos aprendidos</strong></span>
             <span>Secuencia actual: <strong>Nº {currentSequence}</strong></span>
             <span>Motor: Gestarian Core 4.2 · Veri*Factu AEAT Ready</span>
+          </div>
+        </div>
+
+        {/* ========================================================================= */}
+        {/* SECCIÓN 4 (AL FINAL DE LA PÁGINA): AJUSTES DEL SISTEMA Y FISCALES           */}
+        {/* ========================================================================= */}
+        <div className="space-y-3 pt-4 border-t border-neutral-800/80">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-300 flex items-center gap-2">
+            <Sliders className="w-4 h-4 text-amber-400" />
+            <span>Ajustes del Sistema y Fiscales</span>
+          </h2>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {/* Veri*Factu AEAT */}
+            {onOpenVeriFactuModal && (
+              <button
+                type="button"
+                id="config-btn-verifactu"
+                onClick={onOpenVeriFactuModal}
+                className="p-3.5 rounded-xl bg-neutral-900 hover:bg-neutral-850 border border-neutral-700 hover:border-emerald-400/60 text-white font-semibold text-xs flex items-center gap-2.5 transition-all active:scale-95 cursor-pointer shadow-md"
+              >
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <span>Veri*Factu AEAT</span>
+              </button>
+            )}
+
+            {/* Serie y Numeración */}
+            {onOpenConfigModal && (
+              <button
+                type="button"
+                id="config-btn-sequence"
+                onClick={onOpenConfigModal}
+                className="p-3.5 rounded-xl bg-neutral-900 hover:bg-neutral-850 border border-neutral-700 hover:border-amber-400/60 text-white font-semibold text-xs flex items-center gap-2.5 transition-all active:scale-95 cursor-pointer shadow-md"
+              >
+                <Hash className="w-4 h-4 text-amber-400" />
+                <span>Serie y Numeración</span>
+              </button>
+            )}
+
+            {/* Sesión de Usuario */}
+            {onOpenAuthModal && (
+              <button
+                type="button"
+                id="config-btn-user-session"
+                onClick={onOpenAuthModal}
+                className="p-3.5 rounded-xl bg-neutral-900 hover:bg-neutral-850 border border-neutral-700 hover:border-amber-400/60 text-white font-semibold text-xs flex items-center gap-2.5 transition-all active:scale-95 cursor-pointer shadow-md"
+              >
+                <KeyRound className="w-4 h-4 text-amber-400" />
+                <span className="truncate">{currentUser ? currentUser.name : 'Sesión / Login'}</span>
+              </button>
+            )}
+
+            {/* Guardar en Dispositivo */}
+            {onSaveDeviceData && (
+              <button
+                type="button"
+                id="config-btn-save-device"
+                onClick={onSaveDeviceData}
+                className="p-3.5 rounded-xl bg-neutral-900 hover:bg-neutral-850 border border-neutral-700 hover:border-amber-400/60 text-amber-300 font-semibold text-xs flex items-center gap-2.5 transition-all active:scale-95 cursor-pointer shadow-md"
+              >
+                <Smartphone className="w-4 h-4 text-amber-400" />
+                <span>Guardar en Dispositivo</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

@@ -1,31 +1,30 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import {
   Camera,
   Plus,
   Search,
   Receipt,
-  Building2,
   Phone,
   Mail,
-  Calendar,
   Sparkles,
   Trash2,
   Edit3,
-  CheckCircle2,
-  FileText,
-  DollarSign,
-  TrendingDown,
-  Percent,
   X,
   Eye,
-  ArrowRight,
-  HelpCircle,
+  Image as ImageIcon,
   FileCheck,
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  Check,
+  MapPin,
+  MessageCircle,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { ReceivedInvoice, ProviderData } from '../types';
 import { CameraInvoiceCaptureModal } from './CameraInvoiceCaptureModal';
 import { NewReceivedInvoiceFullScreenForm } from './NewReceivedInvoiceFullScreenForm';
-import { formatCurrency } from '../utils/formatters';
+import { formatCurrency, formatDate } from '../utils/formatters';
 
 interface ReceivedInvoicesScreenProps {
   invoices: ReceivedInvoice[];
@@ -43,7 +42,9 @@ export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
   const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [expandedInvoiceId, setExpandedInvoiceId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // Form State
@@ -63,13 +64,6 @@ export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
   const [notes, setNotes] = useState('');
   const [scannedWithOcr, setScannedWithOcr] = useState(false);
   const [capturedImageUrl, setCapturedImageUrl] = useState<string | undefined>(undefined);
-  const [ocrSuccessNotice, setOcrSuccessNotice] = useState<string | null>(null);
-
-  // Computed Cuota IVA and Total
-  const numBase = typeof baseImponible === 'number' ? baseImponible : 0;
-  const computedIvaAmount = Number(((numBase * ivaRate) / 100).toFixed(2));
-  const computedIrpfAmount = Number(((numBase * irpfRate) / 100).toFixed(2));
-  const computedTotal = Number((numBase + computedIvaAmount - computedIrpfAmount).toFixed(2));
 
   // Reset form
   const resetForm = () => {
@@ -89,7 +83,6 @@ export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
     setNotes('');
     setScannedWithOcr(false);
     setCapturedImageUrl(undefined);
-    setOcrSuccessNotice(null);
   };
 
   // Open form for a new invoice
@@ -116,216 +109,514 @@ export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
     setNotes(inv.notes || '');
     setScannedWithOcr(Boolean(inv.scannedWithOcr));
     setCapturedImageUrl(inv.capturedImageUrl);
-    setOcrSuccessNotice(null);
     setIsFormOpen(true);
   };
 
-  // Handle OCR extraction result from camera
+  // Callback when OCR camera extracts invoice data
   const handleInvoiceExtractedFromOcr = (
     data: Partial<ReceivedInvoice>,
     capturedImg?: string
   ) => {
+    resetForm();
     setIsFormOpen(true);
-    setEditingId(null); // It's a new received invoice
     setSupplierName(data.supplierName || '');
     setSupplierCif(data.supplierCif || '');
     setSupplierPhone(data.supplierPhone || '');
     setSupplierEmail(data.supplierEmail || '');
     setSupplierAddress(data.supplierAddress || '');
-    setInvoiceNumber(data.invoiceNumber || `FAC-${Date.now().toString().slice(-5)}`);
+    setInvoiceNumber(data.invoiceNumber || `FAC-${Date.now().toString().slice(-6)}`);
     setDate(data.date || new Date().toISOString().split('T')[0]);
-    setConcept(data.concept || '');
+    setConcept(data.concept || 'Gasto escaneado mediante OCR');
     setCategory(data.category || 'Suministros');
-    setBaseImponible(data.baseImponible ?? 0);
+    setBaseImponible(data.baseImponible ?? '');
     setIvaRate(data.ivaRate ?? 21);
     setIrpfRate(data.irpfRate ?? 0);
     setNotes(data.notes || '');
     setScannedWithOcr(true);
     setCapturedImageUrl(capturedImg);
-    setOcrSuccessNotice(
-      `¡Factura de "${data.supplierName || 'Proveedor'}" escaneada con éxito por Gemini OCR! Revisa los campos y pulsa Guardar.`
+  };
+
+  const toggleExpand = (id: string) => {
+    setExpandedInvoiceId((prev) => (prev === id ? null : id));
+  };
+
+  const handleCopy = (text: string, id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 1800);
+  };
+
+  const getSupplierPhone = (inv: ReceivedInvoice): string => {
+    if (inv.supplierPhone) return inv.supplierPhone;
+    const match = providers.find(
+      (p) =>
+        (inv.supplierCif && p.cif && p.cif.toLowerCase() === inv.supplierCif.toLowerCase()) ||
+        (p.name && inv.supplierName && p.name.toLowerCase() === inv.supplierName.toLowerCase())
     );
+    return match?.phone || '';
   };
 
-  // Save received invoice
-  const handleSubmitForm = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!supplierName.trim()) {
-      alert('Por favor, indica el nombre o razón social del proveedor.');
+  const handlePhoneClick = (phone: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!phone) {
+      alert('Esta factura no tiene teléfono de proveedor registrado. Pulsa en Editar para añadirlo.');
       return;
     }
-
-    if (numBase <= 0 && computedTotal <= 0) {
-      alert('Por favor, introduce una base imponible o importe válido.');
-      return;
-    }
-
-    const newInvoice: ReceivedInvoice = {
-      id: editingId || `rec-inv-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-      supplierName: supplierName.trim(),
-      supplierCif: supplierCif.trim(),
-      supplierPhone: supplierPhone.trim(),
-      supplierEmail: supplierEmail.trim(),
-      supplierAddress: supplierAddress.trim(),
-      invoiceNumber: invoiceNumber.trim() || `FAC-${Date.now().toString().slice(-6)}`,
-      date,
-      concept: concept.trim() || 'Gasto de suministros y servicios',
-      category,
-      baseImponible: numBase,
-      ivaRate,
-      ivaAmount: computedIvaAmount,
-      irpfRate,
-      irpfAmount: computedIrpfAmount,
-      totalAmount: computedTotal,
-      scannedWithOcr,
-      ocrModel: scannedWithOcr ? 'gemini-3.8-flash' : undefined,
-      capturedImageUrl,
-      notes: notes.trim(),
-      createdAt: Date.now(),
-    };
-
-    onSaveInvoice(newInvoice);
-    resetForm();
-    setIsFormOpen(false);
+    window.location.href = `tel:${phone.replace(/\s+/g, '')}`;
   };
 
-  // Calculations for summary metrics
-  const totals = useMemo(() => {
-    let sumBase = 0;
-    let sumIva = 0;
-    let sumTotal = 0;
-
-    invoices.forEach((inv) => {
-      sumBase += inv.baseImponible || 0;
-      sumIva += inv.ivaAmount || 0;
-      sumTotal += inv.totalAmount || 0;
-    });
-
-    return {
-      count: invoices.length,
-      sumBase,
-      sumIva,
-      sumTotal,
-    };
-  }, [invoices]);
+  const handleWhatsAppClick = (inv: ReceivedInvoice, phone: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!phone) {
+      alert('Esta factura no tiene teléfono de proveedor para WhatsApp. Pulsa en Editar para añadirlo.');
+      return;
+    }
+    const cleanNumber = phone.replace(/[^0-9]/g, '');
+    const formatted = cleanNumber.startsWith('34') ? cleanNumber : `34${cleanNumber}`;
+    const text = encodeURIComponent(
+      `Hola ${inv.supplierName || 'Proveedor'}, le escribo respecto a la factura recibida nº ${inv.invoiceNumber || 'registrada'}.`
+    );
+    window.open(`https://wa.me/${formatted}?text=${text}`, '_blank');
+  };
 
   // Filtered invoices
   const filteredInvoices = useMemo(() => {
     return invoices.filter((inv) => {
       const q = searchQuery.toLowerCase().trim();
-      const matchesQuery =
-        !q ||
+      if (!q) return true;
+      return (
         inv.supplierName.toLowerCase().includes(q) ||
         inv.supplierCif.toLowerCase().includes(q) ||
         inv.invoiceNumber.toLowerCase().includes(q) ||
-        inv.concept.toLowerCase().includes(q);
-
-      const matchesCat = selectedCategory === 'all' || inv.category === selectedCategory;
-
-      return matchesQuery && matchesCat;
+        inv.concept.toLowerCase().includes(q)
+      );
     });
-  }, [invoices, searchQuery, selectedCategory]);
+  }, [invoices, searchQuery]);
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 py-6 space-y-6">
-      {/* Top Banner & Title */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-neutral-800">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-amber-400/20 border border-amber-400/40 flex items-center justify-center text-amber-400">
-              <Receipt className="w-4 h-4" />
-            </div>
-            <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight uppercase">
-              Facturas Recibidas y Gastos
-            </h2>
-            <span className="px-2 py-0.5 rounded-full bg-neutral-800 border border-neutral-700 text-amber-400 text-[10px] font-extrabold uppercase">
-              Proveedores
-            </span>
-          </div>
-          <p className="text-xs text-neutral-400 max-w-2xl">
-            Gestiona los gastos de tu negocio. Rellena los datos manualmente o captura la factura con la cámara de tu dispositivo para extracción automática mediante IA Gemini OCR.
-          </p>
+    <div
+      id="received-invoices-screen-container"
+      className="w-full max-w-7xl mx-auto px-1 sm:px-2 pt-1 sm:pt-2 pb-8 space-y-3.5 text-neutral-100"
+    >
+      {/* Barra de acciones limpia: Buscador (anchura 0.5), Botón OCR y Botón + FACTURA */}
+      <div className="flex flex-row items-center justify-between gap-2 sm:gap-3 bg-neutral-950/80 border border-neutral-800/80 rounded-2xl p-2.5 sm:p-3 backdrop-blur-md shadow-lg">
+        {/* Campo de Búsqueda (anchura 0.5) */}
+        <div className="relative w-1/2 max-w-[50%]">
+          <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input
+            ref={searchInputRef}
+            type="text"
+            id="received-invoices-search-input"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Buscar por proveedor, CIF, número, concepto..."
+            className="w-full pl-9 pr-7 py-2 rounded-xl bg-neutral-900 border border-neutral-700/80 text-xs sm:text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-amber-400 transition-colors"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white text-xs px-1 cursor-pointer"
+              title="Limpiar búsqueda"
+            >
+              ✕
+            </button>
+          )}
         </div>
 
-        {/* Primary Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          {/* Cámara OCR Button (Prominent) */}
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          {/* Botón OCR Cámara */}
           <button
             type="button"
             id="btn-scan-invoice-camera"
             onClick={() => setIsCameraModalOpen(true)}
-            className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-neutral-950 font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-amber-400/20 active:scale-95 transition-all cursor-pointer"
-            title="Abrir cámara para escanear factura con Gemini OCR"
+            className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl bg-transparent hover:bg-amber-400/15 text-amber-400 hover:text-amber-300 border-2 border-amber-400 font-extrabold text-xs sm:text-sm shadow-sm transition-all active:scale-95 cursor-pointer shrink-0"
+            title="Escanear factura con OCR"
           >
-            <Camera className="w-4 h-4 text-neutral-950" />
-            <span>Capturar con Cámara</span>
-            <span className="bg-neutral-950 text-amber-300 text-[9px] px-1.5 py-0.5 rounded-full font-bold ml-0.5">
-              OCR
-            </span>
+            <Camera className="w-4 h-4 text-amber-400 stroke-[2.2]" />
+            <span>OCR</span>
           </button>
 
-          {/* Nueva Factura Manual Button */}
+          {/* Botón + FACTURA */}
           <button
             type="button"
             id="btn-new-received-invoice-manual"
             onClick={handleOpenNewForm}
-            className="py-2.5 px-4 rounded-xl bg-neutral-800 hover:bg-neutral-750 text-neutral-100 font-bold text-xs flex items-center gap-2 border border-neutral-700 shadow-md active:scale-95 transition-all cursor-pointer"
+            className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-transparent hover:bg-amber-400/15 text-amber-400 hover:text-amber-300 border-2 border-amber-400 font-extrabold text-xs sm:text-sm shadow-sm transition-all active:scale-95 cursor-pointer shrink-0"
+            title="Crear nueva factura recibida"
           >
-            <Plus className="w-4 h-4 text-amber-400" />
-            <span>Rellenar Manualmente</span>
+            <Plus className="w-4 h-4 text-amber-400 stroke-[2.5]" />
+            <span>+ FACTURA</span>
           </button>
         </div>
       </div>
 
-      {/* Summary KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="p-4 rounded-2xl bg-neutral-900 border border-neutral-800 space-y-1">
-          <div className="flex items-center justify-between text-neutral-400 text-xs font-semibold">
-            <span>Total Facturas</span>
-            <Receipt className="w-4 h-4 text-neutral-500" />
+      {/* Grid de Tarjetas de Facturas Recibidas - Mismo diseño que Clientes y Proveedores */}
+      {filteredInvoices.length === 0 ? (
+        <div className="bg-neutral-950/60 border border-neutral-800/80 rounded-2xl p-10 text-center space-y-3">
+          <div className="text-base font-bold text-white">
+            {searchQuery ? 'No se encontraron facturas recibidas' : 'Aún no hay facturas recibidas'}
           </div>
-          <div className="text-2xl sm:text-3xl font-black font-mono text-white">
-            {totals.count}
+          <p className="text-xs text-neutral-400 max-w-sm mx-auto">
+            {searchQuery
+              ? `No hay ninguna factura que coincida con "${searchQuery}".`
+              : 'Registra tu primera factura recibida usando la cámara OCR o rellenando los datos manualmente.'}
+          </p>
+          <div className="pt-2 flex justify-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => setIsCameraModalOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-transparent hover:bg-amber-400/15 text-amber-400 border-2 border-amber-400 font-bold text-xs transition-all cursor-pointer"
+            >
+              <Camera className="w-4 h-4" />
+              <span>Escanear con OCR</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleOpenNewForm}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Crear manualmente</span>
+            </button>
           </div>
-          <div className="text-[11px] text-neutral-500">Documentos contabilizados</div>
         </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 items-start">
+          {filteredInvoices.map((inv) => {
+            const isExpanded = expandedInvoiceId === inv.id;
+            const hasAnyExpanded = expandedInvoiceId !== null;
+            const isDimmed = hasAnyExpanded && !isExpanded;
+            const phone = getSupplierPhone(inv);
 
-        <div className="p-4 rounded-2xl bg-neutral-900 border border-neutral-800 space-y-1">
-          <div className="flex items-center justify-between text-neutral-400 text-xs font-semibold">
-            <span>Base Imponible</span>
-            <DollarSign className="w-4 h-4 text-neutral-500" />
-          </div>
-          <div className="text-2xl sm:text-3xl font-black font-mono text-stone-200">
-            {formatCurrency(totals.sumBase)}
-          </div>
-          <div className="text-[11px] text-neutral-500">Gasto neto antes de impuestos</div>
+            return (
+              <motion.div
+                key={inv.id}
+                id={`received-invoice-card-${inv.id}`}
+                layout
+                transition={{ duration: 0.25, ease: 'easeInOut' }}
+                className={`group relative rounded-2xl border-2 transition-all duration-300 flex flex-col justify-between overflow-hidden shadow-lg ${
+                  isExpanded
+                    ? 'bg-neutral-900/98 border-amber-400 shadow-2xl ring-2 ring-amber-400/50 z-10 scale-[1.01]'
+                    : 'bg-neutral-950/95 hover:bg-neutral-900/90 border-neutral-600 hover:border-amber-400/90'
+                } ${isDimmed ? 'opacity-50 brightness-70 contrast-85 transition-all duration-300' : 'opacity-100'}`}
+              >
+                {/* LÍNEA 1: Nombre del Proveedor y Número de factura en la cabecera (Al pulsar se expande/contrae) */}
+                <div
+                  onClick={() => toggleExpand(inv.id)}
+                  className="px-4 pt-3.5 pb-1.5 flex items-center justify-between gap-2 cursor-pointer hover:bg-neutral-800/40 transition-colors select-none"
+                  title="Pulsa para expandir o contraer todos los datos de la factura recibida"
+                >
+                  <div className="flex items-center gap-2 truncate flex-1 min-w-0">
+                    <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-amber-300 transition-colors truncate uppercase">
+                      {inv.supplierName || 'Proveedor'}
+                    </h3>
+                    <span className="font-mono text-xs sm:text-sm font-bold px-2 py-0.5 rounded-lg border shrink-0 bg-amber-400/15 text-amber-300 border-amber-400/30">
+                      {inv.invoiceNumber || 'S/N'}
+                    </span>
+                    {inv.scannedWithOcr && (
+                      <span
+                        className="shrink-0 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-amber-400/20 text-amber-300 border border-amber-400/40 px-2 py-0.5 rounded-full"
+                        title="Escaneada con OCR"
+                      >
+                        <Sparkles className="w-3 h-3 text-amber-400" />
+                        <span className="hidden sm:inline">OCR</span>
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="font-mono text-base sm:text-lg font-bold text-amber-300">
+                      {formatCurrency(inv.totalAmount || 0)}
+                    </span>
+                    <div className="p-1 text-neutral-400 hover:text-amber-300 transition-colors shrink-0">
+                      {isExpanded ? (
+                        <ChevronUp className="w-5 h-5 text-amber-400" />
+                      ) : (
+                        <ChevronDown className="w-5 h-5 text-neutral-400 group-hover:text-amber-300" />
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* LÍNEA 2: Fila de Iconos Grandes FLOTANTES SIN ENVOLTORIO (x1.5 más grandes, trazo 1.5px): Teléfono celeste, WhatsApp, Ver comprobante, Editar, Eliminar */}
+                <div className="px-3 pt-1 pb-3.5 grid grid-cols-5 place-items-center gap-1">
+                  {/* Icono 1: Teléfono Flotante (Celeste, 1.5px) */}
+                  <button
+                    type="button"
+                    onClick={(e) => handlePhoneClick(phone, e)}
+                    className="p-1 text-sky-400 hover:text-sky-300 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
+                    title={phone ? `Llamar a ${phone}` : 'Sin teléfono registrado (pulsa editar)'}
+                  >
+                    <Phone className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm" />
+                  </button>
+
+                  {/* Icono 2: WhatsApp Flotante (1.5px) */}
+                  <button
+                    type="button"
+                    onClick={(e) => handleWhatsAppClick(inv, phone, e)}
+                    className="p-1 text-[#25D366] hover:text-[#3df084] hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
+                    title={phone ? 'Abrir chat de WhatsApp' : 'Sin teléfono para WhatsApp'}
+                  >
+                    <MessageCircle className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm" />
+                  </button>
+
+                  {/* Icono 3: Ver Comprobante / Foto con icono de imagen estándar */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (inv.capturedImageUrl) {
+                        setPreviewImage(inv.capturedImageUrl);
+                      } else {
+                        toggleExpand(inv.id);
+                      }
+                    }}
+                    className={`p-1 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none ${
+                      inv.capturedImageUrl
+                        ? 'text-amber-400 hover:text-amber-300'
+                        : 'text-neutral-500 hover:text-neutral-400'
+                    }`}
+                    title={
+                      inv.capturedImageUrl
+                        ? 'Ver foto del comprobante / factura capturada'
+                        : 'Sin foto adjunta (pulsa para ver detalles)'
+                    }
+                  >
+                    <ImageIcon className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm" />
+                  </button>
+
+                  {/* Icono 4: Editar Flotante (1.5px) */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditInvoice(inv);
+                    }}
+                    className="p-1 text-neutral-300 hover:text-white hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
+                    title="Editar todos los datos de la factura recibida"
+                  >
+                    <Edit3 className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm" />
+                  </button>
+
+                  {/* Icono 5: Eliminar Flotante (1.5px) */}
+                  <button
+                    type="button"
+                    id={`btn-delete-received-invoice-${inv.id}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (window.confirm('¿Estás seguro de que deseas eliminar esta factura recibida?')) {
+                        onDeleteInvoice(inv.id);
+                      }
+                    }}
+                    className="p-1 text-rose-400 hover:text-rose-300 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
+                    title="Eliminar esta factura recibida"
+                  >
+                    <Trash2 className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm" />
+                  </button>
+                </div>
+
+                {/* ZONA EXPANDIBLE: Aparece de modo fluido al pulsar el nombre con texto aumentado x1.5 */}
+                <AnimatePresence initial={false}>
+                  {isExpanded && (
+                    <motion.div
+                      key={`expanded-content-${inv.id}`}
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.25, ease: 'easeInOut' }}
+                      className="overflow-hidden"
+                    >
+                      <div className="p-4 sm:p-5 bg-neutral-950/80 border-t border-neutral-800 space-y-4 text-base text-neutral-200">
+                        {/* Fecha de Emisión & NIF */}
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm sm:text-base font-bold uppercase tracking-wider text-neutral-400">
+                              Fecha:
+                            </span>
+                            <span className="font-mono text-base sm:text-lg font-bold text-white">
+                              {formatDate(inv.date)}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm sm:text-base font-bold uppercase tracking-wider text-neutral-400">
+                              NIF / CIF:
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-base sm:text-lg font-bold text-amber-300 bg-amber-400/10 px-3 py-1 rounded-lg border border-amber-400/30">
+                                {inv.supplierCif || 'SIN CIF'}
+                              </span>
+                              {inv.supplierCif && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleCopy(inv.supplierCif, `${inv.id}-cif`, e)}
+                                  className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer"
+                                  title="Copiar CIF"
+                                >
+                                  {copiedId === `${inv.id}-cif` ? (
+                                    <Check className="w-5 h-5 text-emerald-400" />
+                                  ) : (
+                                    <Copy className="w-5 h-5" />
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Concepto / Descripción */}
+                        <div className="space-y-1.5 pt-1 border-t border-neutral-850/80">
+                          <span className="text-sm sm:text-base font-bold uppercase tracking-wider text-neutral-400">
+                            Concepto / Descripción:
+                          </span>
+                          <div className="pl-2 text-neutral-100 text-base sm:text-lg">
+                            <p className="leading-relaxed">{inv.concept || 'Gasto general registrado'}</p>
+                          </div>
+                        </div>
+
+                        {/* Categoría */}
+                        {inv.category && (
+                          <div className="flex items-center justify-between gap-2 pt-1 border-t border-neutral-850/80">
+                            <span className="text-sm sm:text-base font-bold uppercase tracking-wider text-neutral-400">
+                              Categoría:
+                            </span>
+                            <span className="text-xs sm:text-sm font-semibold px-2.5 py-1 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-200">
+                              {inv.category}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Domicilio del Proveedor */}
+                        {inv.supplierAddress && (
+                          <div className="space-y-1.5 pt-1 border-t border-neutral-850/80">
+                            <span className="text-sm sm:text-base font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
+                              <MapPin className="w-4.5 h-4.5 text-neutral-400" />
+                              <span>Domicilio:</span>
+                            </span>
+                            <div className="pl-6 text-neutral-100 text-base sm:text-lg">
+                              <p className="leading-relaxed">{inv.supplierAddress}</p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Teléfono & Email */}
+                        {(phone || inv.supplierEmail) && (
+                          <div className="space-y-2 pt-1 border-t border-neutral-850/80">
+                            {phone && (
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-sm sm:text-base font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
+                                  <Phone className="w-4.5 h-4.5 text-sky-400 stroke-[1.5]" />
+                                  <span>Teléfono:</span>
+                                </span>
+                                <span className="font-mono text-sky-300 text-base sm:text-lg font-bold">
+                                  {phone}
+                                </span>
+                              </div>
+                            )}
+
+                            {inv.supplierEmail && (
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-sm sm:text-base font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
+                                  <Mail className="w-4.5 h-4.5 text-amber-400" />
+                                  <span>Email:</span>
+                                </span>
+                                <span className="text-neutral-300 text-base sm:text-lg truncate max-w-[240px]">
+                                  {inv.supplierEmail}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Desglose Fiscal (Base, IVA, IRPF, Total) */}
+                        <div className="pt-2 border-t border-neutral-850/80 space-y-2 bg-neutral-900/60 p-3 rounded-xl border border-neutral-800">
+                          <div className="flex items-center justify-between text-sm sm:text-base text-neutral-300">
+                            <span>Base Imponible:</span>
+                            <span className="font-mono font-bold">{formatCurrency(inv.baseImponible || 0)}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm sm:text-base text-neutral-300">
+                            <span>IVA ({inv.ivaRate ?? 21}%):</span>
+                            <span className="font-mono font-bold text-amber-300/90">
+                              +{formatCurrency(inv.ivaAmount || 0)}
+                            </span>
+                          </div>
+                          {(inv.irpfRate ?? 0) > 0 && (
+                            <div className="flex items-center justify-between text-sm sm:text-base text-neutral-300">
+                              <span>Retención IRPF ({inv.irpfRate}%):</span>
+                              <span className="font-mono font-bold text-rose-300">
+                                -{formatCurrency(inv.irpfAmount || 0)}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex items-center justify-between text-base sm:text-lg font-black text-white pt-1.5 border-t border-neutral-700">
+                            <span>TOTAL FACTURA:</span>
+                            <span className="font-mono text-amber-300">{formatCurrency(inv.totalAmount || 0)}</span>
+                          </div>
+                        </div>
+
+                        {/* Observaciones o Notas */}
+                        {inv.notes && (
+                          <div className="pt-2 border-t border-neutral-850/80 text-sm sm:text-base text-neutral-300">
+                            <span className="font-bold text-neutral-200">Notas: </span>
+                            <span className="italic">{inv.notes}</span>
+                          </div>
+                        )}
+
+                        {/* Comprobante / Foto escaneada */}
+                        {inv.capturedImageUrl && (
+                          <div className="pt-2 border-t border-neutral-850/80 flex items-center justify-between">
+                            <span className="text-sm font-semibold text-neutral-300">Foto original:</span>
+                            <button
+                              type="button"
+                              onClick={() => setPreviewImage(inv.capturedImageUrl || null)}
+                              className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-400 hover:text-amber-300 py-1 px-2.5 rounded-lg bg-amber-400/10 border border-amber-400/30 cursor-pointer transition-colors"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>Ver comprobante completo</span>
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Pie de acciones expandidas: Eliminar factura y Editar */}
+                        <div className="pt-3 border-t border-neutral-850 flex flex-wrap items-center justify-between gap-3">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (window.confirm('¿Estás seguro de que deseas eliminar esta factura recibida?')) {
+                                  onDeleteInvoice(inv.id);
+                                }
+                              }}
+                              className="inline-flex items-center gap-2 text-sm sm:text-base text-red-400 hover:text-red-300 transition-colors py-1.5 px-3 rounded-lg hover:bg-red-950/50 cursor-pointer font-bold"
+                              title="Eliminar factura recibida"
+                            >
+                              <Trash2 className="w-4.5 h-4.5" />
+                              <span>Eliminar</span>
+                            </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleEditInvoice(inv)}
+                            className="inline-flex items-center gap-2 text-sm sm:text-base text-amber-400 hover:text-amber-300 transition-colors py-1.5 px-3 rounded-lg hover:bg-amber-400/15 cursor-pointer font-bold"
+                          >
+                            <Edit3 className="w-4.5 h-4.5 stroke-[2]" />
+                            <span>Editar datos</span>
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          })}
         </div>
+      )}
 
-        <div className="p-4 rounded-2xl bg-neutral-900 border border-neutral-800 space-y-1">
-          <div className="flex items-center justify-between text-amber-400 text-xs font-semibold">
-            <span>IVA Deducible (21%)</span>
-            <Percent className="w-4 h-4 text-amber-400" />
-          </div>
-          <div className="text-2xl sm:text-3xl font-black font-mono text-amber-400">
-            {formatCurrency(totals.sumIva)}
-          </div>
-          <div className="text-[11px] text-neutral-400">IVA soportado a compensar</div>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-gradient-to-br from-neutral-900 to-neutral-950 border-2 border-neutral-700 space-y-1 shadow-lg">
-          <div className="flex items-center justify-between text-neutral-300 text-xs font-bold uppercase tracking-wider">
-            <span>Total Gastos</span>
-            <TrendingDown className="w-4 h-4 text-red-400" />
-          </div>
-          <div className="text-2xl sm:text-3xl font-black font-mono text-white">
-            {formatCurrency(totals.sumTotal)}
-          </div>
-          <div className="text-[11px] text-neutral-400">Importe final liquidado</div>
-        </div>
-      </div>
-
-      {/* FORMULARIO DE RELLENO / EDICIÓN A4 */}
+      {/* Modal de Formulario de Factura Recibida */}
       {isFormOpen && (
         <NewReceivedInvoiceFullScreenForm
           isOpen={isFormOpen}
@@ -362,553 +653,6 @@ export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
         />
       )}
 
-
-
-
-
-
-
-          {/* Formulario migrado a NewReceivedInvoiceFullScreenForm */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold text-neutral-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <Building2 className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Datos Fiscales del Proveedor</span>
-                </h4>
-
-                {/* Autocompletado rápido desde proveedores existentes */}
-                {providers.length > 0 && (
-                  <div className="flex items-center gap-1 text-[11px] text-neutral-400">
-                    <span>O seleccionar guardado:</span>
-                    <select
-                      className="bg-neutral-900 border border-neutral-700 text-neutral-200 text-xs rounded-lg px-2 py-1 focus:border-amber-400 focus:outline-none"
-                      onChange={(e) => {
-                        const prov = providers.find((p) => p.name === e.target.value);
-                        if (prov) {
-                          setSupplierName(prov.name);
-                          setSupplierCif(prov.cif);
-                          setSupplierPhone(prov.phone);
-                          setSupplierEmail(prov.email);
-                          setSupplierAddress(prov.address);
-                        }
-                      }}
-                      defaultValue=""
-                    >
-                      <option value="" disabled>
-                        -- Proveedores guardados --
-                      </option>
-                      {providers.map((p, idx) => (
-                        <option key={idx} value={p.name}>
-                          {p.name} ({p.cif})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="lg:col-span-2">
-                  <label className="block text-[11px] font-semibold text-neutral-400 mb-1">
-                    Nombre o Razón Social del Proveedor *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={supplierName}
-                    onChange={(e) => setSupplierName(e.target.value)}
-                    placeholder="Ej: Suministros Industriales S.L."
-                    className="w-full px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-xl text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-neutral-400 mb-1">
-                    CIF / NIF / NIE *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={supplierCif}
-                    onChange={(e) => setSupplierCif(e.target.value.toUpperCase())}
-                    placeholder="B12345678"
-                    className="w-full px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-xl text-xs text-white placeholder-neutral-500 font-mono uppercase focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-neutral-400 mb-1">
-                    Teléfono
-                  </label>
-                  <input
-                    type="tel"
-                    value={supplierPhone}
-                    onChange={(e) => setSupplierPhone(e.target.value)}
-                    placeholder="+34 912 345 678"
-                    className="w-full px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-xl text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-neutral-400 mb-1">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={supplierEmail}
-                    onChange={(e) => setSupplierEmail(e.target.value)}
-                    placeholder="facturacion@proveedor.es"
-                    className="w-full px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-xl text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
-                  />
-                </div>
-
-                <div className="lg:col-span-3">
-                  <label className="block text-[11px] font-semibold text-neutral-400 mb-1">
-                    Dirección Fiscal
-                  </label>
-                  <input
-                    type="text"
-                    value={supplierAddress}
-                    onChange={(e) => setSupplierAddress(e.target.value)}
-                    placeholder="Calle, Polígono, Ciudad, Código Postal..."
-                    className="w-full px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-xl text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Sección 2: Datos de la Factura Recibida */}
-            <div className="space-y-3 pt-3 border-t border-neutral-800">
-              <h4 className="text-xs font-bold text-neutral-300 uppercase tracking-wider flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5 text-amber-400" />
-                <span>Identificación de la Factura o Gasto</span>
-              </h4>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-[11px] font-semibold text-neutral-400 mb-1">
-                    Número de Factura / Ticket *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={invoiceNumber}
-                    onChange={(e) => setInvoiceNumber(e.target.value)}
-                    placeholder="FAC-2026-001"
-                    className="w-full px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-xl text-xs text-white placeholder-neutral-500 font-mono focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-neutral-400 mb-1">
-                    Fecha de Expedición *
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className="w-full px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-xl text-xs text-white focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-neutral-400 mb-1">
-                    Categoría de Gasto
-                  </label>
-                  <select
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="w-full px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-xl text-xs text-white focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
-                  >
-                    <option value="Suministros">Suministros (Luz, Agua, Internet)</option>
-                    <option value="Materiales">Materiales y Mercancías</option>
-                    <option value="Servicios Profesionales">Servicios Profesionales / Asesoría</option>
-                    <option value="Software">Software y Herramientas Digitales</option>
-                    <option value="Alquiler">Alquiler de Local / Oficina</option>
-                    <option value="Transporte">Transporte y Combustible</option>
-                    <option value="Dietas">Dietas y Hostelería</option>
-                    <option value="Otros">Otros Gastos</option>
-                  </select>
-                </div>
-
-                <div className="sm:col-span-3">
-                  <label className="block text-[11px] font-semibold text-neutral-400 mb-1">
-                    Concepto o Descripción del Gasto *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={concept}
-                    onChange={(e) => setConcept(e.target.value)}
-                    placeholder="Ej: Material de oficina, tóner, hosting anual o servicios de consultoría"
-                    className="w-full px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-xl text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Sección 3: Importes y Desglose de IVA (Base Imponible, IVA 21%, Total) */}
-            <div className="space-y-3 pt-3 border-t border-neutral-800">
-              <h4 className="text-xs font-bold text-neutral-300 uppercase tracking-wider flex items-center gap-1.5">
-                <DollarSign className="w-3.5 h-3.5 text-amber-400" />
-                <span>Desglose Económico e Importes Fiscales</span>
-              </h4>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 rounded-xl bg-neutral-900/80 border border-neutral-800">
-                {/* Base Imponible */}
-                <div>
-                  <label className="block text-[11px] font-bold text-neutral-300 mb-1">
-                    Base Imponible (€) *
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    required
-                    value={baseImponible}
-                    onChange={(e) =>
-                      setBaseImponible(e.target.value === '' ? '' : parseFloat(e.target.value))
-                    }
-                    placeholder="0.00"
-                    className="w-full px-3 py-2.5 bg-neutral-950 border border-neutral-700 rounded-xl text-sm font-bold font-mono text-white placeholder-neutral-600 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
-                  />
-                </div>
-
-                {/* Tipo de IVA */}
-                <div>
-                  <label className="block text-[11px] font-bold text-neutral-300 mb-1">
-                    Tipo de IVA (%)
-                  </label>
-                  <select
-                    value={ivaRate}
-                    onChange={(e) => setIvaRate(Number(e.target.value))}
-                    className="w-full px-3 py-2.5 bg-neutral-950 border border-neutral-700 rounded-xl text-sm font-bold font-mono text-amber-300 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
-                  >
-                    <option value={21}>21% (General)</option>
-                    <option value={10}>10% (Reducido)</option>
-                    <option value={4}>4% (Superreducido)</option>
-                    <option value={0}>0% (Exento)</option>
-                  </select>
-                </div>
-
-                {/* Cuota de IVA (calculada) */}
-                <div>
-                  <label className="block text-[11px] font-bold text-neutral-400 mb-1">
-                    Cuota de IVA ({ivaRate}%)
-                  </label>
-                  <div className="w-full px-3 py-2.5 bg-neutral-950/70 border border-neutral-800 rounded-xl text-sm font-bold font-mono text-amber-400 flex items-center justify-between">
-                    <span>{formatCurrency(computedIvaAmount)}</span>
-                    <span className="text-[10px] text-neutral-500 font-normal">Automático</span>
-                  </div>
-                </div>
-
-                {/* Total Factura Recibida */}
-                <div>
-                  <label className="block text-[11px] font-black text-amber-300 mb-1 uppercase tracking-wider">
-                    Total Factura (€)
-                  </label>
-                  <div className="w-full px-3 py-2 bg-gradient-to-r from-amber-400/20 to-amber-500/20 border-2 border-amber-400 rounded-xl text-base font-black font-mono text-amber-300 flex items-center justify-between">
-                    <span>{formatCurrency(computedTotal)}</span>
-                    <CheckCircle2 className="w-4 h-4 text-amber-400" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Foto de comprobante capturada si existe */}
-            {capturedImageUrl && (
-              <div className="p-3 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-lg bg-neutral-950 overflow-hidden border border-neutral-700 shrink-0">
-                    <img
-                      src={capturedImageUrl}
-                      alt="Factura capturada"
-                      className="w-full h-full object-cover cursor-pointer"
-                      onClick={() => setPreviewImage(capturedImageUrl)}
-                    />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-neutral-200 flex items-center gap-1.5">
-                      <Sparkles className="w-3 h-3 text-amber-400" />
-                      <span>Imagen de Factura Capturada con Cámara</span>
-                    </div>
-                    <div className="text-[11px] text-neutral-400">
-                      Asociada a esta tarjeta de gasto para comprobación fiscal
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPreviewImage(capturedImageUrl)}
-                    className="px-2.5 py-1 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-semibold flex items-center gap-1"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>Ver</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCapturedImageUrl(undefined)}
-                    className="p-1 text-neutral-500 hover:text-red-400"
-                    title="Eliminar foto adjunta"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Botones de acción del formulario */}
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-neutral-800">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsFormOpen(false);
-                  resetForm();
-                }}
-                className="px-4 py-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-700 text-neutral-300 text-xs font-bold transition-colors cursor-pointer"
-              >
-                Cancelar
-              </button>
-
-              <button
-                type="submit"
-                id="save-received-invoice-btn"
-                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-neutral-950 font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-amber-500/20 active:scale-95 transition-all cursor-pointer"
-              >
-                <CheckCircle2 className="w-4 h-4 text-neutral-950" />
-                <span>{editingId ? 'Actualizar Factura' : 'Guardar Factura Recibida'}</span>
-              </button>
-            </div>
-
-
-      {/* Toolbar: Filtro y Búsqueda */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 rounded-2xl bg-neutral-900 border border-neutral-800">
-        <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-neutral-500 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Buscar por proveedor, CIF o nº factura..."
-            className="w-full pl-9 pr-3 py-2 bg-neutral-950 border border-neutral-700 rounded-xl text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-amber-400"
-          />
-        </div>
-
-        {/* Categorías */}
-        <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 text-xs">
-          {[
-            { id: 'all', label: 'Todos' },
-            { id: 'Suministros', label: 'Suministros' },
-            { id: 'Materiales', label: 'Materiales' },
-            { id: 'Servicios Profesionales', label: 'Servicios' },
-            { id: 'Software', label: 'Software' },
-          ].map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`px-3 py-1.5 rounded-lg font-semibold whitespace-nowrap transition-colors ${
-                selectedCategory === cat.id
-                  ? 'bg-amber-400 text-neutral-950'
-                  : 'bg-neutral-800 text-neutral-300 hover:bg-neutral-750'
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* LISTADO DE TARJETAS DE FACTURAS RECIBIDAS */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between px-1">
-          <h3 className="text-xs font-bold text-neutral-400 uppercase tracking-wider">
-            Listado de Facturas Recibidas ({filteredInvoices.length})
-          </h3>
-          <span className="text-[11px] text-neutral-500">
-            Ordenadas por fecha de registro
-          </span>
-        </div>
-
-        {filteredInvoices.length === 0 ? (
-          <div className="p-12 text-center rounded-2xl bg-neutral-900 border border-neutral-800 space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-neutral-800 text-neutral-500 flex items-center justify-center mx-auto">
-              <Receipt className="w-6 h-6" />
-            </div>
-            <div className="space-y-1">
-              <h4 className="text-sm font-bold text-neutral-300">No hay facturas recibidas</h4>
-              <p className="text-xs text-neutral-500 max-w-sm mx-auto">
-                {searchQuery
-                  ? 'No se encontraron facturas con los criterios de búsqueda especificados.'
-                  : 'Empieza capturando tu primera factura con la cámara o rellenando los datos manualmente.'}
-              </p>
-            </div>
-            <div className="pt-2 flex justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => setIsCameraModalOpen(true)}
-                className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-md"
-              >
-                <Camera className="w-3.5 h-3.5" />
-                <span>Capturar con Cámara</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleOpenNewForm}
-                className="px-4 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-semibold text-xs flex items-center gap-1.5 cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Rellenar Manualmente</span>
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredInvoices.map((inv) => (
-              <div
-                key={inv.id}
-                id={`received-invoice-card-${inv.id}`}
-                className="p-5 rounded-2xl bg-neutral-900/90 border border-neutral-800 hover:border-neutral-700 flex flex-col justify-between space-y-4 shadow-lg hover:shadow-xl transition-all group relative overflow-hidden"
-              >
-                {/* Top: Supplier and Badges */}
-                <div className="space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider block">
-                        PROVEEDOR
-                      </span>
-                      <h4 className="text-sm font-extrabold text-white group-hover:text-amber-300 transition-colors line-clamp-1">
-                        {inv.supplierName}
-                      </h4>
-                    </div>
-
-                    {inv.scannedWithOcr && (
-                      <span
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-300 text-[10px] font-bold shrink-0"
-                        title="Escaneada con Gemini OCR"
-                      >
-                        <Sparkles className="w-2.5 h-2.5 text-amber-400" />
-                        <span>Gemini OCR</span>
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Supplier info tags */}
-                  <div className="space-y-1 text-[11px] text-neutral-400">
-                    <div className="flex items-center gap-2 font-mono text-neutral-300">
-                      <span className="font-semibold text-amber-400">CIF:</span>
-                      <span>{inv.supplierCif || 'No especificado'}</span>
-                    </div>
-
-                    {(inv.supplierPhone || inv.supplierEmail) && (
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-neutral-400 pt-0.5">
-                        {inv.supplierPhone && (
-                          <span className="flex items-center gap-1">
-                            <Phone className="w-3 h-3 text-neutral-500" />
-                            <span>{inv.supplierPhone}</span>
-                          </span>
-                        )}
-                        {inv.supplierEmail && (
-                          <span className="flex items-center gap-1">
-                            <Mail className="w-3 h-3 text-neutral-500" />
-                            <span className="truncate max-w-[140px]">{inv.supplierEmail}</span>
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Middle: Document details */}
-                <div className="p-3 rounded-xl bg-neutral-950/70 border border-neutral-850 space-y-1.5 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-neutral-300 font-bold">
-                      {inv.invoiceNumber}
-                    </span>
-                    <span className="text-neutral-500 text-[11px] flex items-center gap-1">
-                      <Calendar className="w-3 h-3 text-neutral-600" />
-                      {inv.date}
-                    </span>
-                  </div>
-
-                  <p className="text-neutral-400 text-[11px] line-clamp-2 italic">
-                    "{inv.concept}"
-                  </p>
-
-                  <div className="pt-1 flex items-center justify-between">
-                    <span className="px-2 py-0.5 rounded-md bg-neutral-800 text-neutral-300 text-[10px] font-medium">
-                      {inv.category || 'Gasto General'}
-                    </span>
-
-                    {inv.capturedImageUrl && (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewImage(inv.capturedImageUrl || null)}
-                        className="text-[10px] text-amber-400 hover:text-amber-300 flex items-center gap-1 font-semibold"
-                      >
-                        <Eye className="w-3 h-3" />
-                        <span>Ver foto original</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Bottom: Amounts Breakdown */}
-                <div className="pt-2 border-t border-neutral-800 space-y-2">
-                  <div className="flex items-center justify-between text-xs text-neutral-400 font-mono">
-                    <span>Base: {formatCurrency(inv.baseImponible)}</span>
-                    <span className="text-amber-400 font-semibold">
-                      IVA ({inv.ivaRate}%): +{formatCurrency(inv.ivaAmount)}
-                    </span>
-                  </div>
-
-                  <div className="flex items-baseline justify-between pt-1 border-t border-neutral-850">
-                    <span className="text-xs font-bold uppercase tracking-wider text-neutral-300">
-                      Total Factura
-                    </span>
-                    <span className="text-lg sm:text-xl font-black font-mono text-white">
-                      {formatCurrency(inv.totalAmount)}
-                    </span>
-                  </div>
-
-                  {/* Actions (Editar / Eliminar) */}
-                  <div className="flex items-center justify-end gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => handleEditInvoice(inv)}
-                      className="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-750 text-neutral-300 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-                    >
-                      <Edit3 className="w-3.5 h-3.5 text-neutral-400" />
-                      <span>Editar</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (
-                          confirm(
-                            `¿Estás seguro de eliminar la factura recibida de "${inv.supplierName}"?`
-                          )
-                        ) {
-                          onDeleteInvoice(inv.id);
-                        }
-                      }}
-                      className="p-1.5 rounded-lg text-neutral-500 hover:text-red-400 hover:bg-neutral-800 transition-colors cursor-pointer"
-                      title="Eliminar factura recibida"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
       {/* Modal de Cámara / OCR */}
       <CameraInvoiceCaptureModal
         isOpen={isCameraModalOpen}
@@ -934,7 +678,7 @@ export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
               <button
                 type="button"
                 onClick={() => setPreviewImage(null)}
-                className="p-1 text-neutral-400 hover:text-white"
+                className="p-1 text-neutral-400 hover:text-white cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>

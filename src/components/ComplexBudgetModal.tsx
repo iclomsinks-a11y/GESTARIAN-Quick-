@@ -9,14 +9,16 @@ import {
   Calculator,
   Layers,
   ArrowRight,
+  User,
 } from 'lucide-react';
-import { ComplexBudgetVariant, VariantUnitType, InvoiceItem } from '../types';
+import { ComplexBudgetVariant, VariantUnitType, InvoiceItem, ClientData } from '../types';
 import { formatCurrency } from '../utils/formatters';
 
 interface ComplexBudgetModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onInsertItem: (item: InvoiceItem) => void;
+  onInsertItem: (item: InvoiceItem, client?: ClientData | null) => void;
+  client?: ClientData | null;
 }
 
 // Preset templates
@@ -72,6 +74,7 @@ export const ComplexBudgetModal: React.FC<ComplexBudgetModalProps> = ({
   isOpen,
   onClose,
   onInsertItem,
+  client,
 }) => {
   const [conceptTitle, setConceptTitle] = useState(
     'Confección e instalación de cortina a medida'
@@ -178,7 +181,7 @@ export const ComplexBudgetModal: React.FC<ComplexBudgetModalProps> = ({
         unitPrice,
       },
     };
-    onInsertItem(newItem);
+    onInsertItem(newItem, client);
     onClose();
   };
 
@@ -192,13 +195,22 @@ export const ComplexBudgetModal: React.FC<ComplexBudgetModalProps> = ({
               <Sliders className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-neutral-100 flex items-center gap-2">
-                <span>Configurador de Factura Compleja / Variantes</span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-base font-bold text-neutral-100">
+                  Configurador de Factura Compleja
+                </h2>
                 <span className="text-[10px] uppercase font-mono tracking-wider px-2 py-0.5 rounded-full bg-amber-400/10 text-amber-300 border border-amber-400/20">
                   Concepto Técnico
                 </span>
-              </h2>
-              <p className="text-xs text-neutral-400">
+                {client && (
+                  <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30 flex items-center gap-1">
+                    <User className="w-3 h-3 text-sky-400" />
+                    <span>{client.name}</span>
+                    <span className="font-mono text-[10px] opacity-75">({client.nif})</span>
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-neutral-400 mt-0.5">
                 Configure partidas técnicas de factura con variantes avanzadas (materiales, fruncidos %, metros lineales ml, metros cuadrados m², acabados).
               </p>
             </div>
@@ -461,9 +473,13 @@ export const ComplexBudgetModal: React.FC<ComplexBudgetModalProps> = ({
           <button
             type="button"
             onClick={handleInsert}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold text-neutral-950 bg-amber-400 hover:bg-amber-300 transition-all shadow-[0_0_20px_rgba(245,158,11,0.2)] active:scale-95"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold text-neutral-950 bg-amber-400 hover:bg-amber-300 transition-all shadow-[0_0_20px_rgba(245,158,11,0.2)] active:scale-95 cursor-pointer"
           >
-            <span>Insertar en Factura</span>
+            <span>
+              {client
+                ? `Generar Factura Compleja (${formatCurrency(totalCalculated)})`
+                : `Insertar en Factura (${formatCurrency(totalCalculated)})`}
+            </span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>

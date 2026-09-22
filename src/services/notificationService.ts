@@ -450,3 +450,288 @@ export async function sendGestarianEmailNotification(
   return record;
 }
 
+// ==========================================
+// WEB BROWSER NOTIFICATIONS SERVICE
+// ==========================================
+
+export interface BrowserNotificationLog {
+  id: string;
+  title: string;
+  body: string;
+  type: 'verifactu' | 'payment_due' | 'test' | 'general';
+  timestamp: string;
+  invoiceNumber?: string;
+  read: boolean;
+}
+
+const STORAGE_NOTIF_LOG_KEY = 'gestarian_browser_notifications_log_v1';
+const STORAGE_NOTIFIED_DUE_DATES_KEY = 'gestarian_notified_due_dates_v1';
+
+export function isBrowserNotificationSupported(): boolean {
+  return typeof window !== 'undefined' && 'Notification' in window;
+}
+
+export function getBrowserNotificationPermission(): NotificationPermission | 'unsupported' {
+  if (!isBrowserNotificationSupported()) return 'unsupported';
+  return Notification.permission;
+}
+
+export async function requestBrowserNotificationPermission(): Promise<NotificationPermission | 'unsupported'> {
+  if (!isBrowserNotificationSupported()) return 'unsupported';
+  try {
+    const permission = await Notification.requestPermission();
+    return permission;
+  } catch (err) {
+    console.error('Error pidiendo permiso de notificaciones:', err);
+    return Notification.permission;
+  }
+}
+
+export function saveBrowserNotificationLog(logItem: Omit<BrowserNotificationLog, 'id' | 'timestamp' | 'read'>): BrowserNotificationLog {
+  const item: BrowserNotificationLog = {
+    ...logItem,
+    id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+    timestamp: new Date().toISOString(),
+    read: false,
+  };
+  try {
+    const existing = getBrowserNotificationLogs();
+    const updated = [item, ...existing].slice(0, 100);
+    localStorage.setItem(STORAGE_NOTIF_LOG_KEY, JSON.stringify(updated));
+  } catch (err) {
+    console.error('Error guardando log de notificación:', err);
+  }
+  return item;
+}
+
+export function getBrowserNotificationLogs(): BrowserNotificationLog[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_NOTIF_LOG_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function sendBrowserNotification(
+  title: string,
+  options?: NotificationOptions & { invoiceNumber?: string; notifType?: BrowserNotificationLog['type'] }
+): Notification | null {
+  // Always log locally
+  saveBrowserNotificationLog({
+    title,
+    body: options?.body || '',
+    type: options?.notifType || 'general',
+    invoiceNumber: options?.invoiceNumber,
+  });
+
+  if (!isBrowserNotificationSupported()) {
+    console.warn('Las notificaciones del navegador no están soportadas en este entorno.');
+    return null;
+  }
+
+  if (Notification.permission === 'granted') {
+    try {
+      const notif = new Notification(title, {
+        icon: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%231d4ed8"/><text x="50" y="65" font-family="sans-serif" font-size="50" font-weight="bold" fill="white" text-anchor="middle">G</text></svg>',
+        badge: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%231d4ed8"/><text x="50" y="65" font-family="sans-serif" font-size="50" font-weight="bold" fill="white" text-anchor="middle">G</text></svg>',
+        requireInteraction: false,
+        ...options,
+      });
+
+      notif.onclick = () => {
+        window.focus();
+        notif.close();
+      };
+
+      return notif;
+    } catch (err) {
+      console.error('Error al lanzar notificación del navegador:', err);
+      return null;
+    }
+  } else if (Notification.permission === 'default') {
+    requestBrowserNotificationPermission().then((perm) => {
+      if (perm === 'granted') {
+        sendBrowserNotification(title, options);
+      }
+    });
+  }
+
+  return null;
+}
+
+/**
+ * Lanza una notificación cuando una factura se verifica con Veri*Factu (AEAT)
+ */
+export function notifyVeriFactuVerificationSuccess(params: {
+  invoiceNumber: string;
+  clientName?: string;
+  totalAmount?: number;
+  chainHash?: string;
+}): void {
+  const formattedAmount = params.totalAmount !== undefined
+    ? ` por ${params.totalAmount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
+    : '';
+  const clientText = params.clientName ? ` (${params.clientName})` : '';
+
+  const title = `✅ Factura ${params.invoiceNumber} Verificada en Veri*Factu`;
+  const body = `La factura ${params.invoiceNumber}${clientText}${formattedAmount} ha sido validada y registrada correctamente con huella criptográfica encadenada en la AEAT.`;
+
+  sendBrowserNotification(title, {
+    body,
+    tag: `verifactu-ok-${params.invoiceNumber}`,
+    invoiceNumber: params.invoiceNumber,
+    notifType: 'verifactu',
+  });
+}
+
+/**
+ * Lanza una notificación de alerta cuando un pago o cobro está próximo a vencer
+ */
+export function notifyPaymentDueDateUpcoming(params: {
+  invoiceNumber: string;
+  entityName: string;
+  totalAmount: number;
+  dueDate: string;
+  daysRemaining: number;
+  type: 'issued' | 'received'; // 'issued' = Factura emitida (cobro), 'received' = Factura recibida (pago)
+}): void {
+  const formattedAmount = params.totalAmount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const isOverdue = params.daysRemaining < 0;
+  const isToday = params.daysRemaining === 0;
+
+  let urgencyText = `vence en ${params.daysRemaining} días`;
+  if (isOverdue) urgencyText = `venció hace ${Math.abs(params.daysRemaining)} días`;
+  if (isToday) urgencyText = `¡VENCE HOY!`;
+
+  const titleHeader = params.type === 'issued' ? '💶 Cobro Próximo a Vencer' : '💳 Pago Próximo a Vencer';
+  const title = `${titleHeader}: Factura ${params.invoiceNumber}`;
+  const actionText = params.type === 'issued' ? `Cobro pendiente de ${params.entityName}` : `Pago a proveedor ${params.entityName}`;
+
+  const body = `${actionText} por ${formattedAmount} € (${urgencyText} - ${params.dueDate}).`;
+
+  sendBrowserNotification(title, {
+    body,
+    tag: `payment-due-${params.type}-${params.invoiceNumber}`,
+    invoiceNumber: params.invoiceNumber,
+    notifType: 'payment_due',
+  });
+}
+
+/**
+ * Escanea facturas emitidas y recibidas y envía alertas de vencimiento para pagos/cobros
+ * que estén próximos a vencer (en los próximos 3 días o ya vencidos no liquidados).
+ */
+export function checkAndNotifyUpcomingPayments(
+  invoices: any[],
+  receivedInvoices: any[],
+  forceCheckAll = false
+): number {
+  if (typeof window === 'undefined') return 0;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const todayStr = today.toISOString().slice(0, 10);
+  let notifiedMap: Record<string, string> = {};
+  try {
+    const raw = localStorage.getItem(STORAGE_NOTIFIED_DUE_DATES_KEY);
+    if (raw) notifiedMap = JSON.parse(raw);
+  } catch {
+    notifiedMap = {};
+  }
+
+  let notificationCount = 0;
+
+  // 1. Revisar Facturas Emitidas (Cobros a Clientes)
+  for (const inv of invoices || []) {
+    if (inv.status === 'pagada') continue;
+
+    let targetDueDate: Date | null = null;
+    if (inv.dueDate) {
+      targetDueDate = new Date(inv.dueDate);
+    } else if (inv.date) {
+      const issueDate = new Date(inv.date);
+      if (!isNaN(issueDate.getTime())) {
+        targetDueDate = new Date(issueDate.getTime() + 30 * 86400000);
+      }
+    }
+
+    if (!targetDueDate || isNaN(targetDueDate.getTime())) continue;
+
+    targetDueDate.setHours(0, 0, 0, 0);
+    const diffTime = targetDueDate.getTime() - today.getTime();
+    const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (daysRemaining <= 3) {
+      const notifKey = `issued-${inv.id || inv.number}-${todayStr}`;
+      if (forceCheckAll || !notifiedMap[notifKey]) {
+        const items = inv.items || [];
+        const subtotal = items.reduce((s: number, it: any) => s + (it.total || 0), 0);
+        const total = subtotal * (1 + (inv.ivaRate || 21) / 100);
+
+        const dueDateFormatted = targetDueDate.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+        notifyPaymentDueDateUpcoming({
+          invoiceNumber: inv.number || 'Factura',
+          entityName: inv.client?.name || 'Cliente',
+          totalAmount: total,
+          dueDate: dueDateFormatted,
+          daysRemaining,
+          type: 'issued',
+        });
+
+        notifiedMap[notifKey] = new Date().toISOString();
+        notificationCount++;
+      }
+    }
+  }
+
+  // 2. Revisar Facturas Recibidas (Pagos a Proveedores)
+  for (const rec of receivedInvoices || []) {
+    let targetDueDate: Date | null = null;
+    if (rec.dueDate) {
+      targetDueDate = new Date(rec.dueDate);
+    } else if (rec.date) {
+      const issueDate = new Date(rec.date);
+      if (!isNaN(issueDate.getTime())) {
+        targetDueDate = new Date(issueDate.getTime() + 30 * 86400000);
+      }
+    }
+
+    if (!targetDueDate || isNaN(targetDueDate.getTime())) continue;
+
+    targetDueDate.setHours(0, 0, 0, 0);
+    const diffTime = targetDueDate.getTime() - today.getTime();
+    const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (daysRemaining <= 3) {
+      const notifKey = `received-${rec.id || rec.invoiceNumber}-${todayStr}`;
+      if (forceCheckAll || !notifiedMap[notifKey]) {
+        const dueDateFormatted = targetDueDate.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+        notifyPaymentDueDateUpcoming({
+          invoiceNumber: rec.invoiceNumber || 'FAC-REC',
+          entityName: rec.supplierName || 'Proveedor',
+          totalAmount: rec.totalAmount || 0,
+          dueDate: dueDateFormatted,
+          daysRemaining,
+          type: 'received',
+        });
+
+        notifiedMap[notifKey] = new Date().toISOString();
+        notificationCount++;
+      }
+    }
+  }
+
+  try {
+    localStorage.setItem(STORAGE_NOTIFIED_DUE_DATES_KEY, JSON.stringify(notifiedMap));
+  } catch {
+    // Ignore
+  }
+
+  return notificationCount;
+}
+
+

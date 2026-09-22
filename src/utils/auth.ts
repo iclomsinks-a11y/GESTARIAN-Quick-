@@ -3,6 +3,8 @@ import { AuthUser } from '../types';
 const STORAGE_AUTH_USER = 'gestarian_auth_user';
 const STORAGE_REGISTERED_USERS = 'gestarian_registered_users';
 const STORAGE_REMEMBER_DEVICE = 'gestarian_remember_device';
+const STORAGE_APP_DOWNLOADED = 'gestarian_app_downloaded';
+const STORAGE_SAVED_LOGIN_CREDENTIALS = 'gestarian_saved_login_credentials';
 
 // Default detected account from current browser session / Google environment
 const DETECTED_BROWSER_EMAIL = 'iclomsinks@gmail.com';
@@ -10,22 +12,44 @@ const DETECTED_BROWSER_NAME = 'Iclom Sinks';
 
 export interface StoredCredentials {
   email: string;
+  dni?: string;
   passwordHash: string;
   user: AuthUser;
 }
 
+export interface SavedLoginCredentials {
+  name: string;
+  email: string;
+  dni: string;
+  savedAt: number;
+  isAppDownloaded: boolean;
+}
+
 /**
- * Get active session user from localStorage
+ * Detect whether the application is running as a downloaded / installed PWA / standalone application
  */
-export function getStoredAuthUser(): AuthUser | null {
+export function isAppDownloadedOrStandalone(): boolean {
+  if (typeof window === 'undefined') return false;
   try {
-    const raw = localStorage.getItem(STORAGE_AUTH_USER);
-    if (!raw) return null;
-    const user: AuthUser = JSON.parse(raw);
-    return user;
+    const isStandaloneDisplay = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+    const isIosStandalone = (window.navigator as any).standalone === true;
+    const isAndroidTwa = document.referrer && document.referrer.includes('android-app://');
+    const isExplicitlyDownloaded = localStorage.getItem(STORAGE_APP_DOWNLOADED) === 'true';
+
+    return Boolean(isStandaloneDisplay || isIosStandalone || isAndroidTwa || isExplicitlyDownloaded);
   } catch (e) {
-    console.error('Error reading auth user:', e);
-    return null;
+    return false;
+  }
+}
+
+/**
+ * Set explicit download / installation state
+ */
+export function setAppDownloadedState(downloaded: boolean): void {
+  try {
+    localStorage.setItem(STORAGE_APP_DOWNLOADED, downloaded ? 'true' : 'false');
+  } catch (e) {
+    console.error('Error saving app download state:', e);
   }
 }
 
@@ -42,17 +66,75 @@ export function isDeviceRemembered(): boolean {
 }
 
 /**
+ * Get active session user from localStorage
+ * Auto-login: If the user chose to remember and the app is downloaded/standalone,
+ * returns the logged-in user without asking again.
+ */
+export function getStoredAuthUser(): AuthUser | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_AUTH_USER);
+    if (!raw) return null;
+    const user: AuthUser = JSON.parse(raw);
+    const isDownloaded = isAppDownloadedOrStandalone();
+
+    // If device is remembered or app is downloaded, keep user logged in
+    if (user.rememberDevice && isDownloaded) {
+      return {
+        ...user,
+        isAppDownloaded: true,
+      };
+    }
+
+    if (user.rememberDevice) {
+      return user;
+    }
+
+    return user;
+  } catch (e) {
+    console.error('Error reading auth user:', e);
+    return null;
+  }
+}
+
+/**
+ * Get saved login credentials for quick autofill / auto-access
+ */
+export function getSavedLoginCredentials(): SavedLoginCredentials | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_SAVED_LOGIN_CREDENTIALS);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
  * Save active session
  */
-export function saveAuthSession(user: AuthUser, rememberDevice: boolean): void {
+export function saveAuthSession(user: AuthUser, rememberDevice: boolean, rawDniOrPassword?: string): void {
   try {
+    const isDownloaded = isAppDownloadedOrStandalone();
     const updatedUser: AuthUser = {
       ...user,
+      dni: user.dni || rawDniOrPassword,
       rememberDevice,
+      isAppDownloaded: isDownloaded,
       lastLogin: Date.now(),
     };
     localStorage.setItem(STORAGE_AUTH_USER, JSON.stringify(updatedUser));
     localStorage.setItem(STORAGE_REMEMBER_DEVICE, rememberDevice ? 'true' : 'false');
+
+    if (rememberDevice) {
+      const savedCreds: SavedLoginCredentials = {
+        name: user.name,
+        email: user.email,
+        dni: user.dni || rawDniOrPassword || '',
+        savedAt: Date.now(),
+        isAppDownloaded: isDownloaded,
+      };
+      localStorage.setItem(STORAGE_SAVED_LOGIN_CREDENTIALS, JSON.stringify(savedCreds));
+    }
   } catch (e) {
     console.error('Error saving auth session:', e);
   }
@@ -69,6 +151,9 @@ export function setRememberDevice(remember: boolean): void {
       user.rememberDevice = remember;
       localStorage.setItem(STORAGE_AUTH_USER, JSON.stringify(user));
     }
+    if (!remember) {
+      localStorage.removeItem(STORAGE_SAVED_LOGIN_CREDENTIALS);
+    }
   } catch (e) {
     console.error('Error updating remember device:', e);
   }
@@ -81,6 +166,7 @@ export function logoutAuthUser(): void {
   try {
     localStorage.removeItem(STORAGE_AUTH_USER);
     localStorage.removeItem(STORAGE_REMEMBER_DEVICE);
+    localStorage.removeItem(STORAGE_SAVED_LOGIN_CREDENTIALS);
   } catch (e) {
     console.error('Error logging out:', e);
   }
@@ -114,7 +200,6 @@ function saveRegisteredList(list: StoredCredentials[]): void {
  * Detect active Google account in this browser/session
  */
 export function getDetectedGoogleAccount(): { email: string; name: string; avatarUrl?: string } | null {
-  // Returns detected account from browser/Google session context
   return {
     email: DETECTED_BROWSER_EMAIL,
     name: DETECTED_BROWSER_NAME,
@@ -136,6 +221,89 @@ function simpleHash(str: string): string {
 }
 
 /**
+ * Format and sanitize DNI / CIF / NIE
+ */
+export function formatDni(input: string): string {
+  return input.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+/**
+ * Authenticate with User name, Email and Password (DNI/NIF)
+ * Allows registering on first attempt or logging in with matching credentials.
+ */
+export async function authenticateWithDniAndEmail(
+  name: string,
+  email: string,
+  dniOrPassword: string,
+  rememberDevice: boolean
+): Promise<AuthUser> {
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanDni = formatDni(dniOrPassword);
+  const cleanName = name.trim() || cleanEmail.split('@')[0];
+
+  if (!cleanEmail || !cleanEmail.includes('@')) {
+    throw new Error('Por favor, introduce una dirección de correo electrónico válida.');
+  }
+
+  if (!cleanDni || cleanDni.length < 4) {
+    throw new Error('Por favor, introduce una contraseña o DNI/NIF válido.');
+  }
+
+  const list = getRegisteredList();
+  const foundByEmail = list.find((c) => c.email.toLowerCase() === cleanEmail);
+
+  if (foundByEmail) {
+    // Verify password hash or DNI match
+    const isHashMatch = foundByEmail.passwordHash === simpleHash(cleanDni);
+    const isDniMatch = foundByEmail.dni && formatDni(foundByEmail.dni) === cleanDni;
+
+    if (!isHashMatch && !isDniMatch) {
+      throw new Error('Contraseña o DNI incorrecto para este correo electrónico.');
+    }
+
+    const isDownloaded = isAppDownloadedOrStandalone();
+    const loggedUser: AuthUser = {
+      ...foundByEmail.user,
+      name: cleanName || foundByEmail.user.name,
+      dni: cleanDni,
+      provider: 'dni',
+      rememberDevice,
+      isAppDownloaded: isDownloaded,
+      lastLogin: Date.now(),
+    };
+
+    saveAuthSession(loggedUser, rememberDevice, cleanDni);
+    return loggedUser;
+  }
+
+  // Create new user with DNI / Email credentials
+  const isDownloaded = isAppDownloadedOrStandalone();
+  const newUser: AuthUser = {
+    id: `usr-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+    name: cleanName,
+    email: cleanEmail,
+    dni: cleanDni,
+    provider: 'dni',
+    rememberDevice,
+    isAppDownloaded: isDownloaded,
+    createdAt: Date.now(),
+    lastLogin: Date.now(),
+    avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=f59e0b&color=000&bold=true`,
+  };
+
+  list.push({
+    email: cleanEmail,
+    dni: cleanDni,
+    passwordHash: simpleHash(cleanDni),
+    user: newUser,
+  });
+  saveRegisteredList(list);
+
+  saveAuthSession(newUser, rememberDevice, cleanDni);
+  return newUser;
+}
+
+/**
  * Register with name, email and password
  */
 export async function registerWithEmail(
@@ -144,35 +312,7 @@ export async function registerWithEmail(
   password: string,
   rememberDevice: boolean
 ): Promise<AuthUser> {
-  const cleanEmail = email.trim().toLowerCase();
-  const cleanName = name.trim() || cleanEmail.split('@')[0];
-  const list = getRegisteredList();
-
-  const existing = list.find((c) => c.email.toLowerCase() === cleanEmail);
-  if (existing) {
-    throw new Error('Ya existe una cuenta con este correo electrónico. Por favor, inicia sesión.');
-  }
-
-  const newUser: AuthUser = {
-    id: `usr-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-    name: cleanName,
-    email: cleanEmail,
-    provider: 'email',
-    rememberDevice,
-    createdAt: Date.now(),
-    lastLogin: Date.now(),
-    avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=f59e0b&color=000&bold=true`,
-  };
-
-  list.push({
-    email: cleanEmail,
-    passwordHash: simpleHash(password),
-    user: newUser,
-  });
-  saveRegisteredList(list);
-
-  saveAuthSession(newUser, rememberDevice);
-  return newUser;
+  return authenticateWithDniAndEmail(name, email, password, rememberDevice);
 }
 
 /**
@@ -184,43 +324,30 @@ export async function loginWithEmail(
   rememberDevice: boolean
 ): Promise<AuthUser> {
   const cleanEmail = email.trim().toLowerCase();
+  const cleanDni = formatDni(password);
   const list = getRegisteredList();
-
   const found = list.find((c) => c.email.toLowerCase() === cleanEmail);
+
   if (!found) {
-    // If not found in previous manual registrations, allow creating or validating demo login
+    // If not registered yet, auto-register
     const generatedName = cleanEmail.split('@')[0];
-    const newUser: AuthUser = {
-      id: `usr-${Date.now()}`,
-      name: generatedName.charAt(0).toUpperCase() + generatedName.slice(1),
-      email: cleanEmail,
-      provider: 'email',
-      rememberDevice,
-      createdAt: Date.now(),
-      lastLogin: Date.now(),
-      avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(generatedName)}&background=f59e0b&color=000&bold=true`,
-    };
-    list.push({
-      email: cleanEmail,
-      passwordHash: simpleHash(password),
-      user: newUser,
-    });
-    saveRegisteredList(list);
-    saveAuthSession(newUser, rememberDevice);
-    return newUser;
+    return authenticateWithDniAndEmail(generatedName, cleanEmail, cleanDni, rememberDevice);
   }
 
-  if (found.passwordHash !== simpleHash(password)) {
-    throw new Error('Contraseña incorrecta. Por favor compruébala e inténtalo de nuevo.');
+  if (found.passwordHash !== simpleHash(cleanDni) && found.dni !== cleanDni) {
+    throw new Error('Contraseña o DNI incorrecto.');
   }
 
+  const isDownloaded = isAppDownloadedOrStandalone();
   const loggedUser: AuthUser = {
     ...found.user,
+    dni: cleanDni,
     rememberDevice,
+    isAppDownloaded: isDownloaded,
     lastLogin: Date.now(),
   };
 
-  saveAuthSession(loggedUser, rememberDevice);
+  saveAuthSession(loggedUser, rememberDevice, cleanDni);
   return loggedUser;
 }
 
@@ -238,12 +365,14 @@ export async function loginWithGoogle(
   const list = getRegisteredList();
   const existing = list.find((c) => c.email.toLowerCase() === email);
 
+  const isDownloaded = isAppDownloadedOrStandalone();
   const googleUser: AuthUser = existing
     ? {
         ...existing.user,
         name: name || existing.user.name,
         provider: 'google',
         rememberDevice,
+        isAppDownloaded: isDownloaded,
         lastLogin: Date.now(),
       }
     : {
@@ -252,6 +381,7 @@ export async function loginWithGoogle(
         email,
         provider: 'google',
         rememberDevice,
+        isAppDownloaded: isDownloaded,
         createdAt: Date.now(),
         lastLogin: Date.now(),
         avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=f59e0b&color=000&bold=true`,
