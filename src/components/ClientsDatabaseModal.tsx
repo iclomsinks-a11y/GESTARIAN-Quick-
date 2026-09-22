@@ -149,14 +149,14 @@ export const ClientsDatabaseModal: React.FC<ClientsDatabaseModalProps> = ({
             filteredClients.map((c) => (
               <div
                 key={c.id || c.nif}
-                className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 hover:border-amber-400/50 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group"
+                className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 hover:border-blue-500/50 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group"
               >
                 <div className="space-y-1 flex-1">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-neutral-100 group-hover:text-amber-300 transition-colors">
+                    <h3 className="text-sm font-bold text-neutral-100 group-hover:text-blue-300 transition-colors">
                       {c.name}
                     </h3>
-                    <span className="font-mono text-[11px] font-semibold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
+                    <span className="font-mono text-[11px] font-semibold text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
                       {c.nif}
                     </span>
                   </div>
@@ -222,10 +222,10 @@ export const ClientsDatabaseModal: React.FC<ClientsDatabaseModalProps> = ({
                         onOpenClientVariablesTree(c);
                         onClose();
                       }}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-extrabold text-amber-300 bg-amber-400/10 border border-amber-400/40 hover:bg-amber-400/20 transition-all shadow-sm active:scale-95 cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-extrabold text-blue-300 bg-blue-500/10 border border-blue-500/40 hover:bg-blue-500/20 transition-all shadow-sm active:scale-95 cursor-pointer"
                       title="Configurar árbol de variables de 5 niveles para este cliente"
                     >
-                      <FolderTree className="w-3.5 h-3.5 text-amber-400" />
+                      <FolderTree className="w-3.5 h-3.5 text-blue-400" />
                       <span>Variables (5 Niveles)</span>
                     </button>
                   )}
@@ -237,7 +237,7 @@ export const ClientsDatabaseModal: React.FC<ClientsDatabaseModalProps> = ({
                         onSelectClient(c);
                         onClose();
                       }}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-neutral-950 bg-amber-400 hover:bg-amber-300 transition-all shadow-sm active:scale-95 cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition-all shadow-sm active:scale-95 cursor-pointer"
                     >
                       <Check className="w-3.5 h-3.5" />
                       <span>Seleccionar</span>

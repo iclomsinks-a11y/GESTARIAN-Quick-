@@ -115,14 +115,14 @@ export const ClientConceptTreeSelector: React.FC<ClientConceptTreeSelectorProps>
   }
 
   return (
-    <div className="p-4 rounded-2xl bg-neutral-950 border border-amber-400/30 space-y-4 shadow-xl">
+    <div className="p-4 rounded-2xl bg-neutral-950 border border-blue-500/30 space-y-4 shadow-xl">
       <div className="flex items-center justify-between gap-2 border-b border-neutral-800 pb-2.5">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-amber-400/20 text-amber-300 flex items-center justify-center shrink-0">
+          <div className="w-7 h-7 rounded-lg bg-blue-500/20 text-blue-300 flex items-center justify-center shrink-0">
             <FolderTree className="w-4 h-4 stroke-[2.2]" />
           </div>
           <div>
-            <h4 className="text-xs font-extrabold text-amber-300 uppercase tracking-wider">
+            <h4 className="text-xs font-extrabold text-blue-300 uppercase tracking-wider">
               Árbol de Variables Exclusivo ({clientName})
             </h4>
             <p className="text-[11px] text-neutral-400">
@@ -130,14 +130,14 @@ export const ClientConceptTreeSelector: React.FC<ClientConceptTreeSelectorProps>
             </p>
           </div>
         </div>
-        <span className="px-2 py-0.5 rounded-md bg-amber-400/10 text-amber-300 border border-amber-400/20 text-[10px] font-mono font-bold">
+        <span className="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-300 border border-blue-500/20 text-[10px] font-mono font-bold">
           5 Niveles Activos
         </span>
       </div>
 
       {/* Nivel 1 Input & Autocomplete */}
       <div className="relative space-y-1">
-        <label className="text-[11px] font-extrabold text-amber-400 uppercase tracking-wider flex items-center justify-between">
+        <label className="text-[11px] font-extrabold text-blue-400 uppercase tracking-wider flex items-center justify-between">
           <span>Nivel 1 (Escribe o busca variable principal):</span>
           {selectedL1 && <span className="text-emerald-400 font-mono text-[10px]">✓ Autocompletado</span>}
         </label>
@@ -152,7 +152,7 @@ export const ClientConceptTreeSelector: React.FC<ClientConceptTreeSelectorProps>
             }}
             onFocus={() => setShowL1Dropdown(true)}
             placeholder="Comienza a escribir Nivel 1 (ej. Mantenimiento, Instalación...)"
-            className="w-full pl-9 pr-4 py-2 bg-neutral-900 border border-neutral-700 focus:border-amber-400 rounded-xl text-xs sm:text-sm font-bold text-white outline-none"
+            className="w-full pl-9 pr-4 py-2 bg-neutral-900 border border-neutral-700 focus:border-blue-400 rounded-xl text-xs sm:text-sm font-bold text-white outline-none"
           />
         </div>
 
@@ -164,11 +164,11 @@ export const ClientConceptTreeSelector: React.FC<ClientConceptTreeSelectorProps>
                 key={node.id}
                 type="button"
                 onClick={() => handleSelectL1(node)}
-                className="w-full text-left px-3 py-2 rounded-lg hover:bg-amber-400/20 text-neutral-200 hover:text-amber-200 text-xs font-semibold flex items-center justify-between cursor-pointer"
+                className="w-full text-left px-3 py-2 rounded-lg hover:bg-blue-500/20 text-neutral-200 hover:text-blue-200 text-xs font-semibold flex items-center justify-between cursor-pointer"
               >
                 <span>{node.name}</span>
                 {node.children && node.children.length > 0 && (
-                  <span className="text-[10px] text-amber-400/80 font-mono">
+                  <span className="text-[10px] text-blue-400/80 font-mono">
                     ({node.children.length} sub-variables)
                   </span>
                 )}
@@ -180,7 +180,7 @@ export const ClientConceptTreeSelector: React.FC<ClientConceptTreeSelectorProps>
 
       {/* Level 2 Selector */}
       {selectedL1 && selectedL1.children && selectedL1.children.length > 0 && (
-        <div className="space-y-1 pl-2 border-l-2 border-amber-400/40">
+        <div className="space-y-1 pl-2 border-l-2 border-blue-400/40">
           <label className="text-[11px] font-extrabold text-sky-400 uppercase tracking-wider block">
             Nivel 2 (Selecciona sub-variable):
           </label>
@@ -264,16 +264,16 @@ export const ClientConceptTreeSelector: React.FC<ClientConceptTreeSelectorProps>
 
       {/* Live Concept Preview & Save Action */}
       {fullConceptText && (
-        <div className="p-3 rounded-xl bg-amber-400/10 border border-amber-400/40 flex flex-wrap items-center justify-between gap-3">
+        <div className="p-3 rounded-xl bg-blue-600/10 border border-blue-500/40 flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0 flex-1 space-y-0.5">
-            <span className="text-[10px] font-extrabold uppercase text-amber-400 tracking-wider block">
+            <span className="text-[10px] font-extrabold uppercase text-blue-400 tracking-wider block">
               Concepto Generado Dinámicamente:
             </span>
             <p className="text-xs sm:text-sm font-extrabold text-white font-mono break-words">
               {fullConceptText}
             </p>
             {suggestedPrice ? (
-              <p className="text-xs text-amber-300 font-mono font-bold">
+              <p className="text-xs text-blue-300 font-mono font-bold">
                 Precio sugerido para esta rama: €{suggestedPrice.toFixed(2)}
               </p>
             ) : null}
@@ -282,7 +282,7 @@ export const ClientConceptTreeSelector: React.FC<ClientConceptTreeSelectorProps>
           <button
             type="button"
             onClick={handleApply}
-            className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-black text-xs flex items-center gap-1.5 shadow-md active:scale-95 cursor-pointer shrink-0"
+            className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs flex items-center gap-1.5 shadow-md active:scale-95 cursor-pointer shrink-0"
           >
             <Check className="w-4 h-4 stroke-[3]" />
             <span>Guardar / Aplicar Línea</span>

@@ -27,7 +27,7 @@ const MAX_DEPTH_LEVEL = 5;
 
 // Color badges according to level depth
 const LEVEL_BADGES = [
-  { level: 1, label: 'Nivel 1 (Principal)', color: 'bg-amber-400/20 text-amber-300 border-amber-400/40' },
+  { level: 1, label: 'Nivel 1 (Principal)', color: 'bg-blue-500/20 text-blue-300 border-blue-400/40' },
   { level: 2, label: 'Nivel 2 (Sub-variable)', color: 'bg-sky-400/20 text-sky-300 border-sky-400/40' },
   { level: 3, label: 'Nivel 3 (Detalle)', color: 'bg-emerald-400/20 text-emerald-300 border-emerald-400/40' },
   { level: 4, label: 'Nivel 4 (Atributo)', color: 'bg-purple-400/20 text-purple-300 border-purple-400/40' },
@@ -213,8 +213,8 @@ export const ClientVariablesTreeModal: React.FC<ClientVariablesTreeModalProps> =
     const badgeInfo = LEVEL_BADGES[depth - 1] || LEVEL_BADGES[4];
 
     return (
-      <div className="relative space-y-3 pl-3 sm:pl-5 border-l-2 border-neutral-800 hover:border-amber-400/40 transition-colors my-2">
-        <div className="flex flex-wrap items-center gap-2 bg-neutral-900/90 border border-neutral-800 focus-within:border-amber-400/80 p-2.5 sm:p-3 rounded-2xl transition-all">
+      <div className="relative space-y-3 pl-3 sm:pl-5 border-l-2 border-neutral-800 hover:border-blue-400/40 transition-colors my-2">
+        <div className="flex flex-wrap items-center gap-2 bg-neutral-900/90 border border-neutral-800 focus-within:border-blue-400/80 p-2.5 sm:p-3 rounded-2xl transition-all">
           {/* Depth Badge Indicator */}
           <span
             className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-wider border ${badgeInfo.color}`}
@@ -227,23 +227,13 @@ export const ClientVariablesTreeModal: React.FC<ClientVariablesTreeModalProps> =
             type="text"
             value={node.name}
             onChange={(e) => handleUpdateNodeField(node.id, 'name', e.target.value)}
-            placeholder={`Escribe variable Nivel ${depth} (ej: ${
-              depth === 1
-                ? 'Mantenimiento'
-                : depth === 2
-                ? 'Servidores'
-                : depth === 3
-                ? 'Mensual'
-                : depth === 4
-                ? 'Sede Central'
-                : 'Servicio 24/7'
-            })`}
-            className="flex-1 min-w-[180px] bg-neutral-950/80 border border-neutral-800 focus:border-amber-400 text-white font-medium text-xs sm:text-sm rounded-xl px-3 py-2 outline-none transition-all placeholder:text-neutral-600"
+            placeholder={`Escribe variable Nivel ${depth}`}
+            className="flex-1 min-w-[180px] bg-neutral-950/80 border border-neutral-800 focus:border-blue-400 text-white font-medium text-xs sm:text-sm rounded-xl px-3 py-2 outline-none transition-all placeholder:text-neutral-600"
           />
 
           {/* Optional Price Input */}
           <div className="flex items-center gap-1 bg-neutral-950/80 border border-neutral-800 rounded-xl px-2.5 py-1.5 shrink-0">
-            <span className="text-[11px] font-mono text-amber-400 font-bold">€</span>
+            <span className="text-[11px] font-mono text-blue-400 font-bold">€</span>
             <input
               type="number"
               step="0.01"
@@ -256,7 +246,7 @@ export const ClientVariablesTreeModal: React.FC<ClientVariablesTreeModalProps> =
                 )
               }
               placeholder="Precio (€)"
-              className="w-20 bg-transparent text-amber-300 font-mono text-xs font-bold outline-none placeholder:text-neutral-600"
+              className="w-20 bg-transparent text-blue-200 font-mono text-xs font-bold outline-none placeholder:text-neutral-600"
             />
           </div>
 
@@ -268,7 +258,7 @@ export const ClientVariablesTreeModal: React.FC<ClientVariablesTreeModalProps> =
               disabled={!canAddChild}
               className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm cursor-pointer ${
                 canAddChild
-                  ? 'bg-amber-400 hover:bg-amber-300 text-neutral-950 active:scale-95'
+                  ? 'bg-blue-600 hover:bg-blue-500 text-white active:scale-95'
                   : 'bg-neutral-800 text-neutral-500 cursor-not-allowed opacity-60'
               }`}
               title={
@@ -316,12 +306,12 @@ export const ClientVariablesTreeModal: React.FC<ClientVariablesTreeModalProps> =
         {/* Header Modal */}
         <div className="p-4 sm:p-6 bg-neutral-900 border-b border-neutral-800 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
               <FolderTree className="w-6 h-6 stroke-[2]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-lg bg-amber-400/10 border border-amber-400/30 text-amber-300 font-extrabold text-[10px] uppercase tracking-wider">
+                <span className="px-2.5 py-0.5 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-300 font-extrabold text-[10px] uppercase tracking-wider">
                   Árbol Exclusivo de Cliente
                 </span>
               </div>
@@ -346,9 +336,9 @@ export const ClientVariablesTreeModal: React.FC<ClientVariablesTreeModalProps> =
         {/* Modal Body */}
         <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-6 custom-scrollbar">
           {/* Quick Preset / Tips Banner */}
-          <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-neutral-900/80 border border-amber-400/20 text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-neutral-900/80 border border-blue-500/20 text-xs">
             <div className="flex items-center gap-2 text-neutral-300">
-              <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+              <Sparkles className="w-4 h-4 text-blue-400 shrink-0" />
               <span>
                 Crea tus datos en el input y pulsa <strong>"Variables"</strong> para desplegar hasta 5 sub-variables por nivel (hasta 5 niveles de profundidad).
               </span>
@@ -356,7 +346,7 @@ export const ClientVariablesTreeModal: React.FC<ClientVariablesTreeModalProps> =
             <button
               type="button"
               onClick={handleLoadSamplePreset}
-              className="px-3 py-1.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-amber-300 font-bold text-xs flex items-center gap-1.5 border border-neutral-700 transition-all cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-blue-300 font-bold text-xs flex items-center gap-1.5 border border-neutral-700 transition-all cursor-pointer"
             >
               <FolderTree className="w-3.5 h-3.5" />
               <span>Cargar Plantilla Ejemplo</span>
@@ -375,9 +365,9 @@ export const ClientVariablesTreeModal: React.FC<ClientVariablesTreeModalProps> =
             <button
               type="button"
               onClick={handleAddRootNode}
-              className="w-full py-3 px-4 rounded-2xl border-2 border-dashed border-neutral-800 hover:border-amber-400/60 bg-neutral-900/40 hover:bg-neutral-900 text-neutral-300 hover:text-amber-300 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-98"
+              className="w-full py-3 px-4 rounded-2xl border-2 border-dashed border-neutral-800 hover:border-blue-500/60 bg-neutral-900/40 hover:bg-neutral-900 text-neutral-300 hover:text-blue-300 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-98"
             >
-              <Plus className="w-4 h-4 text-amber-400" />
+              <Plus className="w-4 h-4 text-blue-400" />
               <span>Añadir Nueva Variable Principal (Nivel 1)</span>
             </button>
           </div>
@@ -401,11 +391,11 @@ export const ClientVariablesTreeModal: React.FC<ClientVariablesTreeModalProps> =
             <button
               type="button"
               onClick={handleSaveTree}
-              className="px-6 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-black text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-amber-400/10 transition-all active:scale-95 cursor-pointer"
+              className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-blue-600/20 transition-all active:scale-95 cursor-pointer"
             >
               {showSavedFeedback ? (
                 <>
-                  <Check className="w-4 h-4 text-neutral-950 stroke-[3]" />
+                  <Check className="w-4 h-4 text-white stroke-[3]" />
                   <span>¡Estructura Guardada!</span>
                 </>
               ) : (
