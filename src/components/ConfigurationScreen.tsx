@@ -294,7 +294,7 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
   };
 
   return (
-    <div className="min-h-full bg-neutral-950 text-neutral-100 pt-4 sm:pt-6 pb-8 px-4 sm:px-8">
+    <div id="page-screen-config-content" className="min-h-full bg-neutral-950 text-neutral-100 pt-4 sm:pt-6 pb-8 px-4 sm:px-8">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Encabezado limpio de la página de Configuración */}
         <div className="flex items-center justify-between pb-4 border-b border-neutral-800/80">

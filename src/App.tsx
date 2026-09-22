@@ -954,41 +954,8 @@ export default function App() {
       ...prev,
       company: newCompany,
     }));
-    const providerItem: ProviderData = {
-      id: newCompany.id || `prov-${Date.now()}`,
-      name: newCompany.name,
-      cif: newCompany.cif,
-      address: newCompany.address,
-      phone: newCompany.phone,
-      email: newCompany.email,
-      logoUrl: newCompany.logoUrl,
-      iban: newCompany.iban,
-      bankName: newCompany.bankName,
-      isDefault: true,
-      createdAt: Date.now(),
-    };
-    saveProviderToDb(providerItem);
-    setProviders(getStoredProviders());
     localStorage.setItem(STORAGE_COMPANY_KEY, JSON.stringify(newCompany));
-    showToast(`Datos de "${newCompany.name}" actualizados y sincronizados`);
-  };
-
-  const handleSelectProvider = (provider: ProviderData) => {
-    setCurrentInvoice((prev) => ({
-      ...prev,
-      company: {
-        id: provider.id,
-        name: provider.name,
-        cif: provider.cif,
-        address: provider.address,
-        phone: provider.phone,
-        email: provider.email,
-        logoUrl: provider.logoUrl,
-        iban: provider.iban,
-        bankName: provider.bankName,
-      },
-    }));
-    showToast(`Empresa emisora asignada: ${provider.name}`);
+    showToast(`Datos fiscales de "${newCompany.name}" actualizados`);
   };
 
   const handleSaveProvider = (provider: ProviderData) => {
@@ -1001,12 +968,6 @@ export default function App() {
     const updated = deleteProviderFromDb(id);
     setProviders(updated);
     showToast('Proveedor eliminado de la base de datos', 'info');
-  };
-
-  const handleSetDefaultProvider = (id: string) => {
-    const updated = setDefaultProviderInDb(id);
-    setProviders(updated);
-    showToast('Proveedor marcado como predeterminado');
   };
 
   const handleOpenNewProviderForm = () => {
@@ -1413,7 +1374,6 @@ export default function App() {
               onOpenNewProviderForm={handleOpenNewProviderForm}
               onEditProvider={handleEditProvider}
               onDeleteProvider={handleDeleteProvider}
-              onSetDefaultProvider={handleSetDefaultProvider}
               onSelectProviderForExpense={(prov) => {
                 setExpenseInitialData({
                   supplierName: prov.name,
@@ -1519,10 +1479,12 @@ export default function App() {
         isOpen={isProvidersModalOpen}
         onClose={() => setIsProvidersModalOpen(false)}
         providers={providers}
-        onSelectProvider={handleSelectProvider}
+        onSelectProvider={() => {
+          setIsProvidersModalOpen(false);
+        }}
         onSaveProvider={handleSaveProvider}
         onDeleteProvider={handleDeleteProvider}
-        onSetDefaultProvider={handleSetDefaultProvider}
+        onSetDefaultProvider={() => {}}
       />
 
       <ProductsDatabaseModal
@@ -1545,9 +1507,7 @@ export default function App() {
         onClose={() => setIsConfigOpen(false)}
         company={currentInvoice.company}
         onSaveCompany={(newComp) => {
-          handleSelectProvider(newComp as ProviderData);
-          saveProviderToDb(newComp as ProviderData);
-          setProviders(getStoredProviders());
+          handleSaveCompanyFull(newComp);
         }}
         currentSequence={sequence}
         onSaveSequence={(newSeq) => {

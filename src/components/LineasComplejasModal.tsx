@@ -274,18 +274,20 @@ export const LineasComplejasModal: React.FC<LineasComplejasModalProps> = ({
                     <button
                       type="button"
                       onClick={() => handleEditEstructura(est)}
-                      className="p-1.5 rounded-lg text-neutral-500 hover:text-amber-400 hover:bg-amber-400/10 transition-colors cursor-pointer"
+                      className="p-1.5 rounded-lg text-[#808080] hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer"
+                      style={{ color: '#808080' }}
                       title="Editar estructura"
                     >
-                      <Edit3 className="w-3.5 h-3.5" />
+                      <Edit3 className="w-3.5 h-3.5 text-[#808080]" style={{ color: '#808080' }} />
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDeleteEstructura(est.id)}
-                      className="p-1.5 rounded-lg text-neutral-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                      className="p-1.5 rounded-lg text-[#EF4444] hover:text-red-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                      style={{ color: '#EF4444' }}
                       title="Eliminar estructura"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-3.5 h-3.5 text-[#EF4444]" style={{ color: '#EF4444' }} />
                     </button>
                   </div>
                 </div>

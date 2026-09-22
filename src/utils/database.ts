@@ -59,20 +59,8 @@ export const DEFAULT_PRODUCTS: BillableProduct[] = [
   },
 ];
 
-// Default initial providers (Empresas emisoras / Proveedores)
+// Default initial providers (Proveedores y empresas de suministros externas)
 export const DEFAULT_PROVIDERS: ProviderData[] = [
-  {
-    id: 'prov-gestarian',
-    name: 'Gestarian Soluciones Digitales S.L.',
-    cif: 'B88994411',
-    address: 'Paseo de la Castellana 120, 28046 Madrid',
-    phone: '+34 914 556 789',
-    email: 'administracion@gestarian.com',
-    logoUrl: '',
-    iban: 'ES76 2100 0418 4502 0005 1332',
-    bankName: 'CaixaBank',
-    isDefault: true,
-  },
   {
     id: 'prov-textiles',
     name: 'Confecciones Textiles & Cortinajes San Juan S.L.',
@@ -95,6 +83,18 @@ export const DEFAULT_PROVIDERS: ProviderData[] = [
     logoUrl: '',
     iban: 'ES12 0049 1500 0512 3456 7890',
     bankName: 'Banco Santander',
+    isDefault: false,
+  },
+  {
+    id: 'prov-mecanizados',
+    name: 'Mecanizados & Estructuras Metálicas Sur S.L.',
+    cif: 'B41987654',
+    address: 'Av. de la Industria 14, 28823 Coslada (Madrid)',
+    phone: '+34 916 789 012',
+    email: 'pedidos@mecanizadosur.es',
+    logoUrl: '',
+    iban: 'ES88 2038 9876 5400 1234 5678',
+    bankName: 'Bankinter',
     isDefault: false,
   },
 ];
@@ -238,13 +238,25 @@ export function getStoredProviders(): ProviderData[] {
     }
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed) && parsed.length > 0) {
-      // Clean legacy mock SVG default logos so no default logo is displayed
-      const cleaned = parsed.map((p: ProviderData) => {
-        if (p.logoUrl && p.logoUrl.startsWith('data:image/svg+xml')) {
-          return { ...p, logoUrl: '' };
-        }
-        return p;
-      });
+      // Clean legacy mock SVG default logos and exclude application user company cards
+      const cleaned = parsed
+        .filter(
+          (p: ProviderData) =>
+            p.id !== 'prov-gestarian' &&
+            p.cif !== 'B88994411' &&
+            !p.name?.toLowerCase().includes('gestarian soluciones')
+        )
+        .map((p: ProviderData) => {
+          if (p.logoUrl && p.logoUrl.startsWith('data:image/svg+xml')) {
+            return { ...p, logoUrl: '', isDefault: false };
+          }
+          return { ...p, isDefault: false };
+        });
+
+      if (cleaned.length === 0) {
+        localStorage.setItem(STORAGE_PROVIDERS_KEY, JSON.stringify(DEFAULT_PROVIDERS));
+        return DEFAULT_PROVIDERS;
+      }
       return cleaned;
     }
     return DEFAULT_PROVIDERS;

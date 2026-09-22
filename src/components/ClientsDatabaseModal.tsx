@@ -231,10 +231,11 @@ export const ClientsDatabaseModal: React.FC<ClientsDatabaseModalProps> = ({
                   <button
                     type="button"
                     onClick={() => c.id && onDeleteClient(c.id)}
-                    className="p-2 text-neutral-500 hover:text-red-400 hover:bg-neutral-800 rounded-lg transition-colors"
+                    className="p-2 text-[#EF4444] hover:text-red-400 hover:bg-neutral-800 rounded-lg transition-colors"
+                    style={{ color: '#EF4444' }}
                     title="Eliminar cliente"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4 text-[#EF4444]" style={{ color: '#EF4444' }} />
                   </button>
                 </div>
               </div>

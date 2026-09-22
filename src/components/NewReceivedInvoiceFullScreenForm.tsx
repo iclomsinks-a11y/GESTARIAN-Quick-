@@ -368,11 +368,11 @@ export const NewReceivedInvoiceFullScreenForm: React.FC<NewReceivedInvoiceFullSc
           </div>
 
           {/* Total calculated display */}
-          <div className="p-6 bg-neutral-900 rounded-2xl flex items-center justify-between">
-            <span className="text-sm font-bold uppercase tracking-wider text-neutral-400">
+          <div className="p-6 bg-[#FAF8F5] border border-neutral-200 text-neutral-900 rounded-2xl flex items-center justify-between shadow-sm">
+            <span className="text-sm font-bold uppercase tracking-wider text-neutral-700">
               Total Factura (IVA Incluido)
             </span>
-            <span className="text-3xl sm:text-5xl font-mono font-black text-amber-400">
+            <span className="text-3xl sm:text-5xl font-mono font-black text-neutral-950">
               {computedTotal.toFixed(2)} €
             </span>
           </div>

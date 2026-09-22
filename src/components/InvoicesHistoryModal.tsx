@@ -168,9 +168,10 @@ export const InvoicesHistoryModal: React.FC<InvoicesHistoryModalProps> = ({
                             }
                           }}
                           title="Eliminar factura"
-                          className="p-1.5 rounded-lg text-neutral-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                          className="p-1.5 rounded-lg text-[#EF4444] hover:text-red-600 hover:bg-red-50 transition-colors"
+                          style={{ color: '#EF4444' }}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-4 h-4 text-[#EF4444]" style={{ color: '#EF4444' }} />
                         </button>
                       </div>
                     </div>

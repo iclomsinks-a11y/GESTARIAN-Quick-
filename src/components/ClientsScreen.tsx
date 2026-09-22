@@ -360,26 +360,35 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
                     : 'bg-neutral-950/95 hover:bg-neutral-900/90 border-neutral-600 hover:border-amber-400/90'
                 } ${isDimmed ? 'opacity-50 brightness-70 contrast-85 transition-all duration-300' : 'opacity-100'}`}
               >
-                {/* LÍNEA 1: Solo el Nombre en una línea (Al pulsar se expande/contrae) */}
-                <div
-                  onClick={() => toggleExpand(clientId)}
-                  className="px-4 pt-3.5 pb-1.5 flex items-center justify-between gap-2 cursor-pointer hover:bg-neutral-800/40 transition-colors select-none"
-                  title="Pulsa el nombre para expandir o contraer todos los datos del cliente"
-                >
-                  <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-amber-300 transition-colors truncate flex-1 min-w-0">
+                {/* LÍNEA 1: Solo el Nombre en una línea (Al pulsar sobre el nombre se cargan los datos en la factura) */}
+                <div className="px-4 pt-3.5 pb-1.5 flex items-center justify-between gap-2 select-none">
+                  <button
+                    type="button"
+                    onClick={() => onSelectClientForInvoice(client)}
+                    className="text-left text-base sm:text-lg font-bold text-white hover:text-amber-300 transition-colors truncate flex-1 min-w-0 cursor-pointer focus:outline-none"
+                    title={`Seleccionar y cargar los datos de ${client.name} en la factura`}
+                  >
                     {client.name}
-                  </h3>
-                  <div className="p-1 text-neutral-400 hover:text-amber-300 transition-colors shrink-0">
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleExpand(clientId);
+                    }}
+                    className="p-1 text-neutral-400 hover:text-amber-300 transition-colors shrink-0 cursor-pointer rounded-lg hover:bg-neutral-800/60"
+                    title={isExpanded ? "Contraer detalles" : "Ver todos los datos del cliente"}
+                  >
                     {isExpanded ? (
                       <ChevronUp className="w-5 h-5 text-amber-400" />
                     ) : (
-                      <ChevronDown className="w-5 h-5 text-neutral-400 group-hover:text-amber-300" />
+                      <ChevronDown className="w-5 h-5 text-neutral-400 hover:text-amber-300" />
                     )}
-                  </div>
+                  </button>
                 </div>
 
-                {/* LÍNEA 2: Fila de SIETE Iconos Grandes FLOTANTES (x1.5 más grandes, trazo 1.5px): Teléfono, WhatsApp, +F, +G, Productos Facturables, Editar y Eliminar */}
-                <div className="px-2 sm:px-3 pt-1 pb-2.5 grid grid-cols-7 place-items-center gap-0.5 sm:gap-1">
+                {/* LÍNEA 2: Fila de SEIS Iconos Grandes FLOTANTES (x1.5 más grandes, trazo 1.5px): Teléfono, WhatsApp, +F, Productos Facturables, Editar y Eliminar */}
+                <div className="px-2 sm:px-3 pt-1 pb-2.5 grid grid-cols-6 place-items-center gap-0.5 sm:gap-1">
                   {/* Icono 1: Teléfono Flotante (Celeste, 1.5px) */}
                   <button
                     type="button"
@@ -390,14 +399,15 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
                     <Phone className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm" />
                   </button>
 
-                  {/* Icono 2: WhatsApp Flotante (1.5px) */}
+                  {/* Icono 2: WhatsApp Flotante (Verde sólido, 1.5px) */}
                   <button
                     type="button"
                     onClick={(e) => handleWhatsAppClick(client, e)}
                     className="p-1 text-[#25D366] hover:text-[#3df084] hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
+                    style={{ color: '#25D366' }}
                     title={client.phone ? `Abrir chat de WhatsApp` : 'Sin teléfono para WhatsApp'}
                   >
-                    <MessageCircle className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm" />
+                    <MessageCircle className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm text-[#25D366]" style={{ color: '#25D366' }} />
                   </button>
 
                   {/* Icono 3: +F dentro de una hoja Flotante (Facturar a este cliente, 1.5px) */}
@@ -411,17 +421,6 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
                     title="Emitir factura a este cliente (+F)"
                   >
                     <SheetPlusFIcon className="w-8 h-8 sm:w-9 sm:h-9 drop-shadow-sm" />
-                  </button>
-
-                  {/* Icono 4: +G dentro de una hoja Flotante (Adjuntar Factura Recibida / Gasto a mano, 1.5px) */}
-                  <button
-                    type="button"
-                    id={`btn-plus-g-client-${clientId}`}
-                    onClick={(e) => handleOpenReceivedInvoiceForClient(client, e)}
-                    className="p-1 text-emerald-400 hover:text-emerald-300 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
-                    title="Adjuntar Gasto / Factura Recibida a mano (+G)"
-                  >
-                    <SheetPlusGIcon className="w-8 h-8 sm:w-9 sm:h-9 drop-shadow-sm" />
                   </button>
 
                   {/* Icono 4: Catálogo de Productos Facturables (1.5px) */}
@@ -439,20 +438,21 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
                     <Package className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm" />
                   </button>
 
-                  {/* Icono 5: Editar Flotante (1.5px) */}
+                  {/* Icono 5: Editar Flotante (Gris 50%, 1.5px) */}
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       onEditClient(client);
                     }}
-                    className="p-1 text-neutral-300 hover:text-white hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
+                    className="p-1 text-[#808080] hover:text-neutral-300 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
+                    style={{ color: '#808080' }}
                     title="Editar todos los datos del cliente"
                   >
-                    <Edit3 className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm" />
+                    <Edit3 className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm text-[#808080]" style={{ color: '#808080' }} />
                   </button>
 
-                  {/* Icono 6: Eliminar Cliente Flotante (Rojo/Coral, 1.5px) */}
+                  {/* Icono 6: Eliminar Cliente Flotante (Rojo sólido, 1.5px) */}
                   <button
                     type="button"
                     id={`btn-delete-client-${clientId}`}
@@ -460,10 +460,11 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
                       e.stopPropagation();
                       setClientToDelete(client);
                     }}
-                    className="p-1 text-rose-400 hover:text-rose-300 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
+                    className="p-1 text-[#EF4444] hover:text-red-400 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
+                    style={{ color: '#EF4444' }}
                     title="Eliminar este cliente completamente"
                   >
-                    <Trash2 className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm" />
+                    <Trash2 className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm text-[#EF4444]" style={{ color: '#EF4444' }} />
                   </button>
                 </div>
 
@@ -535,10 +536,11 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
                             <button
                               type="button"
                               onClick={(e) => handleDeleteHabitualProduct(client, prod.id, e)}
-                              className="p-1 rounded-md hover:bg-rose-950/60 text-neutral-400 hover:text-rose-400 transition-colors cursor-pointer"
+                              className="p-1 rounded-md hover:bg-rose-950/60 text-[#EF4444] hover:text-red-400 transition-colors cursor-pointer"
+                              style={{ color: '#EF4444' }}
                               title="Eliminar producto habitual"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <Trash2 className="w-3.5 h-3.5 text-[#EF4444]" style={{ color: '#EF4444' }} />
                             </button>
                           </div>
                         </div>
@@ -937,7 +939,8 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
                       <button
                         type="button"
                         onClick={() => productFileInputRef.current?.click()}
-                        className="w-full py-4 px-4 rounded-xl border-2 border-dashed border-neutral-700 hover:border-amber-400 bg-neutral-950/50 hover:bg-neutral-950 text-neutral-300 font-semibold text-xs flex items-center justify-center gap-2.5 transition-all cursor-pointer"
+                        className="w-full py-4 px-4 rounded-xl border-2 border-dashed border-neutral-700/70 hover:border-amber-400 text-neutral-300 font-semibold text-xs flex items-center justify-center gap-2.5 transition-all cursor-pointer"
+                        style={{ backgroundColor: 'rgba(128, 128, 128, 0.05)' }}
                       >
                         <Camera className="w-4 h-4 text-amber-400" />
                         <span>

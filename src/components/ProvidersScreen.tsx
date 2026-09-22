@@ -25,7 +25,6 @@ interface ProvidersScreenProps {
   onOpenNewProviderForm: () => void;
   onEditProvider: (provider: ProviderData) => void;
   onDeleteProvider: (id: string) => void;
-  onSetDefaultProvider?: (id: string) => void;
   onSelectProviderForExpense?: (provider: ProviderData) => void;
 }
 
@@ -66,7 +65,6 @@ export const ProvidersScreen: React.FC<ProvidersScreenProps> = ({
   onOpenNewProviderForm,
   onEditProvider,
   onDeleteProvider,
-  onSetDefaultProvider,
   onSelectProviderForExpense,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -231,12 +229,6 @@ export const ProvidersScreen: React.FC<ProvidersScreenProps> = ({
                     <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-amber-300 transition-colors truncate">
                       {provider.name}
                     </h3>
-                    {provider.isDefault && (
-                      <span className="shrink-0 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-amber-400/20 text-amber-300 border border-amber-400/40 px-2 py-0.5 rounded-full">
-                        <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                        <span>Emisor</span>
-                      </span>
-                    )}
                   </div>
                   <div className="p-1 text-neutral-400 hover:text-amber-300 transition-colors shrink-0">
                     {isExpanded ? (
@@ -259,14 +251,15 @@ export const ProvidersScreen: React.FC<ProvidersScreenProps> = ({
                     <Phone className="w-9 h-9 stroke-[1.5] drop-shadow-sm" />
                   </button>
 
-                  {/* Icono 2: WhatsApp Flotante (1.5px) */}
+                  {/* Icono 2: WhatsApp Flotante (Verde sólido, 1.5px) */}
                   <button
                     type="button"
                     onClick={(e) => handleWhatsAppClick(provider, e)}
                     className="p-1 text-[#25D366] hover:text-[#3df084] hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
+                    style={{ color: '#25D366' }}
                     title={provider.phone ? `Abrir chat de WhatsApp` : 'Sin teléfono para WhatsApp'}
                   >
-                    <MessageCircle className="w-9 h-9 stroke-[1.5] drop-shadow-sm" />
+                    <MessageCircle className="w-9 h-9 stroke-[1.5] drop-shadow-sm text-[#25D366]" style={{ color: '#25D366' }} />
                   </button>
 
                   {/* Icono 3: +G dentro de una hoja Flotante (Registrar gasto / factura recibida de este proveedor, 1.5px) */}
@@ -284,20 +277,21 @@ export const ProvidersScreen: React.FC<ProvidersScreenProps> = ({
                     <SheetPlusGIcon className="w-9 h-9 drop-shadow-sm" />
                   </button>
 
-                  {/* Icono 4: Editar Flotante (1.5px) */}
+                  {/* Icono 4: Editar Flotante (Gris 50%, 1.5px) */}
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       onEditProvider(provider);
                     }}
-                    className="p-1 text-neutral-300 hover:text-white hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
+                    className="p-1 text-[#808080] hover:text-neutral-300 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
+                    style={{ color: '#808080' }}
                     title="Editar todos los datos del proveedor"
                   >
-                    <Edit3 className="w-9 h-9 stroke-[1.5] drop-shadow-sm" />
+                    <Edit3 className="w-9 h-9 stroke-[1.5] drop-shadow-sm text-[#808080]" style={{ color: '#808080' }} />
                   </button>
 
-                  {/* Icono 5: Eliminar Proveedor Flotante (Rojo/Coral, 1.5px) */}
+                  {/* Icono 5: Eliminar Proveedor Flotante (Rojo sólido, 1.5px) */}
                   <button
                     type="button"
                     id={`btn-delete-provider-${providerId}`}
@@ -305,10 +299,11 @@ export const ProvidersScreen: React.FC<ProvidersScreenProps> = ({
                       e.stopPropagation();
                       setProviderToDelete(provider);
                     }}
-                    className="p-1 text-rose-400 hover:text-rose-300 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
+                    className="p-1 text-[#EF4444] hover:text-red-400 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
+                    style={{ color: '#EF4444' }}
                     title="Eliminar este proveedor completamente"
                   >
-                    <Trash2 className="w-9 h-9 stroke-[1.5] drop-shadow-sm" />
+                    <Trash2 className="w-9 h-9 stroke-[1.5] drop-shadow-sm text-[#EF4444]" style={{ color: '#EF4444' }} />
                   </button>
                 </div>
 
@@ -423,34 +418,6 @@ export const ProvidersScreen: React.FC<ProvidersScreenProps> = ({
                                 </button>
                               </div>
                             )}
-                          </div>
-                        )}
-
-                        {/* Empresa Emisora Predeterminada (Toggle o botón) */}
-                        {onSetDefaultProvider && provider.id && (
-                          <div className="pt-2 border-t border-neutral-850/80 flex items-center justify-between gap-2">
-                            <span className="text-sm sm:text-base font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
-                              <Star className="w-4.5 h-4.5 text-amber-400" />
-                              <span>Empresa Emisora:</span>
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => onSetDefaultProvider(provider.id!)}
-                              className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${
-                                provider.isDefault
-                                  ? 'bg-amber-400 text-neutral-950 border-amber-400 shadow-sm'
-                                  : 'bg-neutral-900 text-neutral-300 border-neutral-750 hover:border-amber-400 hover:text-white'
-                              }`}
-                            >
-                              <Star
-                                className={`w-3.5 h-3.5 ${
-                                  provider.isDefault ? 'fill-neutral-950 text-neutral-950' : 'text-amber-400'
-                                }`}
-                              />
-                              <span>
-                                {provider.isDefault ? 'Empresa predeterminada' : 'Hacer predeterminada'}
-                              </span>
-                            </button>
                           </div>
                         )}
 

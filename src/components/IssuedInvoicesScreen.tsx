@@ -265,7 +265,7 @@ export const IssuedInvoicesScreen: React.FC<IssuedInvoicesScreenProps> = ({
                     <Eye className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm" />
                   </button>
 
-                  {/* Icono 1.5: Editar Factura */}
+                  {/* Icono 1.5: Editar Factura (Gris 50%, 1.5px) */}
                   <button
                     type="button"
                     onClick={(e) => {
@@ -281,12 +281,11 @@ export const IssuedInvoicesScreen: React.FC<IssuedInvoicesScreenProps> = ({
                         onEditInvoice(inv);
                       }
                     }}
-                    className={`p-1 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none ${
-                      isSent ? 'text-neutral-500 hover:text-neutral-400' : 'text-blue-400 hover:text-blue-300'
-                    }`}
+                    className="p-1 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
+                    style={{ color: '#808080' }}
                     title={isSent ? `Factura enviada. Pulsar para crear Rectificativa` : `Editar factura ${inv.number}`}
                   >
-                    <Edit3 className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm" />
+                    <Edit3 className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm text-[#808080]" style={{ color: '#808080' }} />
                   </button>
 
                   {/* Icono 2: Factura Rectificativa */}
@@ -302,7 +301,7 @@ export const IssuedInvoicesScreen: React.FC<IssuedInvoicesScreenProps> = ({
                     <RectifyInvoiceIcon className="w-8 h-8 sm:w-9 sm:h-9 drop-shadow-sm" />
                   </button>
 
-                  {/* Icono 3: WhatsApp Flotante */}
+                  {/* Icono 3: WhatsApp Flotante (Verde sólido, 1.5px) */}
                   <button
                     type="button"
                     onClick={(e) => {
@@ -310,9 +309,10 @@ export const IssuedInvoicesScreen: React.FC<IssuedInvoicesScreenProps> = ({
                       onOpenWhatsApp(inv);
                     }}
                     className="p-1 text-[#25D366] hover:text-[#3df084] hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
+                    style={{ color: '#25D366' }}
                     title={`Enviar factura ${inv.number} por WhatsApp`}
                   >
-                    <MessageCircle className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm" />
+                    <MessageCircle className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm text-[#25D366]" style={{ color: '#25D366' }} />
                   </button>
 
                   {/* Icono 4: Imprimir / PDF Flotante */}
@@ -328,7 +328,7 @@ export const IssuedInvoicesScreen: React.FC<IssuedInvoicesScreenProps> = ({
                     <Printer className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm" />
                   </button>
 
-                  {/* Icono 5: Eliminar Factura Flotante */}
+                  {/* Icono 5: Eliminar Factura Flotante (Rojo sólido, 1.5px) */}
                   <button
                     type="button"
                     id={`btn-delete-issued-invoice-${invoiceId}`}
@@ -338,10 +338,11 @@ export const IssuedInvoicesScreen: React.FC<IssuedInvoicesScreenProps> = ({
                         onDeleteInvoice(invoiceId);
                       }
                     }}
-                    className="p-1 text-rose-400 hover:text-rose-300 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
+                    className="p-1 text-[#EF4444] hover:text-red-400 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
+                    style={{ color: '#EF4444' }}
                     title={`Eliminar factura ${inv.number}`}
                   >
-                    <Trash2 className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm" />
+                    <Trash2 className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm text-[#EF4444]" style={{ color: '#EF4444' }} />
                   </button>
                 </div>
 

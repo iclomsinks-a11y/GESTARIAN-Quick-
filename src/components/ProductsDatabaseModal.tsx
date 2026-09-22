@@ -318,7 +318,8 @@ export const ProductsDatabaseModal: React.FC<ProductsDatabaseModalProps> = ({
                   ) : (
                     <div
                       onClick={() => fileInputRef.current?.click()}
-                      className="rounded-xl border-2 border-dashed border-neutral-700 hover:border-amber-400 bg-neutral-900/60 hover:bg-amber-400/5 aspect-square max-h-48 flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all group"
+                      className="rounded-xl border-2 border-dashed border-neutral-700/70 hover:border-amber-400 aspect-square max-h-48 flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all group"
+                      style={{ backgroundColor: 'rgba(128, 128, 128, 0.05)' }}
                     >
                       <ImageIcon className="w-8 h-8 text-neutral-500 group-hover:text-amber-400 mb-2 transition-colors" />
                       <span className="text-xs font-bold text-neutral-300 group-hover:text-amber-300">
@@ -493,10 +494,11 @@ export const ProductsDatabaseModal: React.FC<ProductsDatabaseModalProps> = ({
                               e.stopPropagation();
                               handleStartEdit(product);
                             }}
-                            className="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
+                            className="p-1 rounded-lg text-[#808080] hover:text-white hover:bg-neutral-800 transition-colors"
+                            style={{ color: '#808080' }}
                             title="Editar producto"
                           >
-                            <Edit2 className="w-3.5 h-3.5" />
+                            <Edit2 className="w-3.5 h-3.5 text-[#808080]" style={{ color: '#808080' }} />
                           </button>
 
                           {/* Delete Button */}
@@ -508,10 +510,11 @@ export const ProductsDatabaseModal: React.FC<ProductsDatabaseModalProps> = ({
                                 onDeleteProduct(product.id);
                               }
                             }}
-                            className="p-1 rounded-lg text-neutral-400 hover:text-red-400 hover:bg-neutral-800 transition-colors"
+                            className="p-1 rounded-lg text-[#EF4444] hover:text-red-400 hover:bg-neutral-800 transition-colors"
+                            style={{ color: '#EF4444' }}
                             title="Eliminar producto"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-3.5 h-3.5 text-[#EF4444]" style={{ color: '#EF4444' }} />
                           </button>
 
                           {/* Select / Attach Button */}

@@ -166,10 +166,11 @@ export const ProvidersDatabaseModal: React.FC<ProvidersDatabaseModalProps> = ({
                           onDeleteProvider(p.id);
                         }
                       }}
-                      className="p-2 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-red-400 transition-colors"
+                      className="p-2 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-[#EF4444] hover:text-red-400 transition-colors"
+                      style={{ color: '#EF4444' }}
                       title="Eliminar proveedor"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4 text-[#EF4444]" style={{ color: '#EF4444' }} />
                     </button>
                   </div>
                 </div>

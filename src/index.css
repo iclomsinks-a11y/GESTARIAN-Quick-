@@ -100,7 +100,7 @@ input[type="number"] {
 
 [data-theme="light"] #home-screen-minimalist,
 [data-theme="light"] #page-screen-home {
-  background-color: #faf7f2 !important; /* Blanco hueso / beige claro */
+  background-color: #faf7f2 !important; /* Blanco hueso */
   color: #0f172a !important;
 }
 
@@ -122,19 +122,19 @@ input[type="number"] {
 [data-theme="light"] #home-screen-minimalist button {
   border-color: #1d4ed8 !important; /* Botones línea azul (2px) */
   border-width: 2px !important;
-  color: #52525b !important; /* Texto gris 60% */
-  background-color: #faf9f6 !important;
+  color: #1e3a8a !important; /* Texto Azul Oscuro para contraste */
+  background-color: #faf7f2 !important; /* Blanco hueso pastel */
 }
 
 [data-theme="light"] #home-screen-minimalist button span {
   font-weight: 700 !important;
-  color: #52525b !important;
-  -webkit-text-stroke: 1px #52525b !important;
+  color: #1e3a8a !important; /* Texto Azul Oscuro */
+  -webkit-text-stroke: 1px #1e3a8a !important;
   letter-spacing: 0.3em !important;
 }
 
 [data-theme="light"] #home-screen-minimalist button:hover {
-  background-color: #f1f5f9 !important;
+  background-color: #eff6ff !important;
   border-color: #1e40af !important;
 }
 
@@ -144,7 +144,7 @@ input[type="number"] {
 }
 
 /* ------------------------------------------------------------------------- */
-/* RELLENO DE TARJETAS BLANCO HUESO Y NINGÚN RELLENO MÁS OSCURO QUE GRIS 10% */
+/* RELLENOS PASTEL / BLANCO HUESO EN TEMA CLARO                              */
 /* ------------------------------------------------------------------------- */
 
 [data-theme="light"] .bg-neutral-950,
@@ -153,7 +153,7 @@ input[type="number"] {
 [data-theme="light"] .bg-black,
 [data-theme="light"] .bg-stone-900,
 [data-theme="light"] .bg-stone-950 {
-  background-color: #faf7f2 !important; /* Blanco hueso / beige claro */
+  background-color: #faf7f2 !important; /* Blanco hueso / beige claro pastel */
   color: #0f172a !important;
 }
 
@@ -162,7 +162,9 @@ input[type="number"] {
 [data-theme="light"] .bg-neutral-900\/90,
 [data-theme="light"] .bg-neutral-900\/95,
 [data-theme="light"] .bg-neutral-900\/98,
+[data-theme="light"] .bg-neutral-900\/40,
 [data-theme="light"] .bg-neutral-950\/60,
+[data-theme="light"] .bg-neutral-950\/70,
 [data-theme="light"] .bg-neutral-950\/80,
 [data-theme="light"] .bg-neutral-950\/90,
 [data-theme="light"] .bg-neutral-950\/95,
@@ -170,10 +172,12 @@ input[type="number"] {
 [data-theme="light"] .bg-black\/80,
 [data-theme="light"] .bg-black\/90,
 [data-theme="light"] .bg-black\/95 {
-  background-color: #faf7f2 !important; /* Blanco hueso / beige claro */
+  background-color: #ffffff !important; /* Blanco limpio para tarjetas */
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
 }
 
-/* Sub-contenedores y cajas secundarias (sin superar jamás gris 10% -> #e5e7eb) */
+/* Sub-contenedores y cajas secundarias (Gris claro 5%) */
 [data-theme="light"] .bg-neutral-800,
 [data-theme="light"] .bg-neutral-700\/40,
 [data-theme="light"] .bg-neutral-800\/40,
@@ -181,14 +185,18 @@ input[type="number"] {
 [data-theme="light"] .hover\:bg-neutral-850:hover,
 [data-theme="light"] .hover\:bg-neutral-800:hover,
 [data-theme="light"] .hover\:bg-neutral-900:hover {
-  background-color: #f1f5f9 !important; /* Gris 5% */
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
 }
 
 /* Líneas de tarjeta y bordes en tonos neutros claros o azul */
 [data-theme="light"] .border-neutral-800,
 [data-theme="light"] .border-neutral-850,
 [data-theme="light"] .border-neutral-700,
-[data-theme="light"] .border-neutral-600 {
+[data-theme="light"] .border-neutral-600,
+[data-theme="light"] .border-neutral-800\/80,
+[data-theme="light"] .border-neutral-800\/90,
+[data-theme="light"] .border-neutral-800\/60 {
   border-color: #cbd5e1 !important;
 }
 
@@ -198,11 +206,123 @@ input[type="number"] {
   border-color: #0284c7 !important;
 }
 
-/* Textos oscuros de alto contraste */
-[data-theme="light"] .text-white:not(.btn-colored-text),
-[data-theme="light"] .text-stone-100:not(.btn-colored-text),
-[data-theme="light"] .text-neutral-100:not(.btn-colored-text) {
-  color: #0f172a !important;
+/* ========================================================================= */
+/* BOTONES EN TEMA CLARO: RELLENOS PASTEL / BLANCO HUESO Y TEXTO AZUL O NEGRO OSCURO */
+/* ========================================================================= */
+
+[data-theme="light"] button,
+[data-theme="light"] [role="button"],
+[data-theme="light"] .btn {
+  color: #1e3a8a !important; /* Azul marino oscuro para máximo contraste */
+}
+
+[data-theme="light"] button span,
+[data-theme="light"] button p,
+[data-theme="light"] button div,
+[data-theme="light"] button label,
+[data-theme="light"] button strong {
+  color: inherit;
+}
+
+[data-theme="light"] button svg,
+[data-theme="light"] [role="button"] svg {
+  color: #1d4ed8 !important; /* Iconos en azul oscuro */
+}
+
+/* Rellenos antes sólidos convertidos a tonos pastel suaves / blanco hueso */
+[data-theme="light"] .bg-blue-600,
+[data-theme="light"] .bg-blue-500,
+[data-theme="light"] .bg-blue-700,
+[data-theme="light"] .bg-sky-500,
+[data-theme="light"] .bg-sky-600,
+[data-theme="light"] .bg-indigo-600,
+[data-theme="light"] button.bg-blue-600,
+[data-theme="light"] button.bg-blue-500,
+[data-theme="light"] button.bg-sky-500,
+[data-theme="light"] button.bg-sky-600 {
+  background-color: #eff6ff !important; /* Pastel azul claro / blanco hueso */
+  border: 1.5px solid #93c5fd !important;
+  color: #1e3a8a !important; /* Texto azul oscuro */
+}
+
+[data-theme="light"] .bg-blue-600 *,
+[data-theme="light"] .bg-blue-500 *,
+[data-theme="light"] .bg-sky-500 *,
+[data-theme="light"] .bg-sky-600 *,
+[data-theme="light"] button.bg-blue-600 *,
+[data-theme="light"] button.bg-blue-500 * {
+  color: #1e3a8a !important;
+}
+
+[data-theme="light"] button.bg-blue-600:hover,
+[data-theme="light"] button.bg-blue-500:hover,
+[data-theme="light"] button.bg-sky-500:hover,
+[data-theme="light"] button.bg-sky-600:hover {
+  background-color: #dbeafe !important;
+  border-color: #1d4ed8 !important;
+  color: #172554 !important;
+}
+
+/* Rellenos en Verde/Emerald -> Pastel blanco hueso verdoso */
+[data-theme="light"] .bg-emerald-600,
+[data-theme="light"] .bg-emerald-500,
+[data-theme="light"] .bg-green-600,
+[data-theme="light"] button.bg-emerald-600,
+[data-theme="light"] button.bg-emerald-500 {
+  background-color: #f0fdf4 !important; /* Pastel verde suave */
+  border: 1.5px solid #86efac !important;
+  color: #14532d !important; /* Verde bosque oscuro */
+}
+
+[data-theme="light"] .bg-emerald-600 *,
+[data-theme="light"] .bg-emerald-500 *,
+[data-theme="light"] button.bg-emerald-600 * {
+  color: #14532d !important;
+}
+
+/* Rellenos en Ámbar/Dorado -> Pastel blanco hueso cálido */
+[data-theme="light"] .bg-amber-400,
+[data-theme="light"] .bg-amber-300,
+[data-theme="light"] .bg-amber-500,
+[data-theme="light"] button.bg-amber-400,
+[data-theme="light"] button.bg-amber-300,
+[data-theme="light"] button.bg-amber-500 {
+  background-color: #fffbeb !important; /* Pastel crema / blanco hueso */
+  border: 1.5px solid #fde68a !important;
+  color: #78350f !important; /* Marrón ámbar oscuro */
+}
+
+[data-theme="light"] .bg-amber-400 *,
+[data-theme="light"] .bg-amber-300 *,
+[data-theme="light"] .bg-amber-500 *,
+[data-theme="light"] button.bg-amber-400 *,
+[data-theme="light"] button.bg-amber-300 * {
+  color: #78350f !important;
+}
+
+/* Rellenos en Rojo/Peligro -> Pastel blanco hueso rojizo */
+[data-theme="light"] .bg-red-600,
+[data-theme="light"] .bg-red-500,
+[data-theme="light"] .bg-rose-600,
+[data-theme="light"] button.bg-red-600,
+[data-theme="light"] button.bg-red-500,
+[data-theme="light"] button.bg-rose-600 {
+  background-color: #fef2f2 !important; /* Pastel rosa suave */
+  border: 1.5px solid #fecaca !important;
+  color: #991b1b !important; /* Rojo oscuro */
+}
+
+[data-theme="light"] .bg-red-600 *,
+[data-theme="light"] .bg-red-500 *,
+[data-theme="light"] button.bg-red-600 * {
+  color: #991b1b !important;
+}
+
+/* Textos oscuros de alto contraste en toda la interfaz */
+[data-theme="light"] .text-white,
+[data-theme="light"] .text-stone-100,
+[data-theme="light"] .text-neutral-100 {
+  color: #0f172a !important; /* Negro/Pizarra oscuro */
 }
 
 [data-theme="light"] .text-stone-200,
@@ -231,15 +351,9 @@ input[type="number"] {
   color: #0284c7 !important;
 }
 
-[data-theme="light"] .bg-amber-400,
-[data-theme="light"] .bg-amber-300 {
-  background-color: #0284c7 !important;
-  color: #ffffff !important;
-}
-
 [data-theme="light"] .hover\:bg-amber-300:hover,
 [data-theme="light"] .hover\:bg-amber-400:hover {
-  background-color: #0369a1 !important;
+  background-color: #fef3c7 !important;
 }
 
 [data-theme="light"] .border-amber-400,
@@ -251,7 +365,7 @@ input[type="number"] {
 [data-theme="light"] .bg-amber-400\/10,
 [data-theme="light"] .bg-amber-400\/15,
 [data-theme="light"] .bg-amber-400\/20 {
-  background-color: rgba(2, 132, 199, 0.1) !important;
+  background-color: rgba(2, 132, 199, 0.08) !important;
 }
 
 /* Inputs en tema claro */
@@ -266,6 +380,203 @@ input[type="number"] {
 [data-theme="light"] input::placeholder,
 [data-theme="light"] textarea::placeholder {
   color: #94a3b8 !important;
+}
+
+/* ========================================================================= */
+/* ESPECÍFICO DE PANTALLA DE CONFIGURACIÓN (#page-screen-config) EN TEMA CLARO */
+/* Todos los fondos o rellenos claros y todos los textos y caracteres oscuros */
+/* ========================================================================= */
+
+[data-theme="light"] #page-screen-config,
+[data-theme="light"] #page-screen-config > div,
+[data-theme="light"] #page-screen-config .min-h-full {
+  background-color: #faf7f2 !important; /* Fondo claro hueso */
+  color: #0f172a !important;
+}
+
+/* Todas las tarjetas de configuración: fondo blanco y borde suave */
+[data-theme="light"] #page-screen-config .bg-neutral-900\/80,
+[data-theme="light"] #page-screen-config .bg-neutral-900\/40,
+[data-theme="light"] #page-screen-config .bg-neutral-900,
+[data-theme="light"] #page-screen-config .bg-neutral-950,
+[data-theme="light"] #page-screen-config .bg-neutral-950\/90,
+[data-theme="light"] #page-screen-config .bg-neutral-950\/80,
+[data-theme="light"] #page-screen-config .bg-neutral-950\/70,
+[data-theme="light"] #page-screen-config .bg-neutral-950\/60 {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+/* Subcuadros de notificaciones, servicios y logs técnicos en configuración */
+[data-theme="light"] #page-screen-config .p-3\.5,
+[data-theme="light"] #page-screen-config .p-4,
+[data-theme="light"] #page-screen-config .p-5 {
+  border-color: #e2e8f0 !important;
+}
+
+/* Todos los textos, encabezados, títulos y caracteres en Configuración */
+[data-theme="light"] #page-screen-config h1,
+[data-theme="light"] #page-screen-config h2,
+[data-theme="light"] #page-screen-config h3,
+[data-theme="light"] #page-screen-config h4 {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] #page-screen-config p,
+[data-theme="light"] #page-screen-config span,
+[data-theme="light"] #page-screen-config label,
+[data-theme="light"] #page-screen-config div,
+[data-theme="light"] #page-screen-config strong {
+  color: #1e293b;
+}
+
+[data-theme="light"] #page-screen-config .text-neutral-400,
+[data-theme="light"] #page-screen-config .text-neutral-500,
+[data-theme="light"] #page-screen-config .text-stone-400,
+[data-theme="light"] #page-screen-config .text-stone-500 {
+  color: #475569 !important;
+}
+
+[data-theme="light"] #page-screen-config .text-amber-400,
+[data-theme="light"] #page-screen-config .text-amber-300 {
+  color: #1d4ed8 !important; /* Azul intenso de alto contraste */
+}
+
+/* Inputs de configuración con fondo blanco puro y texto oscuro */
+[data-theme="light"] #page-screen-config input,
+[data-theme="light"] #page-screen-config textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+[data-theme="light"] #page-screen-config input::placeholder,
+[data-theme="light"] #page-screen-config textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Badges y estados en Configuración con rellenos suaves claros y textos oscuros */
+[data-theme="light"] #page-screen-config .bg-emerald-950,
+[data-theme="light"] #page-screen-config .bg-emerald-950\/80 {
+  background-color: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #065f46 !important;
+}
+[data-theme="light"] #page-screen-config .bg-emerald-950 *,
+[data-theme="light"] #page-screen-config .bg-emerald-950\/80 * {
+  color: #065f46 !important;
+}
+
+[data-theme="light"] #page-screen-config .bg-red-950,
+[data-theme="light"] #page-screen-config .bg-red-950\/80,
+[data-theme="light"] #page-screen-config .bg-red-950\/60 {
+  background-color: #fef2f2 !important;
+  border-color: #fecaca !important;
+  color: #991b1b !important;
+}
+[data-theme="light"] #page-screen-config .bg-red-950 *,
+[data-theme="light"] #page-screen-config .bg-red-950\/80 *,
+[data-theme="light"] #page-screen-config .bg-red-950\/60 * {
+  color: #991b1b !important;
+}
+
+[data-theme="light"] #page-screen-config .bg-amber-950,
+[data-theme="light"] #page-screen-config .bg-amber-950\/80,
+[data-theme="light"] #page-screen-config .bg-amber-950\/60 {
+  background-color: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #92400e !important;
+}
+[data-theme="light"] #page-screen-config .bg-amber-950 *,
+[data-theme="light"] #page-screen-config .bg-amber-950\/80 *,
+[data-theme="light"] #page-screen-config .bg-amber-950\/60 * {
+  color: #92400e !important;
+}
+
+[data-theme="light"] #page-screen-config .bg-sky-950,
+[data-theme="light"] #page-screen-config .bg-sky-950\/80 {
+  background-color: #f0f9ff !important;
+  border-color: #bae6fd !important;
+  color: #075985 !important;
+}
+[data-theme="light"] #page-screen-config .bg-sky-950 *,
+[data-theme="light"] #page-screen-config .bg-sky-950\/80 * {
+  color: #075985 !important;
+}
+
+/* Botones de acción del sistema en Configuración */
+[data-theme="light"] #save-company-full-btn {
+  background-color: #eff6ff !important; /* Pastel azul / blanco hueso */
+  border: 1.5px solid #3b82f6 !important;
+  color: #1e3a8a !important; /* Azul marino oscuro */
+  font-weight: 700 !important;
+}
+[data-theme="light"] #save-company-full-btn * {
+  color: #1e3a8a !important;
+}
+[data-theme="light"] #save-company-full-btn:hover {
+  background-color: #dbeafe !important;
+  border-color: #1d4ed8 !important;
+  color: #172554 !important;
+}
+
+[data-theme="light"] #config-btn-verifactu,
+[data-theme="light"] #config-btn-sequence,
+[data-theme="light"] #config-btn-user-session,
+[data-theme="light"] #config-btn-save-device,
+[data-theme="light"] #btn-replay-splash-screen,
+[data-theme="light"] #btn-scan-upcoming-payments {
+  background-color: #faf7f2 !important; /* Blanco hueso */
+  border-color: #cbd5e1 !important;
+  color: #1e3a8a !important; /* Azul oscuro */
+  font-weight: 600 !important;
+}
+[data-theme="light"] #config-btn-verifactu *,
+[data-theme="light"] #config-btn-sequence *,
+[data-theme="light"] #config-btn-user-session *,
+[data-theme="light"] #config-btn-save-device *,
+[data-theme="light"] #btn-replay-splash-screen *,
+[data-theme="light"] #btn-scan-upcoming-payments * {
+  color: #1e3a8a !important;
+}
+
+[data-theme="light"] #config-btn-verifactu:hover,
+[data-theme="light"] #config-btn-sequence:hover,
+[data-theme="light"] #config-btn-user-session:hover,
+[data-theme="light"] #config-btn-save-device:hover,
+[data-theme="light"] #btn-replay-splash-screen:hover,
+[data-theme="light"] #btn-scan-upcoming-payments:hover {
+  background-color: #eff6ff !important;
+  border-color: #1d4ed8 !important;
+  color: #1e3a8a !important;
+}
+
+/* Generador de logotipo con IA en Configuración */
+[data-theme="light"] #page-screen-config .from-amber-500\/10,
+[data-theme="light"] #page-screen-config .to-amber-500\/5 {
+  background: #f0f9ff !important;
+  border-color: #bae6fd !important;
+}
+
+[data-theme="light"] #submit-ai-logo-btn,
+[data-theme="light"] #btn-open-ai-logo-generator,
+[data-theme="light"] #btn-open-ai-logo-generator-replace {
+  background: #eff6ff !important; /* Pastel azul claro */
+  border: 1.5px solid #93c5fd !important;
+  color: #1e3a8a !important; /* Azul marino oscuro */
+  font-weight: 700 !important;
+}
+[data-theme="light"] #submit-ai-logo-btn *,
+[data-theme="light"] #btn-open-ai-logo-generator *,
+[data-theme="light"] #btn-open-ai-logo-generator-replace * {
+  color: #1e3a8a !important;
+}
+[data-theme="light"] #submit-ai-logo-btn:hover,
+[data-theme="light"] #btn-open-ai-logo-generator:hover,
+[data-theme="light"] #btn-open-ai-logo-generator-replace:hover {
+  background: #dbeafe !important;
+  border-color: #1d4ed8 !important;
 }
 
 /* Scrollbar e indicadores de scroll lateral e inferior en tema claro */

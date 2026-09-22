@@ -353,14 +353,15 @@ export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
                     <Phone className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm" />
                   </button>
 
-                  {/* Icono 2: WhatsApp Flotante (1.5px) */}
+                  {/* Icono 2: WhatsApp Flotante (Verde sólido, 1.5px) */}
                   <button
                     type="button"
                     onClick={(e) => handleWhatsAppClick(inv, phone, e)}
                     className="p-1 text-[#25D366] hover:text-[#3df084] hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
+                    style={{ color: '#25D366' }}
                     title={phone ? 'Abrir chat de WhatsApp' : 'Sin teléfono para WhatsApp'}
                   >
-                    <MessageCircle className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm" />
+                    <MessageCircle className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm text-[#25D366]" style={{ color: '#25D366' }} />
                   </button>
 
                   {/* Icono 3: Ver Comprobante / Foto con icono de imagen estándar */}
@@ -388,20 +389,21 @@ export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
                     <ImageIcon className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm" />
                   </button>
 
-                  {/* Icono 4: Editar Flotante (1.5px) */}
+                  {/* Icono 4: Editar Flotante (Gris 50%, 1.5px) */}
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleEditInvoice(inv);
                     }}
-                    className="p-1 text-neutral-300 hover:text-white hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
+                    className="p-1 text-[#808080] hover:text-neutral-300 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
+                    style={{ color: '#808080' }}
                     title="Editar todos los datos de la factura recibida"
                   >
-                    <Edit3 className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm" />
+                    <Edit3 className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm text-[#808080]" style={{ color: '#808080' }} />
                   </button>
 
-                  {/* Icono 5: Eliminar Flotante (1.5px) */}
+                  {/* Icono 5: Eliminar Flotante (Rojo sólido, 1.5px) */}
                   <button
                     type="button"
                     id={`btn-delete-received-invoice-${inv.id}`}
@@ -411,10 +413,11 @@ export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
                         onDeleteInvoice(inv.id);
                       }
                     }}
-                    className="p-1 text-rose-400 hover:text-rose-300 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
+                    className="p-1 text-[#EF4444] hover:text-red-400 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
+                    style={{ color: '#EF4444' }}
                     title="Eliminar esta factura recibida"
                   >
-                    <Trash2 className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm" />
+                    <Trash2 className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm text-[#EF4444]" style={{ color: '#EF4444' }} />
                   </button>
                 </div>
 
@@ -531,29 +534,31 @@ export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
                           </div>
                         )}
 
-                        {/* Desglose Fiscal (Base, IVA, IRPF, Total) */}
-                        <div className="pt-2 border-t border-neutral-850/80 space-y-2 bg-neutral-900/60 p-3 rounded-xl border border-neutral-800">
-                          <div className="flex items-center justify-between text-sm sm:text-base text-neutral-300">
-                            <span>Base Imponible:</span>
-                            <span className="font-mono font-bold">{formatCurrency(inv.baseImponible || 0)}</span>
+                        {/* Desglose Fiscal (Base, IVA, IRPF, Total) - Sección de Importes en Blanco Hueso */}
+                        <div className="pt-2 border-t border-neutral-850/80 space-y-2 bg-[#FAF8F5] p-3.5 rounded-xl border border-neutral-200 text-neutral-900 shadow-sm">
+                          <div className="flex items-center justify-between text-sm sm:text-base text-neutral-700">
+                            <span className="font-semibold">Base Imponible:</span>
+                            <span className="font-mono font-bold text-neutral-900">{formatCurrency(inv.baseImponible || 0)}</span>
                           </div>
-                          <div className="flex items-center justify-between text-sm sm:text-base text-neutral-300">
-                            <span>IVA ({inv.ivaRate ?? 21}%):</span>
-                            <span className="font-mono font-bold text-amber-300/90">
+                          <div className="flex items-center justify-between text-sm sm:text-base text-neutral-700">
+                            <span className="font-semibold">IVA ({inv.ivaRate ?? 21}%):</span>
+                            <span className="font-mono font-bold text-amber-900">
                               +{formatCurrency(inv.ivaAmount || 0)}
                             </span>
                           </div>
                           {(inv.irpfRate ?? 0) > 0 && (
-                            <div className="flex items-center justify-between text-sm sm:text-base text-neutral-300">
-                              <span>Retención IRPF ({inv.irpfRate}%):</span>
-                              <span className="font-mono font-bold text-rose-300">
+                            <div className="flex items-center justify-between text-sm sm:text-base text-neutral-700">
+                              <span className="font-semibold">Retención IRPF ({inv.irpfRate}%):</span>
+                              <span className="font-mono font-bold text-rose-700">
                                 -{formatCurrency(inv.irpfAmount || 0)}
                               </span>
                             </div>
                           )}
-                          <div className="flex items-center justify-between text-base sm:text-lg font-black text-white pt-1.5 border-t border-neutral-700">
+                          <div className="flex items-center justify-between text-base sm:text-lg font-black text-neutral-950 pt-2 border-t border-neutral-300">
                             <span>TOTAL FACTURA:</span>
-                            <span className="font-mono text-amber-300">{formatCurrency(inv.totalAmount || 0)}</span>
+                            <span className="font-mono text-xl sm:text-2xl font-black text-neutral-950">
+                              {formatCurrency(inv.totalAmount || 0)}
+                            </span>
                           </div>
                         </div>
 

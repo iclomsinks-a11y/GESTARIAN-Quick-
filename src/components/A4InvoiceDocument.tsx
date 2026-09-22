@@ -56,7 +56,7 @@ interface A4InvoiceDocumentProps {
   onSelectClient: (client: ClientData) => void;
   onOpenClientsSearch: () => void;
   onOpenNewClientForm: () => void;
-  onOpenProvidersModal: () => void;
+  onOpenProvidersModal?: () => void;
   onOpenAttachProduct?: (lineIndex?: number) => void;
   onSaveInvoice?: () => void;
   onOpenWhatsAppModal?: () => void;
@@ -332,95 +332,51 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                 </div>
               )}
 
-              {/* Company Fiscal & Contact Data (strictly left-aligned) */}
-              <div className="text-left space-y-0.5 text-xs text-neutral-600 flex-1 min-w-0">
-                <div className="group relative">
-                  <input
-                    type="text"
-                    value={invoice.company.name}
-                    onChange={(e) =>
-                      onChangeInvoice({
-                        ...invoice,
-                        company: { ...invoice.company, name: e.target.value },
-                      })
-                    }
-                    onFocus={(e) => handleInputFocus(e, 'Nombre Emisor')}
-                    onBlur={handleInputBlur}
-                    placeholder="Nombre o Razón Social"
-                    className="font-bold text-sm sm:text-base text-neutral-900 w-full text-left bg-transparent hover:bg-amber-50/50 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:border-amber-500 rounded px-1.5 py-0.5 border border-transparent hover:border-neutral-200 focus:outline-none transition-all print:border-none print:p-0"
-                  />
+              {/* Company Fiscal & Contact Data (strictly left-aligned, outside inputs like printable version) */}
+              <div className="text-left space-y-1 text-xs text-neutral-700 flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <h2 className="font-extrabold text-base sm:text-lg text-neutral-900 tracking-tight">
+                    {invoice.company.name || 'Empresa Emisora (Emisor Fiscal)'}
+                  </h2>
                 </div>
 
-                <div className="flex items-center gap-1">
-                  <span className="text-neutral-400 font-normal shrink-0">CIF/NIF:</span>
-                  <input
-                    type="text"
-                    value={invoice.company.cif}
-                    onChange={(e) =>
-                      onChangeInvoice({
-                        ...invoice,
-                        company: { ...invoice.company, cif: e.target.value.toUpperCase() },
-                      })
-                    }
-                    onFocus={(e) => handleInputFocus(e, 'CIF Emisor')}
-                    onBlur={handleInputBlur}
-                    placeholder="CIF de la empresa"
-                    className="font-mono text-neutral-800 font-semibold uppercase text-left bg-transparent hover:bg-amber-50/50 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:border-amber-500 rounded px-1.5 py-0.5 border border-transparent hover:border-neutral-200 focus:outline-none w-32 transition-all print:border-none print:p-0"
-                  />
+                {invoice.company.cif && (
+                  <div className="font-mono text-xs font-semibold text-neutral-800">
+                    <span className="text-neutral-500 font-normal">CIF/NIF: </span>
+                    <span>{invoice.company.cif}</span>
+                  </div>
+                )}
+
+                {invoice.company.address && (
+                  <div className="text-neutral-600 text-xs leading-relaxed max-w-sm">
+                    {invoice.company.address}
+                  </div>
+                )}
+
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-neutral-600 text-xs">
+                  {invoice.company.phone && (
+                    <div>
+                      <span className="text-neutral-500 font-medium">Tel: </span>
+                      <span className="font-mono">{invoice.company.phone}</span>
+                    </div>
+                  )}
+                  {invoice.company.email && (
+                    <div>
+                      <span className="text-neutral-500 font-medium">Email: </span>
+                      <span>{invoice.company.email}</span>
+                    </div>
+                  )}
                 </div>
 
-                <div>
-                  <input
-                    type="text"
-                    value={invoice.company.address}
-                    onChange={(e) =>
-                      onChangeInvoice({
-                        ...invoice,
-                        company: { ...invoice.company, address: e.target.value },
-                      })
-                    }
-                    onFocus={(e) => handleInputFocus(e, 'Domicilio Fiscal Emisor')}
-                    onBlur={handleInputBlur}
-                    placeholder="Domicilio fiscal emisor"
-                    className="text-neutral-600 w-full text-left bg-transparent hover:bg-amber-50/50 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:border-amber-500 rounded px-1.5 py-0.5 border border-transparent hover:border-neutral-200 focus:outline-none transition-all print:border-none print:p-0"
-                  />
-                </div>
-
-                <div className="flex items-center gap-1">
-                  <span className="text-neutral-400 font-normal shrink-0">Tel:</span>
-                  <input
-                    type="text"
-                    value={invoice.company.phone || ''}
-                    onChange={(e) =>
-                      onChangeInvoice({
-                        ...invoice,
-                        company: { ...invoice.company, phone: e.target.value },
-                      })
-                    }
-                    onFocus={(e) => handleInputFocus(e, 'Teléfono Emisor')}
-                    onBlur={handleInputBlur}
-                    placeholder="Teléfono emisor"
-                    className="text-neutral-600 text-left bg-transparent hover:bg-amber-50/50 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:border-amber-500 rounded px-1.5 py-0.5 border border-transparent hover:border-neutral-200 focus:outline-none w-36 transition-all print:border-none print:p-0"
-                  />
-                </div>
-
-                <div className="flex items-center gap-1">
-                  <span className="text-neutral-400 font-normal shrink-0">Email:</span>
-                  <input
-                    type="email"
-                    value={invoice.company.email || ''}
-                    onChange={(e) =>
-                      onChangeInvoice({
-                        ...invoice,
-                        company: { ...invoice.company, email: e.target.value },
-                      })
-                    }
-                    onFocus={(e) => handleInputFocus(e, 'Email Emisor')}
-                    onBlur={handleInputBlur}
-                    placeholder="Email emisor"
-                    className="text-neutral-600 text-left bg-transparent hover:bg-amber-50/50 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:border-amber-500 rounded px-1.5 py-0.5 border border-transparent hover:border-neutral-200 focus:outline-none w-52 transition-all print:border-none print:p-0"
-                  />
-                </div>
+                {invoice.company.iban && (
+                  <div className="text-[11px] font-mono text-neutral-600">
+                    <span className="text-neutral-500 font-sans">IBAN: </span>
+                    <span>{invoice.company.iban}</span>
+                    {invoice.company.bankName && (
+                      <span className="text-neutral-500 font-sans ml-1">({invoice.company.bankName})</span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -483,149 +439,76 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
             </div>
           </div>
 
-          {/* Row 2: CLIENT SECTION (Clean, distraction-free document layout) */}
-          <div className="space-y-3">
-            {/* Client Data Sheet Display (Under Issuer) */}
-            {/* Phone and Email visible on screen, but HIDDEN on print */}
-            <div className="p-4 sm:p-5 rounded-xl bg-neutral-50/70 border border-neutral-200/90 print:bg-transparent print:border-none print:p-0">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-bold text-neutral-700 uppercase tracking-wider">
-                    Datos del Cliente (Receptor)
+          {/* Row 2: CLIENT SECTION (Formato imprimible sin recuadros, igual que los datos del emisor) */}
+          <div className="text-left space-y-1 text-xs text-neutral-700">
+            {/* Header / Actions: Etiqueta y botón Cargar de BD */}
+            <div className="flex items-center justify-between gap-3 pb-0.5">
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
+                  Cliente (Receptor)
+                </span>
+                {invoice.client.name && (
+                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full print:hidden">
+                    Cliente Asignado
                   </span>
-                  {invoice.client.name && (
-                    <span className="text-[10px] font-medium text-emerald-800 bg-emerald-100 px-2 py-0.2 rounded-full print:hidden">
-                      Cliente Asignado
-                    </span>
-                  )}
-                </div>
-
-                {/* Subtle client picker link if user wants to pull from database without clutter */}
-                <div className="flex items-center gap-3 print:hidden">
-                  <button
-                    type="button"
-                    onClick={onOpenClientsSearch}
-                    className="text-[11px] text-neutral-500 hover:text-amber-700 flex items-center gap-1 font-medium transition-colors"
-                    title="Cargar datos de un cliente guardado en la base de datos"
-                  >
-                    <Search className="w-3 h-3 text-amber-600" />
-                    <span>Cargar de BD</span>
-                  </button>
-                  <div
-                    className="text-[10px] text-neutral-400 flex items-center gap-1"
-                    title="El teléfono y correo del cliente se ven en pantalla pero se omiten en la impresión"
-                  >
-                    <EyeOff className="w-3 h-3 text-neutral-400" />
-                    <span>Tel/Email ocultos al imprimir</span>
-                  </div>
-                </div>
+                )}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-xs">
-                {/* Client Name */}
-                <div className="sm:col-span-2">
-                  <input
-                    type="text"
-                    value={invoice.client.name}
-                    onChange={(e) =>
-                      onChangeInvoice({
-                        ...invoice,
-                        client: { ...invoice.client, name: e.target.value },
-                      })
-                    }
-                    onFocus={(e) => handleInputFocus(e, 'Nombre del Cliente')}
-                    onBlur={handleInputBlur}
-                    placeholder="Nombre completo o Razón Social del cliente..."
-                    className="font-bold text-sm sm:text-base text-neutral-900 w-full bg-amber-50/50 hover:bg-amber-50 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:border-amber-500 rounded px-2.5 py-1.5 border border-amber-200/80 transition-all print:p-0 print:border-none print:bg-transparent"
-                  />
-                </div>
-
-                {/* Client NIF/CIF */}
-                <div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-neutral-500 font-medium">NIF / CIF / DNI:</span>
-                    <input
-                      type="text"
-                      value={invoice.client.nif}
-                      onChange={(e) =>
-                        onChangeInvoice({
-                          ...invoice,
-                          client: { ...invoice.client, nif: e.target.value.toUpperCase() },
-                        })
-                      }
-                      onFocus={(e) => handleInputFocus(e, 'NIF / CIF del Cliente')}
-                      onBlur={handleInputBlur}
-                      placeholder="Ej. B88776655"
-                      className="font-mono text-xs uppercase font-semibold text-neutral-800 bg-amber-50/50 hover:bg-amber-50 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:border-amber-500 rounded px-2 py-1 border border-amber-200/80 flex-1 transition-all print:p-0 print:border-none print:bg-transparent"
-                    />
-                  </div>
-                </div>
-
-                {/* Client Address */}
-                <div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-neutral-500 font-medium">Domicilio:</span>
-                    <input
-                      type="text"
-                      value={invoice.client.address}
-                      onChange={(e) =>
-                        onChangeInvoice({
-                          ...invoice,
-                          client: { ...invoice.client, address: e.target.value },
-                        })
-                      }
-                      onFocus={(e) => handleInputFocus(e, 'Domicilio del Cliente')}
-                      onBlur={handleInputBlur}
-                      placeholder="Dirección fiscal del cliente..."
-                      className="text-xs text-neutral-700 bg-amber-50/50 hover:bg-amber-50 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:border-amber-500 rounded px-2 py-1 border border-amber-200/80 flex-1 transition-all print:p-0 print:border-none print:bg-transparent"
-                    />
-                  </div>
-                </div>
-
-                {/* Client Phone (VISIBLE ON SCREEN, HIDDEN ON PRINT) */}
-                <div className="print:hidden">
-                  <div className="flex items-center gap-1.5 text-neutral-600 bg-amber-50/40 px-2 py-1 rounded border border-amber-200/50">
-                    <Phone className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-                    <span className="text-neutral-500 font-medium">Tel:</span>
-                    <input
-                      type="tel"
-                      value={invoice.client.phone}
-                      onChange={(e) =>
-                        onChangeInvoice({
-                          ...invoice,
-                          client: { ...invoice.client, phone: e.target.value },
-                        })
-                      }
-                      onFocus={(e) => handleInputFocus(e, 'Teléfono del Cliente')}
-                      onBlur={handleInputBlur}
-                      placeholder="Teléfono del cliente"
-                      className="text-xs text-neutral-800 bg-white/70 hover:bg-white focus:bg-white focus:ring-2 focus:ring-amber-400 focus:border-amber-500 rounded px-1.5 py-1 border border-amber-200 flex-1 transition-all"
-                    />
-                  </div>
-                </div>
-
-                {/* Client Email (VISIBLE ON SCREEN, HIDDEN ON PRINT) */}
-                <div className="print:hidden">
-                  <div className="flex items-center gap-1.5 text-neutral-600 bg-amber-50/40 px-2 py-1 rounded border border-amber-200/50">
-                    <Mail className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-                    <span className="text-neutral-500 font-medium">Email:</span>
-                    <input
-                      type="email"
-                      value={invoice.client.email}
-                      onChange={(e) =>
-                        onChangeInvoice({
-                          ...invoice,
-                          client: { ...invoice.client, email: e.target.value },
-                        })
-                      }
-                      onFocus={(e) => handleInputFocus(e, 'Email del Cliente')}
-                      onBlur={handleInputBlur}
-                      placeholder="correo@cliente.com"
-                      className="text-xs text-neutral-800 bg-white/70 hover:bg-white focus:bg-white focus:ring-2 focus:ring-amber-400 focus:border-amber-500 rounded px-1.5 py-1 border border-amber-200 flex-1 transition-all"
-                    />
-                  </div>
-                </div>
+              {/* Botón Cargar de BD para ir a la página de clientes */}
+              <div className="flex items-center gap-2 print:hidden">
+                <button
+                  type="button"
+                  id="btn-cargar-cliente-bd-a4"
+                  onClick={onOpenClientsSearch}
+                  className="px-3 py-1 rounded-lg bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer border border-amber-500/30"
+                  title="Cargar datos del cliente desde la base de datos de clientes"
+                >
+                  <Search className="w-3.5 h-3.5 stroke-[2.2] text-neutral-950" />
+                  <span className="text-neutral-950 font-bold">Cargar de BD</span>
+                </button>
               </div>
+            </div>
+
+            {/* Nombre del Cliente en formato imprimible */}
+            <div className="flex items-center gap-2">
+              <h3 className="font-extrabold text-base sm:text-lg text-neutral-900 tracking-tight">
+                {invoice.client.name || (
+                  <span className="text-neutral-400 font-normal italic">
+                    Sin cliente asignado (pulsa «Cargar de BD» para seleccionar)
+                  </span>
+                )}
+              </h3>
+            </div>
+
+            {/* CIF / NIF del Cliente en formato imprimible */}
+            {invoice.client.nif && (
+              <div className="font-mono text-xs font-semibold text-neutral-800">
+                <span className="text-neutral-500 font-normal">CIF/NIF: </span>
+                <span>{invoice.client.nif}</span>
+              </div>
+            )}
+
+            {/* Domicilio del Cliente en formato imprimible */}
+            {invoice.client.address && (
+              <div className="text-neutral-600 text-xs leading-relaxed max-w-sm">
+                <span>{invoice.client.address}</span>
+              </div>
+            )}
+
+            {/* Teléfono y Correo del Cliente */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-neutral-600 text-xs">
+              {invoice.client.phone && (
+                <div>
+                  <span className="text-neutral-500 font-medium">Tel: </span>
+                  <span className="font-mono">{invoice.client.phone}</span>
+                </div>
+              )}
+              {invoice.client.email && (
+                <div>
+                  <span className="text-neutral-500 font-medium">Email: </span>
+                  <span>{invoice.client.email}</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -717,10 +600,11 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                         <button
                           type="button"
                           onClick={() => handleRemoveItem(index)}
-                          className="p-1 rounded text-neutral-300 hover:text-red-600 hover:bg-red-50 transition-colors"
+                          className="p-1 rounded text-[#EF4444] hover:text-red-600 hover:bg-red-50 transition-colors"
+                          style={{ color: '#EF4444' }}
                           title="Eliminar línea"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-3.5 h-3.5 text-[#EF4444]" style={{ color: '#EF4444' }} />
                         </button>
                       </td>
                     </tr>

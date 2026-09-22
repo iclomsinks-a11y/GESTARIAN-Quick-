@@ -188,18 +188,22 @@ export const GestarianSplash: React.FC<GestarianSplashProps> = ({
           >
             <div className="flex flex-col items-end mx-auto text-center w-fit">
               <h1
-                className="text-[clamp(1.5rem,8vw,7.5rem)] font-thin tracking-[0.1em] sm:tracking-[0.25em] uppercase leading-none select-none text-[#FEFCE9] text-center"
+                className="text-[clamp(1.5rem,8vw,7.5rem)] font-[100] tracking-[0.1em] sm:tracking-[0.25em] uppercase leading-none select-none text-[#FEFCE9] text-center"
                 style={{
-                  fontFamily: "'Montserrat', 'Cinzel', sans-serif",
+                  fontFamily: "'Montserrat', sans-serif",
+                  fontWeight: 100,
                 }}
               >
                 GESTARIAN
               </h1>
               <span
-                className="text-[10px] sm:text-sm font-light tracking-[0.15em] sm:tracking-[0.25em] text-neutral-400"
+                className="text-[12px] sm:text-base md:text-lg font-[100] tracking-[0.15em] sm:tracking-[0.25em] text-[#808080]"
                 style={{
-                  fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
-                  marginTop: '3px',
+                  fontFamily: "'Montserrat', 'Plus Jakarta Sans', system-ui, sans-serif",
+                  fontWeight: 100,
+                  color: '#808080',
+                  marginTop: '4px',
+                  fontSize: '1.2em',
                 }}
               >
                 Quick
@@ -362,15 +366,27 @@ export const GestarianSplash: React.FC<GestarianSplashProps> = ({
               {/* CASE C: NOT LOGGED IN - SHOW REGISTRO, LOGIN & GOOGLE AUTO-DETECT */}
               {(!currentUser || authView !== 'choice') && authView !== 'registered_success' && (
                 <div className="p-5 sm:p-6 rounded-2xl bg-neutral-950/95 border border-neutral-800 backdrop-blur-md shadow-2xl space-y-4">
-                  {/* Google Auto-detection (as requested: "o entrar con Google si tiene el navegador abierto pues se detecta la cuenta de correo electrónico y se entra directamente") */}
+                  {/* Google Auto-detection */}
                   {detectedGoogle && (
-                    <div className="p-3.5 rounded-xl bg-gradient-to-r from-neutral-900 to-neutral-950 border border-amber-400/30 space-y-2">
+                    <div className="p-3.5 rounded-xl bg-gradient-to-r from-neutral-900 to-neutral-950 border border-blue-400/30 space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] uppercase font-mono tracking-wider text-amber-300 flex items-center gap-1.5 font-semibold">
-                          <Sparkles className="w-3 h-3 text-amber-400" />
-                  {/* CASE B: BRAND NEW SESSION - ONLY EMAIL AND CIF/DNI ALLOWED */}
+                        <span className="text-[10px] uppercase font-mono tracking-wider text-blue-300 flex items-center gap-1.5 font-semibold">
+                          <Sparkles className="w-3 h-3 text-blue-400" />
+                          <span>Google Detectado</span>
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleGoogleLogin(detectedGoogle.email)}
+                        className="w-full py-2 px-3 rounded-lg bg-white hover:bg-neutral-100 text-neutral-900 font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-sm cursor-pointer"
+                      >
+                        <Mail className="w-4 h-4 text-blue-600" />
+                        <span>Entrar con {detectedGoogle.email}</span>
+                      </button>
+                    </div>
+                  )}
 
-                  {/* BOTONES DE REGISTRO Y DE LOGIN (Solicitados explícitamente) */}
+                  {/* BOTONES DE REGISTRO Y DE LOGIN */}
                   <div className="grid grid-cols-2 gap-2 pt-1">
                     <button
                       id="splash-show-login-btn"

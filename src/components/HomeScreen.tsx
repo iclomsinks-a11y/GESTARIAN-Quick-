@@ -45,17 +45,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           >
             <div className="flex flex-col items-end mx-auto w-fit">
               <h1
-                className="text-[clamp(1.5rem,8vw,4.5rem)] font-thin tracking-[0.1em] sm:tracking-[0.25em] uppercase leading-none select-none text-[#FEFCE9] text-center"
+                className="text-[clamp(1.5rem,8vw,4.5rem)] font-[100] tracking-[0.1em] sm:tracking-[0.25em] uppercase leading-none select-none text-[#FEFCE9] text-center"
                 style={{
-                  fontFamily: "'Montserrat', 'Cinzel', sans-serif",
+                  fontFamily: "'Montserrat', sans-serif",
+                  fontWeight: 100,
                 }}
               >
                 GESTARIAN
               </h1>
               <span
-                className="home-subtitle-quick text-[10px] sm:text-sm md:text-base font-light tracking-[0.15em] sm:tracking-[0.25em] text-amber-400 text-right self-end mt-1.5"
+                className="home-subtitle-quick text-[12px] sm:text-base md:text-lg font-[100] tracking-[0.15em] sm:tracking-[0.25em] text-[#808080] text-right self-end mt-1.5"
                 style={{
                   fontFamily: "'Montserrat', 'Plus Jakarta Sans', sans-serif",
+                  fontWeight: 100,
+                  color: '#808080',
+                  fontSize: '1.2em',
                 }}
               >
                 Quick
@@ -65,7 +69,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </div>
 
         {/* Action Buttons Stack (Fade In starting 100px below, sequentially via delay) */}
-        <div className="flex flex-col items-center gap-3.5 w-[80%] max-w-xs mx-auto mt-8 sm:mt-10">
+        <div className="flex flex-col items-center gap-4 w-[85%] max-w-sm mx-auto mt-8 sm:mt-10">
           {/* Button 1: Factura */}
           <motion.div
             initial={{ opacity: 0, y: 100 }}
@@ -78,12 +82,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               type="button"
               id="btn-home-nueva-factura"
               onClick={onNewInvoice}
-              className="w-full px-6 py-3.5 rounded-lg bg-transparent hover:bg-[#FAF6EE]/5 text-[#FAF6EE] font-extralight text-xs sm:text-sm uppercase tracking-[0.3em] flex items-center justify-center gap-3 border border-[#FAF6EE]/30 hover:border-[#FAF6EE]/80 transition-all duration-300 cursor-pointer active:scale-95 shadow-none"
+              className="w-full px-6 py-4 sm:py-4.5 rounded-xl bg-transparent hover:bg-[#FAF6EE]/5 text-[#FAF6EE] font-extralight text-lg sm:text-xl uppercase tracking-[0.3em] flex items-center justify-center gap-3.5 border border-[#FAF6EE]/30 hover:border-[#FAF6EE]/80 transition-all duration-300 cursor-pointer active:scale-95 shadow-none"
               style={{
                 fontFamily: "'Montserrat', sans-serif",
+                fontWeight: 200,
               }}
             >
-              <Plus className="w-4 h-4 stroke-[1] text-[#FAF6EE]/80" />
+              <Plus className="w-5 h-5 sm:w-6 sm:h-6 stroke-[1.25] text-[#FAF6EE]/80 shrink-0" />
               <span>FACTURA</span>
             </button>
           </motion.div>
@@ -103,12 +108,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 if (onOpenClientsDb) onOpenClientsDb();
                 else onOpenNewClientForm?.();
               }}
-              className="w-full px-6 py-3.5 rounded-lg bg-transparent hover:bg-[#FAF6EE]/5 text-[#FAF6EE] font-extralight text-xs sm:text-sm uppercase tracking-[0.3em] flex items-center justify-center gap-3 border border-[#FAF6EE]/30 hover:border-[#FAF6EE]/80 transition-all duration-300 cursor-pointer active:scale-95 shadow-none"
+              className="w-full px-6 py-4 sm:py-4.5 rounded-xl bg-transparent hover:bg-[#FAF6EE]/5 text-[#FAF6EE] font-extralight text-lg sm:text-xl uppercase tracking-[0.3em] flex items-center justify-center gap-3.5 border border-[#FAF6EE]/30 hover:border-[#FAF6EE]/80 transition-all duration-300 cursor-pointer active:scale-95 shadow-none"
               style={{
                 fontFamily: "'Montserrat', sans-serif",
+                fontWeight: 200,
               }}
             >
-              <Plus className="w-4 h-4 stroke-[1] text-[#FAF6EE]/80" />
+              <Plus className="w-5 h-5 sm:w-6 sm:h-6 stroke-[1.25] text-[#FAF6EE]/80 shrink-0" />
               <span>CLIENTE</span>
             </button>
           </motion.div>
