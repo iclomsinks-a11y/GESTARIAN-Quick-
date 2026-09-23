@@ -248,19 +248,8 @@ input[type="number"] {
 }
 
 /* ========================================================================= */
-/* COLORES UNIVERSALES: WhatsApp (Verde), Papelera (Rojo), Editar (Gris 50%) */
+/* COLORES UNIVERSALES: Papelera (Rojo), Editar (Gris 50%) */
 /* ========================================================================= */
-
-svg.lucide-message-circle:not(.inactive-whatsapp):not(.text-neutral-500),
-svg.lucide-message-square:not(.inactive-whatsapp):not(.text-neutral-500),
-[data-theme="light"] svg.lucide-message-circle:not(.inactive-whatsapp):not(.text-neutral-500),
-[data-theme="light"] svg.lucide-message-square:not(.inactive-whatsapp):not(.text-neutral-500),
-[data-theme="light"] button svg.lucide-message-circle:not(.inactive-whatsapp):not(.text-neutral-500),
-[data-theme="light"] button svg.lucide-message-square:not(.inactive-whatsapp):not(.text-neutral-500),
-[data-theme="pastel"] svg.lucide-message-circle:not(.inactive-whatsapp):not(.text-neutral-500),
-[data-theme="pastel"] svg.lucide-message-square:not(.inactive-whatsapp):not(.text-neutral-500) {
-  color: #25D366 !important;
-}
 
 svg.inactive-whatsapp,
 svg.inactive-icon,
@@ -453,200 +442,165 @@ svg.lucide-pencil,
 }
 
 /* ========================================================================= */
-/* ESPECÍFICO DE PANTALLA DE CONFIGURACIÓN (#page-screen-config) EN TEMA CLARO */
-/* Todos los fondos o rellenos claros y todos los textos y caracteres oscuros */
+/* ========================================================================= */
+/* ESPECÍFICO DE PANTALLA DE CONFIGURACIÓN (#page-screen-config)              */
+/* Tarjetas y botones en subtarjetas: celeste muy clarito                     */
+/* Botones fuera de subtarjetas: celeste un poquitín más oscuro               */
 /* ========================================================================= */
 
-[data-theme="light"] #page-screen-config,
-[data-theme="light"] #page-screen-config > div,
-[data-theme="light"] #page-screen-config .min-h-full {
-  background-color: #faf7f2 !important; /* Fondo claro hueso */
-  color: #0f172a !important;
+#page-screen-config {
+  background-color: #f3f9fd;
+  color: #0c2b47;
 }
 
-/* Todas las tarjetas de configuración: fondo blanco y borde suave */
-[data-theme="light"] #page-screen-config .bg-neutral-900\/80,
-[data-theme="light"] #page-screen-config .bg-neutral-900\/40,
-[data-theme="light"] #page-screen-config .bg-neutral-900,
-[data-theme="light"] #page-screen-config .bg-neutral-950,
-[data-theme="light"] #page-screen-config .bg-neutral-950\/90,
-[data-theme="light"] #page-screen-config .bg-neutral-950\/80,
-[data-theme="light"] #page-screen-config .bg-neutral-950\/70,
-[data-theme="light"] #page-screen-config .bg-neutral-950\/60 {
+/* 1. TARJETAS PRINCIPALES: Relleno celeste muy clarito */
+#page-screen-config .bg-neutral-900\/80,
+#page-screen-config .bg-neutral-900\/40,
+#page-screen-config .bg-neutral-900 {
+  background-color: #ebf6fd !important;
+  border-color: #c7e5fa !important;
+  color: #0a2d4d !important;
+}
+
+/* 2. SUBTARJETAS DENTRO DE CONFIGURACIÓN: Relleno celeste muy clarito */
+#page-screen-config .bg-neutral-950,
+#page-screen-config .bg-neutral-950\/90,
+#page-screen-config .bg-neutral-950\/80,
+#page-screen-config .bg-neutral-950\/70,
+#page-screen-config .bg-neutral-950\/60,
+#page-screen-config #gmail-scanner-config-card {
+  background-color: #ddf0fb !important;
+  border-color: #b9e0f7 !important;
+  color: #0a2d4d !important;
+}
+
+/* Textos legibles en configuración */
+#page-screen-config h1,
+#page-screen-config h2,
+#page-screen-config h3,
+#page-screen-config h4 {
+  color: #082845 !important;
+}
+
+#page-screen-config p,
+#page-screen-config label,
+#page-screen-config span:not(.no-override-text),
+#page-screen-config strong {
+  color: #11385c;
+}
+
+#page-screen-config .text-neutral-400,
+#page-screen-config .text-neutral-500,
+#page-screen-config .text-stone-400,
+#page-screen-config .text-stone-500 {
+  color: #2b577e !important;
+}
+
+#page-screen-config .text-amber-400,
+#page-screen-config .text-amber-300 {
+  color: #0369a1 !important;
+}
+
+/* Inputs de configuración */
+#page-screen-config input,
+#page-screen-config textarea {
   background-color: #ffffff !important;
-  border-color: #cbd5e1 !important;
-  color: #0f172a !important;
+  color: #09233a !important;
+  border-color: #bedef7 !important;
 }
 
-/* Subcuadros de notificaciones, servicios y logs técnicos en configuración */
-[data-theme="light"] #page-screen-config .p-3\.5,
-[data-theme="light"] #page-screen-config .p-4,
-[data-theme="light"] #page-screen-config .p-5 {
-  border-color: #e2e8f0 !important;
+#page-screen-config input::placeholder,
+#page-screen-config textarea::placeholder {
+  color: #7ba2c2 !important;
 }
 
-/* Todos los textos, encabezados, títulos y caracteres en Configuración */
-[data-theme="light"] #page-screen-config h1,
-[data-theme="light"] #page-screen-config h2,
-[data-theme="light"] #page-screen-config h3,
-[data-theme="light"] #page-screen-config h4 {
-  color: #0f172a !important;
-}
-
-[data-theme="light"] #page-screen-config p,
-[data-theme="light"] #page-screen-config span,
-[data-theme="light"] #page-screen-config label,
-[data-theme="light"] #page-screen-config div,
-[data-theme="light"] #page-screen-config strong {
-  color: #1e293b;
-}
-
-[data-theme="light"] #page-screen-config .text-neutral-400,
-[data-theme="light"] #page-screen-config .text-neutral-500,
-[data-theme="light"] #page-screen-config .text-stone-400,
-[data-theme="light"] #page-screen-config .text-stone-500 {
-  color: #475569 !important;
-}
-
-[data-theme="light"] #page-screen-config .text-amber-400,
-[data-theme="light"] #page-screen-config .text-amber-300 {
-  color: #1d4ed8 !important; /* Azul intenso de alto contraste */
-}
-
-/* Inputs de configuración con fondo blanco puro y texto oscuro */
-[data-theme="light"] #page-screen-config input,
-[data-theme="light"] #page-screen-config textarea {
-  background-color: #ffffff !important;
-  color: #0f172a !important;
-  border-color: #cbd5e1 !important;
-}
-
-[data-theme="light"] #page-screen-config input::placeholder,
-[data-theme="light"] #page-screen-config textarea::placeholder {
-  color: #94a3b8 !important;
-}
-
-/* Badges y estados en Configuración con rellenos suaves claros y textos oscuros */
-[data-theme="light"] #page-screen-config .bg-emerald-950,
-[data-theme="light"] #page-screen-config .bg-emerald-950\/80 {
-  background-color: #ecfdf5 !important;
-  border-color: #a7f3d0 !important;
-  color: #065f46 !important;
-}
-[data-theme="light"] #page-screen-config .bg-emerald-950 *,
-[data-theme="light"] #page-screen-config .bg-emerald-950\/80 * {
-  color: #065f46 !important;
-}
-
-[data-theme="light"] #page-screen-config .bg-red-950,
-[data-theme="light"] #page-screen-config .bg-red-950\/80,
-[data-theme="light"] #page-screen-config .bg-red-950\/60 {
-  background-color: #fef2f2 !important;
-  border-color: #fecaca !important;
-  color: #991b1b !important;
-}
-[data-theme="light"] #page-screen-config .bg-red-950 *,
-[data-theme="light"] #page-screen-config .bg-red-950\/80 *,
-[data-theme="light"] #page-screen-config .bg-red-950\/60 * {
-  color: #991b1b !important;
-}
-
-[data-theme="light"] #page-screen-config .bg-amber-950,
-[data-theme="light"] #page-screen-config .bg-amber-950\/80,
-[data-theme="light"] #page-screen-config .bg-amber-950\/60 {
-  background-color: #fffbeb !important;
-  border-color: #fde68a !important;
-  color: #92400e !important;
-}
-[data-theme="light"] #page-screen-config .bg-amber-950 *,
-[data-theme="light"] #page-screen-config .bg-amber-950\/80 *,
-[data-theme="light"] #page-screen-config .bg-amber-950\/60 * {
-  color: #92400e !important;
-}
-
-[data-theme="light"] #page-screen-config .bg-sky-950,
-[data-theme="light"] #page-screen-config .bg-sky-950\/80 {
-  background-color: #f0f9ff !important;
-  border-color: #bae6fd !important;
-  color: #075985 !important;
-}
-[data-theme="light"] #page-screen-config .bg-sky-950 *,
-[data-theme="light"] #page-screen-config .bg-sky-950\/80 * {
-  color: #075985 !important;
-}
-
-/* Botones de acción del sistema en Configuración */
-[data-theme="light"] #save-company-full-btn {
-  background-color: #eff6ff !important; /* Pastel azul / blanco hueso */
-  border: 1.5px solid #3b82f6 !important;
-  color: #1e3a8a !important; /* Azul marino oscuro */
+/* 3. BOTONES DENTRO DE SUBTARJETAS: Relleno celeste muy clarito */
+#page-screen-config .bg-neutral-950 button,
+#page-screen-config .bg-neutral-950\/90 button,
+#page-screen-config .bg-neutral-950\/80 button,
+#page-screen-config .bg-neutral-950\/70 button,
+#page-screen-config #gmail-scanner-config-card button,
+#page-screen-config #submit-ai-logo-btn,
+#page-screen-config #btn-open-ai-logo-generator,
+#page-screen-config #btn-open-ai-logo-generator-replace,
+#page-screen-config #btn-enable-browser-notifications,
+#page-screen-config #btn-test-verifactu-notification,
+#page-screen-config #btn-test-payment-due-notification,
+#page-screen-config #btn-scan-upcoming-payments,
+#page-screen-config #btn-config-gmail-scanner {
+  background-color: #eaf5fc !important;
+  background-image: none !important;
+  border: 1.5px solid #a4daf8 !important;
+  color: #063962 !important;
   font-weight: 700 !important;
-}
-[data-theme="light"] #save-company-full-btn * {
-  color: #1e3a8a !important;
-}
-[data-theme="light"] #save-company-full-btn:hover {
-  background-color: #dbeafe !important;
-  border-color: #1d4ed8 !important;
-  color: #172554 !important;
+  box-shadow: 0 2px 4px rgba(7, 89, 133, 0.08) !important;
 }
 
-[data-theme="light"] #config-btn-verifactu,
-[data-theme="light"] #config-btn-sequence,
-[data-theme="light"] #config-btn-user-session,
-[data-theme="light"] #config-btn-save-device,
-[data-theme="light"] #btn-replay-splash-screen,
-[data-theme="light"] #btn-scan-upcoming-payments {
-  background-color: #faf7f2 !important; /* Blanco hueso */
-  border-color: #cbd5e1 !important;
-  color: #1e3a8a !important; /* Azul oscuro */
-  font-weight: 600 !important;
-}
-[data-theme="light"] #config-btn-verifactu *,
-[data-theme="light"] #config-btn-sequence *,
-[data-theme="light"] #config-btn-user-session *,
-[data-theme="light"] #config-btn-save-device *,
-[data-theme="light"] #btn-replay-splash-screen *,
-[data-theme="light"] #btn-scan-upcoming-payments * {
-  color: #1e3a8a !important;
+#page-screen-config .bg-neutral-950 button *,
+#page-screen-config .bg-neutral-950\/90 button *,
+#page-screen-config .bg-neutral-950\/80 button *,
+#page-screen-config .bg-neutral-950\/70 button *,
+#page-screen-config #gmail-scanner-config-card button *,
+#page-screen-config #submit-ai-logo-btn *,
+#page-screen-config #btn-open-ai-logo-generator *,
+#page-screen-config #btn-open-ai-logo-generator-replace *,
+#page-screen-config #btn-enable-browser-notifications *,
+#page-screen-config #btn-test-verifactu-notification *,
+#page-screen-config #btn-test-payment-due-notification *,
+#page-screen-config #btn-scan-upcoming-payments *,
+#page-screen-config #btn-config-gmail-scanner * {
+  color: #063962 !important;
 }
 
-[data-theme="light"] #config-btn-verifactu:hover,
-[data-theme="light"] #config-btn-sequence:hover,
-[data-theme="light"] #config-btn-user-session:hover,
-[data-theme="light"] #config-btn-save-device:hover,
-[data-theme="light"] #btn-replay-splash-screen:hover,
-[data-theme="light"] #btn-scan-upcoming-payments:hover {
-  background-color: #eff6ff !important;
-  border-color: #1d4ed8 !important;
-  color: #1e3a8a !important;
+#page-screen-config .bg-neutral-950 button:hover,
+#page-screen-config .bg-neutral-950\/90 button:hover,
+#page-screen-config .bg-neutral-950\/80 button:hover,
+#page-screen-config .bg-neutral-950\/70 button:hover,
+#page-screen-config #gmail-scanner-config-card button:hover,
+#page-screen-config #submit-ai-logo-btn:hover,
+#page-screen-config #btn-open-ai-logo-generator:hover,
+#page-screen-config #btn-open-ai-logo-generator-replace:hover,
+#page-screen-config #btn-enable-browser-notifications:hover,
+#page-screen-config #btn-test-verifactu-notification:hover,
+#page-screen-config #btn-test-payment-due-notification:hover,
+#page-screen-config #btn-scan-upcoming-payments:hover,
+#page-screen-config #btn-config-gmail-scanner:hover {
+  background-color: #d7eefb !important;
+  border-color: #7bc5f3 !important;
 }
 
-/* Generador de logotipo con IA en Configuración */
-[data-theme="light"] #page-screen-config .from-amber-500\/10,
-[data-theme="light"] #page-screen-config .to-amber-500\/5 {
-  background: #f0f9ff !important;
-  border-color: #bae6fd !important;
-}
-
-[data-theme="light"] #submit-ai-logo-btn,
-[data-theme="light"] #btn-open-ai-logo-generator,
-[data-theme="light"] #btn-open-ai-logo-generator-replace {
-  background: #eff6ff !important; /* Pastel azul claro */
-  border: 1.5px solid #93c5fd !important;
-  color: #1e3a8a !important; /* Azul marino oscuro */
+/* 4. BOTONES FUERA DE SUBTARJETAS: Celeste con un tono un poquitín más oscuro para diferenciarlos */
+#page-screen-config #save-company-full-btn,
+#page-screen-config #btn-replay-splash-screen,
+#page-screen-config #config-btn-verifactu,
+#page-screen-config #config-btn-sequence,
+#page-screen-config #config-btn-user-session,
+#page-screen-config #config-btn-save-device {
+  background-color: #bce4fa !important;
+  background-image: none !important;
+  border: 1.5px solid #72bde9 !important;
+  color: #022542 !important;
   font-weight: 700 !important;
+  box-shadow: 0 3px 6px rgba(7, 89, 133, 0.12) !important;
 }
-[data-theme="light"] #submit-ai-logo-btn *,
-[data-theme="light"] #btn-open-ai-logo-generator *,
-[data-theme="light"] #btn-open-ai-logo-generator-replace * {
-  color: #1e3a8a !important;
+
+#page-screen-config #save-company-full-btn *,
+#page-screen-config #btn-replay-splash-screen *,
+#page-screen-config #config-btn-verifactu *,
+#page-screen-config #config-btn-sequence *,
+#page-screen-config #config-btn-user-session *,
+#page-screen-config #config-btn-save-device * {
+  color: #022542 !important;
 }
-[data-theme="light"] #submit-ai-logo-btn:hover,
-[data-theme="light"] #btn-open-ai-logo-generator:hover,
-[data-theme="light"] #btn-open-ai-logo-generator-replace:hover {
-  background: #dbeafe !important;
-  border-color: #1d4ed8 !important;
+
+#page-screen-config #save-company-full-btn:hover,
+#page-screen-config #btn-replay-splash-screen:hover,
+#page-screen-config #config-btn-verifactu:hover,
+#page-screen-config #config-btn-sequence:hover,
+#page-screen-config #config-btn-user-session:hover,
+#page-screen-config #config-btn-save-device:hover {
+  background-color: #a7dbf7 !important;
+  border-color: #4bb0ea !important;
 }
 
 /* Scrollbar e indicadores de scroll lateral e inferior en tema claro */

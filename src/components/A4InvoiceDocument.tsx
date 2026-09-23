@@ -25,7 +25,6 @@ import {
   Sparkles,
   Check,
   Save,
-  MessageCircle,
   Package,
   ArrowLeft,
   Printer,
@@ -38,7 +37,13 @@ import {
   ClientData,
   ProviderData,
 } from '../types';
+import { WhatsAppIcon } from './WhatsAppIcon';
 import { formatCurrency, formatDecimal, formatDate, getTodayIso } from '../utils/formatters';
+import {
+  generateWhatsAppInvoiceMessage,
+  getWhatsAppDirectUrl,
+  sendGestarianWhatsAppNotification,
+} from '../services/notificationService';
 import { ConceptAutocompleteInput } from './ConceptAutocompleteInput';
 import { PrintPreviewModal } from './PrintPreviewModal';
 import { ClientEditorModal, ClientInputField } from './ClientEditorModal';
@@ -198,13 +203,77 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
 
   const handleWhatsApp = () => {
     if (!isSavedLocal) return;
-    if (onOpenWhatsAppModal) {
-      onOpenWhatsAppModal();
+
+    const baseImp = invoice.items.reduce((sum, item) => sum + (item.total || 0), 0);
+    const ivaAmt = baseImp * (invoice.ivaRate / 100);
+    const irpfAmt = baseImp * ((invoice.irpfRate || 0) / 100);
+    const totalCalc = baseImp + ivaAmt - irpfAmt;
+    const phone = invoice.client?.phone || '';
+
+    const messageText = generateWhatsAppInvoiceMessage({
+      invoiceId: invoice.id,
+      invoiceNumber: invoice.number,
+      clientPhone: phone,
+      clientName: invoice.client?.name || 'Cliente',
+      clientEmail: invoice.client?.email,
+      companyName: invoice.company?.name || 'Nuestra Empresa',
+      companyCif: invoice.company?.cif || '',
+      totalAmount: totalCalc,
+      issueDate: invoice.date,
+      veriFactuHash: invoice.veriFactu?.chainHash || 'VF-AEAT-OK',
+      pdfHostedUrl: `https://notificaciones.gestarian.com/f/${encodeURIComponent(invoice.number)}`,
+    });
+
+    if (phone.trim()) {
+      // Registrar envío en segundo plano
+      sendGestarianWhatsAppNotification(
+        {
+          invoiceId: invoice.id,
+          invoiceNumber: invoice.number,
+          clientPhone: phone,
+          clientName: invoice.client.name,
+          clientEmail: invoice.client.email,
+          companyName: invoice.company.name,
+          companyCif: invoice.company.cif,
+          totalAmount: totalCalc,
+          issueDate: invoice.date,
+          veriFactuHash: invoice.veriFactu?.chainHash || 'VF-AEAT-OK',
+          pdfHostedUrl: `https://notificaciones.gestarian.com/f/${encodeURIComponent(invoice.number)}`,
+        },
+        { sendResendEmail: false }
+      );
+
+      // Abrir directamente la aplicación de WhatsApp con el mensaje preestablecido y enlace
+      const directUrl = getWhatsAppDirectUrl(phone, messageText);
+      const win = window.open(directUrl, '_blank', 'noopener,noreferrer');
+      if (!win || win.closed || typeof win.closed === 'undefined') {
+        window.location.href = directUrl;
+      }
+    } else {
+      // Si el cliente no tiene teléfono guardado, abrir el modal de envío para que el usuario lo introduzca
+      if (onOpenWhatsAppModal) {
+        onOpenWhatsAppModal();
+      }
     }
   };
 
   const handleEmail = () => {
     if (!isSavedLocal) return;
+
+    const baseImp = invoice.items.reduce((sum, item) => sum + (item.total || 0), 0);
+    const ivaAmt = baseImp * (invoice.ivaRate / 100);
+    const irpfAmt = baseImp * ((invoice.irpfRate || 0) / 100);
+    const totalCalc = baseImp + ivaAmt - irpfAmt;
+    const email = invoice.client?.email || '';
+
+    if (email.trim()) {
+      const subject = encodeURIComponent(`Factura ${invoice.number} - ${invoice.company.name}`);
+      const body = encodeURIComponent(
+        `Estimado/a ${invoice.client.name},\n\nLe remitimos su factura ${invoice.number} con fecha ${invoice.date} por un importe total de ${formatCurrency(totalCalc)}.\n\nPuede consultar y descargar su factura aquí:\nhttps://notificaciones.gestarian.com/f/${encodeURIComponent(invoice.number)}\n\nAtentamente,\n${invoice.company.name}`
+      );
+      window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+    }
+
     if (onOpenEmailModal) {
       onOpenEmailModal();
     }
@@ -311,7 +380,7 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
             disabled={!isSavedLocal}
             onClick={() => {
               if (!isSavedLocal) return;
-              handleOpenPrintPreview();
+              handlePrint();
             }}
             className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all active:scale-95 ${
               isSavedLocal
@@ -833,7 +902,7 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                       type="button"
                       id="a4-footer-save-btn"
                       onClick={handleSave}
-                      className={`w-full py-3.5 px-3 rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border shadow-md transition-all active:scale-[0.98] cursor-pointer ${
+                      className={`w-full py-4 sm:py-5 px-4 sm:px-6 rounded-2xl font-black text-lg sm:text-2xl flex items-center justify-center gap-3 sm:gap-4 border shadow-md transition-all active:scale-[0.98] cursor-pointer ${
                         isSavedLocal
                           ? 'bg-neutral-900 text-emerald-400 border-emerald-500/50 hover:bg-neutral-850'
                           : 'bg-neutral-900 hover:bg-neutral-850 text-stone-100 border-neutral-700 hover:shadow-xl'
@@ -842,12 +911,12 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                     >
                       {isSavedLocal ? (
                         <>
-                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-400 shrink-0" />
                           <span>Factura Guardada</span>
                         </>
                       ) : (
                         <>
-                          <Save className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <Save className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-400 shrink-0" />
                           <span>Guardar Factura</span>
                         </>
                       )}
@@ -860,9 +929,9 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                       disabled={!isSavedLocal}
                       onClick={() => {
                         if (!isSavedLocal) return;
-                        handleOpenPrintPreview();
+                        handlePrint();
                       }}
-                      className={`w-full py-3.5 px-3 rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border transition-all ${
+                      className={`w-full py-4 sm:py-5 px-4 sm:px-6 rounded-2xl font-black text-lg sm:text-2xl flex items-center justify-center gap-3 sm:gap-4 border transition-all ${
                         isSavedLocal
                           ? 'bg-neutral-900 hover:bg-neutral-850 text-stone-100 hover:text-white border-neutral-700 hover:border-amber-400 shadow-md active:scale-[0.98] cursor-pointer ring-1 ring-amber-400/30'
                           : 'bg-neutral-100 border-neutral-300 cursor-not-allowed shadow-none select-none'
@@ -877,7 +946,7 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                       }
                     >
                       <Printer
-                        className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 transition-colors"
+                        className="w-8 h-8 sm:w-10 sm:h-10 shrink-0 transition-colors"
                         style={{
                           color: isSavedLocal ? '#F59E0B' : '#808080',
                         }}
@@ -894,7 +963,7 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                         id="a4-footer-send-btn"
                         disabled={!isSavedLocal}
                         onClick={handleWhatsApp}
-                        className={`w-full py-3.5 px-3 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
+                        className={`w-full py-4 sm:py-5 px-4 sm:px-6 rounded-2xl font-black text-lg sm:text-2xl uppercase tracking-wider flex items-center justify-center gap-3 sm:gap-4 transition-all ${
                           isSavedLocal
                             ? 'bg-[#25D366] hover:bg-[#20bd5a] text-neutral-950 shadow-lg hover:shadow-[#25D366]/30 active:scale-[0.98] cursor-pointer ring-2 ring-[#25D366]/40'
                             : 'bg-neutral-200 text-neutral-400 border border-neutral-300 cursor-not-allowed shadow-none'
@@ -905,10 +974,7 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                             : 'Debes pulsar "Guardar Factura" para activar el botón de envío por WhatsApp'
                         }
                       >
-                        <MessageCircle
-                          className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-[#25D366]"
-                          style={{ color: '#25D366' }}
-                        />
+                        <WhatsAppIcon className="w-8 h-8 sm:w-10 sm:h-10 shrink-0" />
                         <span className="truncate">Enviar WhatsApp</span>
                       </button>
                     ) : (
@@ -917,7 +983,7 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                         id="a4-footer-send-btn"
                         disabled={!isSavedLocal}
                         onClick={handleEmail}
-                        className={`w-full py-3.5 px-3 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
+                        className={`w-full py-4 sm:py-5 px-4 sm:px-6 rounded-2xl font-black text-lg sm:text-2xl uppercase tracking-wider flex items-center justify-center gap-3 sm:gap-4 transition-all ${
                           isSavedLocal
                             ? 'bg-sky-400 hover:bg-sky-300 text-neutral-950 shadow-lg hover:shadow-sky-400/30 active:scale-[0.98] cursor-pointer ring-2 ring-sky-400/40'
                             : 'bg-neutral-200 text-neutral-400 border border-neutral-300 cursor-not-allowed shadow-none'
@@ -929,7 +995,7 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                         }
                       >
                         <Mail
-                          className={`w-4 h-4 sm:w-5 sm:h-5 shrink-0 ${
+                          className={`w-8 h-8 sm:w-10 sm:h-10 shrink-0 ${
                             isSavedLocal ? 'text-neutral-950' : 'text-neutral-400'
                           }`}
                         />

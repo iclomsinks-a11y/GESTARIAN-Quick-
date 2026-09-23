@@ -6,7 +6,6 @@ import {
   Phone,
   Mail,
   MapPin,
-  MessageCircle,
   Edit3,
   Trash2,
   ChevronDown,
@@ -20,6 +19,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ProviderData } from '../types';
+import { WhatsAppIcon } from './WhatsAppIcon';
 
 interface ProvidersScreenProps {
   providers: ProviderData[];
@@ -286,15 +286,14 @@ export const ProvidersScreen: React.FC<ProvidersScreenProps> = ({
                     <Phone className="w-10 h-10 sm:w-11 sm:h-11 stroke-[1.5] drop-shadow-sm" />
                   </button>
 
-                  {/* Icono 2: WhatsApp Flotante (Verde sólido) */}
+                  {/* Icono 2: WhatsApp Flotante (Relleno Gris 30% con telefonito blanco) */}
                   <button
                     type="button"
                     onClick={(e) => handleWhatsAppClick(provider, e)}
-                    className="p-1 text-[#25D366] hover:text-[#3df084] hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
-                    style={{ color: '#25D366' }}
+                    className="p-1 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
                     title={provider.phone ? `Abrir chat de WhatsApp` : 'Sin teléfono para WhatsApp'}
                   >
-                    <MessageCircle className="w-10 h-10 sm:w-11 sm:h-11 stroke-[1.5] drop-shadow-sm text-[#25D366]" style={{ color: '#25D366' }} />
+                    <WhatsAppIcon className="w-10 h-10 sm:w-11 sm:h-11 drop-shadow-sm" />
                   </button>
 
                   {/* Icono 3: +G dentro de una hoja Flotante (Registrar gasto / factura recibida de este proveedor) */}

@@ -18,13 +18,13 @@ import {
   Copy,
   Check,
   MapPin,
-  MessageCircle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ReceivedInvoice, ProviderData } from '../types';
 import { CameraInvoiceCaptureModal } from './CameraInvoiceCaptureModal';
 import { NewReceivedInvoiceFullScreenForm } from './NewReceivedInvoiceFullScreenForm';
 import { formatCurrency, formatDate } from '../utils/formatters';
+import { WhatsAppIcon } from './WhatsAppIcon';
 
 interface ReceivedInvoicesScreenProps {
   invoices: ReceivedInvoice[];
@@ -33,6 +33,55 @@ interface ReceivedInvoicesScreenProps {
   providers?: ProviderData[];
   onOpenGmailScanner?: () => void;
 }
+
+// Icono exclusivo del sobre de Gmail en color rojo (#EA4335)
+const GmailRedEnvelopeIcon: React.FC<{ className?: string }> = ({
+  className = 'w-4 h-4 sm:w-4.5 sm:h-4.5',
+}) => (
+  <svg
+    viewBox="0 0 24 24"
+    className={className}
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    {/* Relleno sutil rojo oficial de Google */}
+    <rect x="2" y="4" width="20" height="16" rx="2.5" fill="#EA4335" fillOpacity="0.16" />
+    {/* Contorno del sobre */}
+    <rect
+      x="2"
+      y="4"
+      width="20"
+      height="16"
+      rx="2.5"
+      stroke="#EA4335"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    {/* Solapa en V característica de Gmail */}
+    <path
+      d="M2.5 5.5L12 13L21.5 5.5"
+      stroke="#EA4335"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    {/* Pliegues laterales */}
+    <path
+      d="M2.5 18.5L9 12.5"
+      stroke="#EA4335"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+    />
+    <path
+      d="M21.5 18.5L15 12.5"
+      stroke="#EA4335"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+    />
+  </svg>
+);
 
 export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
   invoices,
@@ -44,9 +93,20 @@ export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
   const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [expandedInvoiceId, setExpandedInvoiceId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const toggleSearch = () => {
+    setIsSearchOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        setTimeout(() => searchInputRef.current?.focus(), 80);
+      }
+      return next;
+    });
+  };
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [invoiceToDelete, setInvoiceToDelete] = useState<ReceivedInvoice | null>(null);
 
@@ -211,49 +271,38 @@ export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
       id="received-invoices-screen-container"
       className="w-full max-w-7xl mx-auto px-1 sm:px-2 pt-1 sm:pt-2 pb-8 space-y-3.5 text-neutral-100"
     >
-      {/* Barra de acciones limpia: Buscador (anchura 0.5), Botón OCR y Botón + FACTURA */}
-      <div className="flex flex-row items-center justify-between gap-2 sm:gap-3 bg-neutral-950/80 border border-neutral-800/80 rounded-2xl p-2.5 sm:p-3 backdrop-blur-md shadow-lg">
-        {/* Campo de Búsqueda (anchura 0.5) */}
-        <div className="relative w-1/2 max-w-[50%]">
-          <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            ref={searchInputRef}
-            type="text"
-            id="received-invoices-search-input"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Buscar por proveedor, CIF, número, concepto..."
-            className="w-full pl-9 pr-7 py-2 rounded-xl bg-neutral-900 border border-neutral-700/80 text-xs sm:text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-amber-400 transition-colors"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white text-xs px-1 cursor-pointer"
-              title="Limpiar búsqueda"
-            >
-              ✕
-            </button>
-          )}
-        </div>
+      {/* Barra de 4 botones: Buscar (Lupa), Email (Sobre Gmail rojo), OCR Cámara y + Factura */}
+      <div className="bg-neutral-950/80 border border-neutral-800/80 rounded-2xl p-2.5 sm:p-3 backdrop-blur-md shadow-lg space-y-2.5">
+        <div className="flex flex-row items-center gap-2 sm:gap-2.5 flex-wrap">
+          {/* Botón 1: Buscar factura (únicamente la lupa dentro) */}
+          <button
+            type="button"
+            id="btn-search-received-invoices"
+            onClick={toggleSearch}
+            className={`inline-flex items-center justify-center p-2 sm:p-2.5 rounded-xl border-2 font-extrabold text-xs sm:text-sm shadow-sm transition-all active:scale-95 cursor-pointer shrink-0 ${
+              isSearchOpen || searchQuery
+                ? 'bg-amber-400 text-neutral-950 border-amber-400 shadow-amber-400/20'
+                : 'bg-transparent hover:bg-amber-400/15 text-amber-400 hover:text-amber-300 border-amber-400'
+            }`}
+            title={isSearchOpen ? 'Cerrar buscador' : 'Buscar factura'}
+            aria-label="Buscar factura"
+          >
+            <Search className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.4]" />
+          </button>
 
-        <div className="flex items-center gap-2 sm:gap-2.5">
-          {/* Botón Rastreador Gmail */}
-          {onOpenGmailScanner && (
-            <button
-              type="button"
-              id="btn-open-gmail-scanner"
-              onClick={onOpenGmailScanner}
-              className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-amber-300 hover:text-amber-200 border border-amber-500/40 font-bold text-xs sm:text-sm shadow-sm transition-all active:scale-95 cursor-pointer shrink-0"
-              title="Rastreador de Facturas en Gmail (Rastreo automático a las 18:00)"
-            >
-              <Mail className="w-4 h-4 text-amber-400" />
-              <span className="hidden sm:inline">Gmail (18:00)</span>
-              <span className="sm:hidden">Gmail</span>
-            </button>
-          )}
+          {/* Botón 2: Email (solamente el sobre de Gmail de color rojo) */}
+          <button
+            type="button"
+            id="btn-open-gmail-scanner"
+            onClick={onOpenGmailScanner}
+            className="inline-flex items-center justify-center p-2 sm:p-2.5 rounded-xl bg-transparent hover:bg-red-500/15 border-2 border-amber-400 hover:border-red-400 shadow-sm transition-all active:scale-95 cursor-pointer shrink-0"
+            title="Rastreador de Facturas en Gmail"
+            aria-label="Rastreador de Facturas en Gmail"
+          >
+            <GmailRedEnvelopeIcon className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+          </button>
 
-          {/* Botón OCR Cámara */}
+          {/* Botón 3: Capturar factura OCR (como está con cámara y OCR mayúsculas) */}
           <button
             type="button"
             id="btn-scan-invoice-camera"
@@ -265,7 +314,7 @@ export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
             <span>OCR</span>
           </button>
 
-          {/* Botón + FACTURA */}
+          {/* Botón 4: Añadir factura (+ Factura) */}
           <button
             type="button"
             id="btn-new-received-invoice-manual"
@@ -274,9 +323,45 @@ export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
             title="Crear nueva factura recibida"
           >
             <Plus className="w-4 h-4 text-amber-400 stroke-[2.5]" />
-            <span>+ FACTURA</span>
+            <span>Factura</span>
           </button>
         </div>
+
+        {/* Input de búsqueda desplegable al pulsar la lupa o si hay texto */}
+        <AnimatePresence>
+          {(isSearchOpen || searchQuery) && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.18 }}
+              className="overflow-hidden pt-1"
+            >
+              <div className="relative w-full">
+                <Search className="w-4 h-4 text-amber-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  id="received-invoices-search-input"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Buscar por proveedor, CIF, número, concepto..."
+                  className="w-full pl-9 pr-8 py-2 rounded-xl bg-neutral-900 border border-neutral-700/80 text-xs sm:text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-amber-400 transition-colors"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white text-xs px-1 cursor-pointer"
+                    title="Limpiar búsqueda"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Grid de Tarjetas de Facturas Recibidas - Mismo diseño que Clientes y Proveedores */}
@@ -380,15 +465,14 @@ export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
                     <Phone className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm" />
                   </button>
 
-                  {/* Icono 2: WhatsApp Flotante (Verde sólido, 1.5px) */}
+                  {/* Icono 2: WhatsApp Flotante (Relleno Gris 30% con telefonito blanco) */}
                   <button
                     type="button"
                     onClick={(e) => handleWhatsAppClick(inv, phone, e)}
-                    className="p-1 text-[#25D366] hover:text-[#3df084] hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
-                    style={{ color: '#25D366' }}
+                    className="p-1 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
                     title={phone ? 'Abrir chat de WhatsApp' : 'Sin teléfono para WhatsApp'}
                   >
-                    <MessageCircle className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm text-[#25D366]" style={{ color: '#25D366' }} />
+                    <WhatsAppIcon className="w-8 h-8 sm:w-9 sm:h-9 drop-shadow-sm" />
                   </button>
 
                   {/* Icono 3: Ver Comprobante / Foto con icono de imagen estándar */}

@@ -3,7 +3,6 @@ import {
   Search,
   Plus,
   Eye,
-  MessageCircle,
   Printer,
   Trash2,
   ChevronDown,
@@ -19,6 +18,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Invoice } from '../types';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { getStoredWhatsAppDispatches, getStoredEmailDispatches } from '../services/notificationService';
+import { WhatsAppIcon } from './WhatsAppIcon';
 
 interface IssuedInvoicesScreenProps {
   invoices: Invoice[];
@@ -301,18 +301,17 @@ export const IssuedInvoicesScreen: React.FC<IssuedInvoicesScreenProps> = ({
                     <RectifyInvoiceIcon className="w-8 h-8 sm:w-9 sm:h-9 drop-shadow-sm" />
                   </button>
 
-                  {/* Icono 3: WhatsApp Flotante (Verde sólido, 1.5px) */}
+                  {/* Icono 3: WhatsApp Flotante (Relleno Gris 30% con telefonito blanco) */}
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       onOpenWhatsApp(inv);
                     }}
-                    className="p-1 text-[#25D366] hover:text-[#3df084] hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
-                    style={{ color: '#25D366' }}
+                    className="p-1 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
                     title={`Enviar factura ${inv.number} por WhatsApp`}
                   >
-                    <MessageCircle className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm text-[#25D366]" style={{ color: '#25D366' }} />
+                    <WhatsAppIcon className="w-8 h-8 sm:w-9 sm:h-9 drop-shadow-sm" />
                   </button>
 
                   {/* Icono 4: Imprimir / PDF Flotante */}

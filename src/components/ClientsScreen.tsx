@@ -6,7 +6,6 @@ import {
   Phone,
   Mail,
   MapPin,
-  MessageCircle,
   Edit3,
   Trash2,
   ChevronDown,
@@ -29,6 +28,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ClientData, ClientDispatchChannel, BillableProduct, ReceivedInvoice, ProviderData } from '../types';
 import { formatCurrency } from '../utils/formatters';
 import { saveClientToDb } from '../utils/database';
+import { WhatsAppIcon } from './WhatsAppIcon';
 import { NewReceivedInvoiceFullScreenForm } from './NewReceivedInvoiceFullScreenForm';
 import { LineasComplejasModal } from './LineasComplejasModal';
 import { ProductosClienteModal } from './ProductosClienteModal';
@@ -464,15 +464,14 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
                     <Phone className="w-10 h-10 sm:w-11 sm:h-11 stroke-[1.5] drop-shadow-sm" />
                   </button>
 
-                  {/* Icono 2: WhatsApp Flotante (Verde sólido) */}
+                  {/* Icono 2: WhatsApp Flotante (Relleno Gris 30% con telefonito blanco) */}
                   <button
                     type="button"
                     onClick={(e) => handleWhatsAppClick(client, e)}
-                    className="p-1 text-[#25D366] hover:text-[#3df084] hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
-                    style={{ color: '#25D366' }}
+                    className="p-1 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
                     title={client.phone ? `Abrir chat de WhatsApp` : 'Sin teléfono para WhatsApp'}
                   >
-                    <MessageCircle className="w-10 h-10 sm:w-11 sm:h-11 stroke-[1.5] drop-shadow-sm text-[#25D366]" style={{ color: '#25D366' }} />
+                    <WhatsAppIcon className="w-10 h-10 sm:w-11 sm:h-11 drop-shadow-sm" />
                   </button>
 
                   {/* Icono 3: +F dentro de una hoja Flotante (Facturar a este cliente) */}
@@ -707,14 +706,14 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
                                 }}
                                 className={`p-2 sm:p-2.5 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-center active:scale-95 ${
                                   preferred === 'whatsapp'
-                                    ? 'bg-[#25D366]/20 border-[#25D366] text-[#25D366] shadow-lg shadow-[#25D366]/25'
-                                    : 'bg-transparent border-neutral-700 text-neutral-500 hover:border-neutral-500 hover:text-neutral-400'
+                                    ? 'bg-neutral-800 border-amber-400 shadow-lg shadow-amber-400/20 scale-105'
+                                    : 'bg-transparent border-neutral-700 opacity-60 hover:opacity-100 hover:border-neutral-500'
                                 }`}
                                 title="Establecer WhatsApp como canal de envío preferente"
                               >
-                                <MessageCircle
-                                  className={`w-8 h-8 sm:w-9 sm:h-9 stroke-[1.8] drop-shadow-sm ${preferred === 'whatsapp' ? '' : 'inactive-whatsapp text-neutral-500'}`}
-                                  style={{ color: preferred === 'whatsapp' ? '#25D366' : '#737373' }}
+                                <WhatsAppIcon
+                                  className="w-8 h-8 sm:w-9 sm:h-9 drop-shadow-sm"
+                                  active={preferred === 'whatsapp'}
                                 />
                               </button>
 

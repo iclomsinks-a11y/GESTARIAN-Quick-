@@ -16,7 +16,6 @@ import {
   MapPin,
   KeyRound,
   ExternalLink,
-  MessageCircle,
   Play,
   Flame,
   Wand2,
@@ -45,6 +44,7 @@ import {
   AppTheme,
   ReceivedInvoice,
 } from '../types';
+import { WhatsAppIcon } from './WhatsAppIcon';
 import {
   getStoredWhatsAppDispatches,
   WhatsAppNotificationRecord,
@@ -1066,9 +1066,9 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
                 type="button"
                 id="btn-enable-browser-notifications"
                 onClick={handleEnableBrowserNotifications}
-                className="w-full py-2.5 px-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-md"
+                className="w-full py-2.5 px-3 rounded-xl bg-[#eaf5fc] hover:bg-[#d7eefb] text-[#063962] border border-[#a4daf8] font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-sm"
               >
-                <BellRing className="w-3.5 h-3.5 text-neutral-950" />
+                <BellRing className="w-3.5 h-3.5 text-[#063962]" />
                 <span>{notifPermission === 'granted' ? 'Revisar Permiso' : 'Activar Notificaciones'}</span>
               </button>
             </div>
@@ -1090,9 +1090,9 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
                 type="button"
                 id="btn-test-verifactu-notification"
                 onClick={handleTestVeriFactuNotif}
-                className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-md"
+                className="w-full py-2.5 px-3 rounded-xl bg-[#eaf5fc] hover:bg-[#d7eefb] text-[#063962] border border-[#a4daf8] font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-sm"
               >
-                <ShieldCheck className="w-3.5 h-3.5" />
+                <ShieldCheck className="w-3.5 h-3.5 text-[#063962]" />
                 <span>Probar Veri*Factu</span>
               </button>
             </div>
@@ -1114,9 +1114,9 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
                 type="button"
                 id="btn-test-payment-due-notification"
                 onClick={handleTestPaymentDueNotif}
-                className="w-full py-2.5 px-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-md"
+                className="w-full py-2.5 px-3 rounded-xl bg-[#eaf5fc] hover:bg-[#d7eefb] text-[#063962] border border-[#a4daf8] font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-sm"
               >
-                <CalendarClock className="w-3.5 h-3.5" />
+                <CalendarClock className="w-3.5 h-3.5 text-[#063962]" />
                 <span>Probar Vencimiento</span>
               </button>
             </div>
@@ -1138,9 +1138,9 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
                 type="button"
                 id="btn-scan-upcoming-payments"
                 onClick={handleScanUpcomingPayments}
-                className="w-full py-2.5 px-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-md"
+                className="w-full py-2.5 px-3 rounded-xl bg-[#eaf5fc] hover:bg-[#d7eefb] text-[#063962] border border-[#a4daf8] font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-sm"
               >
-                <RefreshCw className="w-3.5 h-3.5 text-cyan-400" />
+                <RefreshCw className="w-3.5 h-3.5 text-[#063962]" />
                 <span>Comprobar Facturas</span>
               </button>
             </div>
@@ -1230,8 +1230,8 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
             {/* Service 1: WhatsApp Gateway */}
             <div className="p-3.5 rounded-xl bg-neutral-950/80 border border-neutral-800/90 space-y-2">
               <div className="flex items-center justify-between">
-                <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-                  <MessageCircle className="w-3.5 h-3.5" />
+                <div className="w-7 h-7 rounded-lg bg-neutral-900 border border-neutral-700 flex items-center justify-center">
+                  <WhatsAppIcon className="w-4 h-4" />
                 </div>
                 <span className="px-2 py-0.5 rounded-full bg-emerald-950 border border-emerald-700/60 text-emerald-300 font-mono text-[9px] font-bold">
                   GATEWAY ACTIVO
@@ -1363,8 +1363,8 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
                 {dispatches.slice(0, 5).map((disp) => (
                   <div key={disp.id} className="py-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-6 h-6 rounded bg-neutral-800 flex items-center justify-center text-neutral-300 shrink-0">
-                        <MessageCircle className="w-3 h-3" />
+                      <div className="w-6 h-6 rounded bg-neutral-900 border border-neutral-700 flex items-center justify-center shrink-0">
+                        <WhatsAppIcon className="w-3.5 h-3.5" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">

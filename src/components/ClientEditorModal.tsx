@@ -7,7 +7,6 @@ import {
   Mail,
   X,
   Save,
-  MessageCircle,
   FileText,
   Check,
   Sliders,
@@ -15,6 +14,7 @@ import {
 } from 'lucide-react';
 import { ClientData, ClientDispatchChannel } from '../types';
 import { saveClientToDb } from '../utils/database';
+import { WhatsAppIcon } from './WhatsAppIcon';
 
 export type ClientInputField = 'name' | 'nif' | 'address' | 'phone' | 'email' | 'notes';
 
@@ -362,7 +362,7 @@ export const ClientEditorModal: React.FC<ClientEditorModalProps> = ({
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <MessageCircle className="w-4 h-4 text-[#25D366] shrink-0" style={{ color: '#25D366' }} />
+                      <WhatsAppIcon className="w-4 h-4 shrink-0" />
                       <span className="text-sm font-bold text-white">WhatsApp</span>
                       {currentPreferred === 'whatsapp' && (
                         <span className="text-[10px] bg-[#25D366]/20 text-[#25D366] font-bold px-1.5 py-0.5 rounded">

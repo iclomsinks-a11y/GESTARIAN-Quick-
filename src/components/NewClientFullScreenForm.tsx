@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { X, Check, MessageCircle, Mail, Sliders, Package } from 'lucide-react';
+import { X, Check, Mail, Sliders, Package } from 'lucide-react';
 import { ClientData } from '../types';
 import { centerInTop60Viewer } from '../utils/scrollHelpers';
+import { WhatsAppIcon } from './WhatsAppIcon';
 
 interface NewClientFullScreenFormProps {
   isOpen: boolean;
@@ -241,7 +242,7 @@ export const NewClientFullScreenForm: React.FC<NewClientFullScreenFormProps> = (
                   />
                   <div>
                     <div className="flex items-center gap-1.5">
-                      <MessageCircle className="w-4 h-4 text-[#25D366]" style={{ color: '#25D366' }} />
+                      <WhatsAppIcon className="w-4 h-4 shrink-0" />
                       <span className="text-sm font-bold text-white">WhatsApp</span>
                     </div>
                     <p className="text-[11px] text-neutral-400 mt-0.5">Envío directo por chat de WhatsApp</p>

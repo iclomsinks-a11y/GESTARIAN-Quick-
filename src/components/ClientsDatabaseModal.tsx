@@ -12,10 +12,10 @@ import {
   Check,
   Trash2,
   ExternalLink,
-  MessageCircle,
   FolderTree,
 } from 'lucide-react';
 import { ClientData } from '../types';
+import { WhatsAppIcon } from './WhatsAppIcon';
 
 interface ClientsDatabaseModalProps {
   isOpen: boolean;
@@ -186,8 +186,8 @@ export const ClientsDatabaseModal: React.FC<ClientsDatabaseModalProps> = ({
                     <span className="text-[10px] text-neutral-500 font-medium">Envío por defecto:</span>
                     {c.defaultSendWhatsApp && c.defaultSendEmail ? (
                       <div className="inline-flex items-center gap-1.5">
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#25D366] bg-[#25D366]/10 border border-[#25D366]/25 px-2 py-0.5 rounded-full">
-                          <MessageCircle className="w-2.5 h-2.5 fill-[#25D366]" />
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-neutral-300 bg-neutral-800 border border-neutral-700 px-2 py-0.5 rounded-full">
+                          <WhatsAppIcon className="w-2.5 h-2.5" />
                           WhatsApp
                         </span>
                         <span className="inline-flex items-center gap-1 text-[10px] font-bold text-sky-400 bg-sky-500/10 border border-sky-500/25 px-2 py-0.5 rounded-full">
@@ -196,8 +196,8 @@ export const ClientsDatabaseModal: React.FC<ClientsDatabaseModalProps> = ({
                         </span>
                       </div>
                     ) : c.defaultSendWhatsApp ? (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#25D366] bg-[#25D366]/10 border border-[#25D366]/25 px-2 py-0.5 rounded-full">
-                        <MessageCircle className="w-2.5 h-2.5 fill-[#25D366]" />
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-neutral-300 bg-neutral-800 border border-neutral-700 px-2 py-0.5 rounded-full">
+                        <WhatsAppIcon className="w-2.5 h-2.5" />
                         WhatsApp
                       </span>
                     ) : c.defaultSendEmail ? (
