@@ -6,10 +6,6 @@ const STORAGE_REMEMBER_DEVICE = 'gestarian_remember_device';
 const STORAGE_APP_DOWNLOADED = 'gestarian_app_downloaded';
 const STORAGE_SAVED_LOGIN_CREDENTIALS = 'gestarian_saved_login_credentials';
 
-// Default detected account from current browser session / Google environment
-const DETECTED_BROWSER_EMAIL = 'iclomsinks@gmail.com';
-const DETECTED_BROWSER_NAME = 'Iclom Sinks';
-
 export interface StoredCredentials {
   email: string;
   dni?: string;
@@ -197,14 +193,33 @@ function saveRegisteredList(list: StoredCredentials[]): void {
 }
 
 /**
- * Detect active Google account in this browser/session
+ * Detect active Google account in this browser/session if saved locally
  */
 export function getDetectedGoogleAccount(): { email: string; name: string; avatarUrl?: string } | null {
-  return {
-    email: DETECTED_BROWSER_EMAIL,
-    name: DETECTED_BROWSER_NAME,
-    avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(DETECTED_BROWSER_NAME)}&background=f59e0b&color=000&bold=true`,
-  };
+  try {
+    const creds = getSavedLoginCredentials();
+    if (creds && creds.email) {
+      return {
+        email: creds.email,
+        name: creds.name || creds.email.split('@')[0],
+        avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(creds.name || creds.email)}&background=f59e0b&color=000&bold=true`,
+      };
+    }
+    const rawAuth = localStorage.getItem(STORAGE_AUTH_USER);
+    if (rawAuth) {
+      const user: AuthUser = JSON.parse(rawAuth);
+      if (user && user.email) {
+        return {
+          email: user.email,
+          name: user.name || user.email.split('@')[0],
+          avatarUrl: user.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || user.email)}&background=f59e0b&color=000&bold=true`,
+        };
+      }
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
 }
 
 /**
@@ -359,8 +374,11 @@ export async function loginWithGoogle(
   customName?: string,
   rememberDevice: boolean = true
 ): Promise<AuthUser> {
-  const email = (customEmail || DETECTED_BROWSER_EMAIL).trim().toLowerCase();
-  const name = customName || (email === DETECTED_BROWSER_EMAIL ? DETECTED_BROWSER_NAME : email.split('@')[0]);
+  const email = (customEmail || '').trim().toLowerCase();
+  if (!email) {
+    throw new Error('Por favor introduce una dirección de correo para acceder.');
+  }
+  const name = customName || email.split('@')[0];
 
   const list = getRegisteredList();
   const existing = list.find((c) => c.email.toLowerCase() === email);

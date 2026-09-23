@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { X, Check, MessageCircle, Mail, Sliders } from 'lucide-react';
+import { X, Check, MessageCircle, Mail, Sliders, Package } from 'lucide-react';
 import { ClientData } from '../types';
 import { centerInTop60Viewer } from '../utils/scrollHelpers';
 
@@ -28,6 +28,7 @@ export const NewClientFullScreenForm: React.FC<NewClientFullScreenFormProps> = (
     defaultSendEmail: initialData?.defaultSendEmail ?? false,
     preferredDispatchChannel: initialData?.preferredDispatchChannel || 'whatsapp',
     enableComplexInvoice: initialData?.enableComplexInvoice ?? false,
+    enableProductsCatalog: initialData?.enableProductsCatalog ?? false,
   });
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -281,12 +282,12 @@ export const NewClientFullScreenForm: React.FC<NewClientFullScreenFormProps> = (
             </div>
           </div>
 
-          {/* Factura Compleja Toggle */}
+          {/* Botón Línea Compleja en Facturas Toggle */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <label className="text-xs uppercase tracking-widest text-neutral-400 font-bold flex items-center gap-2">
                 <Sliders className="w-4 h-4 text-amber-400" />
-                <span>Factura Compleja / Variantes Técnicas</span>
+                <span>Botón Línea Compleja en Facturas</span>
               </label>
               <button
                 type="button"
@@ -311,11 +312,49 @@ export const NewClientFullScreenForm: React.FC<NewClientFullScreenFormProps> = (
                 >
                   {formData.enableComplexInvoice && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                 </div>
-                <span>{formData.enableComplexInvoice ? 'Habilitada' : 'Habilitar Factura Compleja'}</span>
+                <span>{formData.enableComplexInvoice ? 'Activado' : 'Desactivado'}</span>
               </button>
             </div>
             <p className="text-xs text-neutral-400">
-              Muestra el botón de Factura Compleja (80% del ancho) en la tarjeta de este cliente para configurar partidas con metros lineales (ml), m², porcentajes y variantes técnicas.
+              Controla si el botón <strong>«Línea Compleja ▾»</strong> aparece en la hoja A4 al emitir facturas a este cliente. Si está desactivado, no se muestra en la factura.
+            </p>
+          </div>
+
+          {/* Botón Añadir Producto en Facturas Toggle */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-xs uppercase tracking-widest text-neutral-400 font-bold flex items-center gap-2">
+                <Package className="w-4 h-4 text-amber-400" />
+                <span>Botón Añadir Producto en Facturas</span>
+              </label>
+              <button
+                type="button"
+                onClick={() =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    enableProductsCatalog: !prev.enableProductsCatalog,
+                  }))
+                }
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer border ${
+                  formData.enableProductsCatalog
+                    ? 'bg-amber-400 text-neutral-950 border-amber-300 shadow-md shadow-amber-400/20'
+                    : 'bg-neutral-900 text-neutral-400 border-neutral-800 hover:text-white'
+                }`}
+              >
+                <div
+                  className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
+                    formData.enableProductsCatalog
+                      ? 'bg-neutral-950 border-neutral-950 text-amber-400'
+                      : 'bg-neutral-700 border-neutral-600'
+                  }`}
+                >
+                  {formData.enableProductsCatalog && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                </div>
+                <span>{formData.enableProductsCatalog ? 'Activado' : 'Desactivado'}</span>
+              </button>
+            </div>
+            <p className="text-xs text-neutral-400">
+              Controla si el botón <strong>«Añadir Producto»</strong> aparece en la hoja A4 al emitir facturas a este cliente.
             </p>
           </div>
 

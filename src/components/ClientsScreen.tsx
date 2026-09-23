@@ -228,6 +228,28 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
     }
   };
 
+  const handleToggleEnableProductsCatalog = (client: ClientData, enabled: boolean) => {
+    const updatedClient: ClientData = {
+      ...client,
+      enableProductsCatalog: enabled,
+    };
+    saveClientToDb(updatedClient);
+    if (onSaveClient) {
+      onSaveClient(updatedClient);
+    }
+  };
+
+  const handleToggleEnableComplexInvoice = (client: ClientData, enabled: boolean) => {
+    const updatedClient: ClientData = {
+      ...client,
+      enableComplexInvoice: enabled,
+    };
+    saveClientToDb(updatedClient);
+    if (onSaveClient) {
+      onSaveClient(updatedClient);
+    }
+  };
+
   const filteredClients = clients.filter((c) => {
     const term = searchTerm.toLowerCase().trim();
     if (!term) return true;
@@ -476,24 +498,86 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
                   </button>
                 </div>
 
+                {/* SECCIÓN Y BOTÓN DE LÍNEAS COMPLEJAS DEL CLIENTE */}
+                <div className="w-full px-3.5 pt-1 space-y-2">
+                  <div className="flex items-center justify-between gap-2 pt-1 border-t border-neutral-800/80 flex-wrap">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400/90 flex items-center gap-1.5">
+                      <FolderTree className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Líneas Complejas ({client.lineasComplejas?.length || 0})</span>
+                    </span>
+
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {/* Casilla interactiva para activar/desactivar botón Línea Compleja en la factura */}
+                      <label
+                        onClick={(e) => e.stopPropagation()}
+                        className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs font-semibold cursor-pointer transition-all select-none ${
+                          client.enableComplexInvoice
+                            ? 'bg-amber-400/20 border-amber-400/60 text-amber-300 shadow-xs'
+                            : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:text-neutral-200 hover:border-neutral-700'
+                        }`}
+                        title="Habilitar o deshabilitar que aparezca el botón 'Línea Compleja' en la hoja A4 de la factura para este cliente"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={Boolean(client.enableComplexInvoice)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleToggleEnableComplexInvoice(client, e.target.checked);
+                          }}
+                          className="w-3.5 h-3.5 rounded border-neutral-700 bg-neutral-950 text-amber-400 focus:ring-amber-400/50 accent-amber-400 cursor-pointer"
+                        />
+                        <span className="text-[11px]">
+                          {client.enableComplexInvoice ? 'Línea Compleja: Sí' : 'Activar en Factura'}
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
                 {/* SECCIÓN Y BOTÓN DE PRODUCTOS HABITUALES DEL CLIENTE */}
                 <div className="w-full px-3.5 pb-3 space-y-2">
-                  <div className="flex items-center justify-between gap-2 pt-1 border-t border-neutral-800/80">
+                  <div className="flex items-center justify-between gap-2 pt-1 border-t border-neutral-800/80 flex-wrap">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400/90 flex items-center gap-1.5">
                       <Package className="w-3.5 h-3.5 text-amber-400" />
                       <span>Productos Habituales ({client.habitualProducts?.length || 0})</span>
                     </span>
 
-                    <button
-                      type="button"
-                      id={`btn-add-habitual-product-${clientId}`}
-                      onClick={(e) => handleOpenAddHabitualProduct(client, e)}
-                      className="px-2.5 py-1 rounded-lg bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/40 text-amber-300 font-semibold text-xs flex items-center gap-1 transition-all active:scale-95 cursor-pointer"
-                      title="Añadir producto habitual para este cliente mediante descripción y foto o URL"
-                    >
-                      <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                      <span>Añadir Producto</span>
-                    </button>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {/* Casilla interactiva para activar/desactivar botón Añadir Producto en facturación */}
+                      <label
+                        onClick={(e) => e.stopPropagation()}
+                        className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs font-semibold cursor-pointer transition-all select-none ${
+                          client.enableProductsCatalog
+                            ? 'bg-amber-400/20 border-amber-400/60 text-amber-300 shadow-xs'
+                            : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:text-neutral-200 hover:border-neutral-700'
+                        }`}
+                        title="Activar o desactivar que aparezca el botón 'Añadir Producto' en la factura al facturar a este cliente"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={Boolean(client.enableProductsCatalog)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleToggleEnableProductsCatalog(client, e.target.checked);
+                          }}
+                          className="w-3.5 h-3.5 rounded border-neutral-700 bg-neutral-950 text-amber-400 focus:ring-amber-400/50 accent-amber-400 cursor-pointer"
+                        />
+                        <span className="text-[11px]">
+                          {client.enableProductsCatalog ? 'Botón Factura: Sí' : 'Activar en Factura'}
+                        </span>
+                      </label>
+
+                      <button
+                        type="button"
+                        id={`btn-add-habitual-product-${clientId}`}
+                        onClick={(e) => handleOpenAddHabitualProduct(client, e)}
+                        className="px-2.5 py-1 rounded-lg bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/40 text-amber-300 font-semibold text-xs flex items-center gap-1 transition-all active:scale-95 cursor-pointer"
+                        title="Añadir producto habitual para este cliente mediante descripción y foto o URL"
+                      >
+                        <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                        <span>Añadir Producto</span>
+                      </button>
+                    </div>
                   </div>
 
                   {/* Lista de productos habituales si existen */}
@@ -724,17 +808,42 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
                           </div>
                         </div>
 
-                        {/* Estado: Líneas Complejas y Productos (reemplaza sección antigua) */}
+                        {/* Estado: Líneas Complejas */}
                         <div className="flex items-center justify-between gap-3 pt-2 border-t border-neutral-850/80 text-sm sm:text-base">
                           <span className="font-bold text-neutral-400 flex items-center gap-1.5">
                             <FolderTree className="w-4 h-4 text-amber-400" />
-                            <span>Líneas Complejas:</span>
+                            <span>Botón Línea Compleja:</span>
                           </span>
-                          <span className="text-xs sm:text-sm font-semibold px-2.5 py-0.5 rounded-full border bg-amber-400/10 text-amber-300 border-amber-400/20">
-                            {client.lineasComplejas && client.lineasComplejas.length > 0
-                              ? `${client.lineasComplejas.length} estructura(s)`
-                              : 'Sin configurar'}
+                          <button
+                            type="button"
+                            onClick={() => handleToggleEnableComplexInvoice(client, !client.enableComplexInvoice)}
+                            className={`text-xs sm:text-sm font-bold px-3 py-1 rounded-lg border transition-all cursor-pointer ${
+                              client.enableComplexInvoice
+                                ? 'bg-amber-400 text-neutral-950 border-amber-300 shadow-sm'
+                                : 'bg-neutral-900 text-neutral-400 border-neutral-800 hover:text-white'
+                            }`}
+                          >
+                            {client.enableComplexInvoice ? '✓ Mostrado en Factura' : '✕ Oculto en Factura'}
+                          </button>
+                        </div>
+
+                        {/* Estado: Botón Añadir Producto en Facturación */}
+                        <div className="flex items-center justify-between gap-3 pt-2 border-t border-neutral-850/80 text-sm sm:text-base">
+                          <span className="font-bold text-neutral-400 flex items-center gap-1.5">
+                            <Package className="w-4 h-4 text-amber-400" />
+                            <span>Botón Añadir Producto:</span>
                           </span>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleEnableProductsCatalog(client, !client.enableProductsCatalog)}
+                            className={`text-xs sm:text-sm font-bold px-3 py-1 rounded-lg border transition-all cursor-pointer ${
+                              client.enableProductsCatalog
+                                ? 'bg-amber-400 text-neutral-950 border-amber-300 shadow-sm'
+                                : 'bg-neutral-900 text-neutral-400 border-neutral-800 hover:text-white'
+                            }`}
+                          >
+                            {client.enableProductsCatalog ? '✓ Mostrado en Factura' : '✕ Oculto en Factura'}
+                          </button>
                         </div>
 
                         {/* Observaciones / Notas si las tiene (Texto x1.5) */}

@@ -534,8 +534,11 @@ export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
                           </div>
                         )}
 
-                        {/* Desglose Fiscal (Base, IVA, IRPF, Total) - Sección de Importes en Blanco Hueso */}
-                        <div className="pt-2 border-t border-neutral-850/80 space-y-2 bg-[#FAF8F5] p-3.5 rounded-xl border border-neutral-200 text-neutral-900 shadow-sm">
+                        {/* Desglose Fiscal (Base, IVA, IRPF, Total) - Recuadro con fondo Gris 5% (#f2f2f2) */}
+                        <div
+                          className="pt-2 border-t border-neutral-850/80 space-y-2 p-3.5 rounded-xl border border-neutral-300 text-neutral-900 shadow-xs"
+                          style={{ backgroundColor: '#f2f2f2' }}
+                        >
                           <div className="flex items-center justify-between text-sm sm:text-base text-neutral-700">
                             <span className="font-semibold">Base Imponible:</span>
                             <span className="font-mono font-bold text-neutral-900">{formatCurrency(inv.baseImponible || 0)}</span>

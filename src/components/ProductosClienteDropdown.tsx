@@ -44,7 +44,7 @@ export const ProductosClienteDropdown: React.FC<ProductosClienteDropdownProps> =
         title="Insertar un producto configurado para este cliente"
       >
         <Package className="w-3.5 h-3.5 text-amber-700" />
-        <span>Producto ▾</span>
+        <span>Añadir Producto ▾</span>
       </button>
 
       <AnimatePresence>

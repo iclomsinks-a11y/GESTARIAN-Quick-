@@ -28,6 +28,7 @@ import {
   MessageCircle,
   Package,
   ArrowLeft,
+  Printer,
 } from 'lucide-react';
 import {
   Invoice,
@@ -282,9 +283,9 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
   // Direct logo upload from A4 sheet
   return (
     <div className="w-full flex flex-col items-center py-2 sm:py-4 px-2 sm:px-4 pb-4 transition-all">
-      {/* Botón Volver a Facturas Emitidas / Pantalla Principal */}
-      {onBack && (
-        <div className="w-full max-w-[840px] mb-3 sm:mb-4 flex items-center justify-between gap-3 bg-neutral-950/80 border border-neutral-800 rounded-2xl p-2.5 sm:p-3 backdrop-blur-md shadow-lg print:hidden">
+      {/* Barra Superior con Botón Volver, Número de Factura y Botón Imprimir */}
+      <div className="w-full max-w-[840px] mb-3 sm:mb-4 flex items-center justify-between gap-3 bg-neutral-950/80 border border-neutral-800 rounded-2xl p-2.5 sm:p-3 backdrop-blur-md shadow-lg print:hidden">
+        {onBack ? (
           <button
             type="button"
             onClick={onBack}
@@ -294,14 +295,50 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
             <ArrowLeft className="w-4 h-4 text-amber-400" />
             <span>Volver a Facturas Emitidas</span>
           </button>
+        ) : (
+          <div />
+        )}
 
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-xs font-bold text-amber-300 bg-amber-400/10 px-2.5 py-1 rounded-lg border border-amber-400/30">
-              {invoice.number || 'Factura'}
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          <span className="font-mono text-xs font-bold text-amber-300 bg-amber-400/10 px-2.5 py-1.5 rounded-xl border border-amber-400/30">
+            {invoice.number || 'Factura'}
+          </span>
+
+          {/* Botón Imprimir Superior: Identifica estado guardado (color predeterminado) o no guardado (icono gris 50%) */}
+          <button
+            type="button"
+            id="a4-top-print-btn"
+            disabled={!isSavedLocal}
+            onClick={() => {
+              if (!isSavedLocal) return;
+              handleOpenPrintPreview();
+            }}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all active:scale-95 ${
+              isSavedLocal
+                ? 'bg-neutral-900 hover:bg-neutral-850 text-stone-100 hover:text-white border border-neutral-700 hover:border-amber-400/80 cursor-pointer shadow-md ring-1 ring-amber-400/30'
+                : 'bg-neutral-950/80 border border-neutral-850 cursor-not-allowed select-none'
+            }`}
+            style={{
+              color: isSavedLocal ? undefined : '#808080',
+            }}
+            title={
+              isSavedLocal
+                ? 'Abrir vista de impresión y enviar a la impresora preconfigurada'
+                : 'Debes pulsar "Guardar Factura" para activar la impresión'
+            }
+          >
+            <Printer
+              className="w-4 h-4 shrink-0 transition-colors"
+              style={{
+                color: isSavedLocal ? '#F59E0B' : '#808080',
+              }}
+            />
+            <span style={{ color: isSavedLocal ? undefined : '#808080' }}>
+              Imprimir
             </span>
-          </div>
+          </button>
         </div>
-      )}
+      </div>
 
       {/* A4 Sheet Container: standardized 210mm x 297mm aspect ratio container */}
       <div
@@ -620,20 +657,25 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                 id="add-concept-line-btn"
                 onClick={handleAddItem}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-dashed border-amber-300 hover:border-amber-500 bg-amber-50/50 hover:bg-amber-100/50 text-amber-900 text-xs font-semibold transition-all shadow-xs cursor-pointer"
+                title="Añadir una nueva línea libre de concepto a la factura"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Añadir línea de concepto</span>
+                <span>Añadir línea libre</span>
               </button>
 
-              <LineasComplejasDropdown
-                estructuras={invoice.client.lineasComplejas || []}
-                onSelect={handleAddItemWithConcept}
-              />
+              {invoice.client.enableComplexInvoice && (
+                <LineasComplejasDropdown
+                  estructuras={invoice.client.lineasComplejas || []}
+                  onSelect={handleAddItemWithConcept}
+                />
+              )}
 
-              <ProductosClienteDropdown
-                productos={invoice.client.habitualProducts || []}
-                onSelect={handleAddItemWithConcept}
-              />
+              {invoice.client.enableProductsCatalog && (
+                <ProductosClienteDropdown
+                  productos={invoice.client.habitualProducts || []}
+                  onSelect={handleAddItemWithConcept}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -785,18 +827,18 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
 
               return (
                 <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {/* 1. Botón de Guardar Factura */}
                     <button
                       type="button"
                       id="a4-footer-save-btn"
                       onClick={handleSave}
-                      className={`w-full py-3.5 px-4 rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border shadow-md transition-all active:scale-[0.98] cursor-pointer ${
+                      className={`w-full py-3.5 px-3 rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border shadow-md transition-all active:scale-[0.98] cursor-pointer ${
                         isSavedLocal
                           ? 'bg-neutral-900 text-emerald-400 border-emerald-500/50 hover:bg-neutral-850'
                           : 'bg-neutral-900 hover:bg-neutral-850 text-stone-100 border-neutral-700 hover:shadow-xl'
                       }`}
-                      title="Guardar factura y activar el botón de envío"
+                      title="Guardar factura y activar los botones de impresión y envío"
                     >
                       {isSavedLocal ? (
                         <>
@@ -811,14 +853,48 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                       )}
                     </button>
 
-                    {/* 2. Botón de Enviar por WhatsApp O Enviar por Email según esté configurado el cliente */}
+                    {/* 2. Botón de Imprimir Factura: Activo cuando está guardada, o gris 50% cuando no */}
+                    <button
+                      type="button"
+                      id="a4-footer-print-btn"
+                      disabled={!isSavedLocal}
+                      onClick={() => {
+                        if (!isSavedLocal) return;
+                        handleOpenPrintPreview();
+                      }}
+                      className={`w-full py-3.5 px-3 rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border transition-all ${
+                        isSavedLocal
+                          ? 'bg-neutral-900 hover:bg-neutral-850 text-stone-100 hover:text-white border-neutral-700 hover:border-amber-400 shadow-md active:scale-[0.98] cursor-pointer ring-1 ring-amber-400/30'
+                          : 'bg-neutral-100 border-neutral-300 cursor-not-allowed shadow-none select-none'
+                      }`}
+                      style={{
+                        color: isSavedLocal ? undefined : '#808080',
+                      }}
+                      title={
+                        isSavedLocal
+                          ? 'Imprimir documento en la impresora preconfigurada del dispositivo'
+                          : 'Debes pulsar "Guardar Factura" para activar la impresión'
+                      }
+                    >
+                      <Printer
+                        className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 transition-colors"
+                        style={{
+                          color: isSavedLocal ? '#F59E0B' : '#808080',
+                        }}
+                      />
+                      <span style={{ color: isSavedLocal ? undefined : '#808080' }}>
+                        Imprimir
+                      </span>
+                    </button>
+
+                    {/* 3. Botón de Enviar por WhatsApp O Enviar por Email según esté configurado el cliente */}
                     {preferredChannel === 'whatsapp' ? (
                       <button
                         type="button"
                         id="a4-footer-send-btn"
                         disabled={!isSavedLocal}
                         onClick={handleWhatsApp}
-                        className={`w-full py-3.5 px-4 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
+                        className={`w-full py-3.5 px-3 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
                           isSavedLocal
                             ? 'bg-[#25D366] hover:bg-[#20bd5a] text-neutral-950 shadow-lg hover:shadow-[#25D366]/30 active:scale-[0.98] cursor-pointer ring-2 ring-[#25D366]/40'
                             : 'bg-neutral-200 text-neutral-400 border border-neutral-300 cursor-not-allowed shadow-none'
@@ -833,7 +909,7 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                           className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-[#25D366]"
                           style={{ color: '#25D366' }}
                         />
-                        <span className="truncate">Enviar por WhatsApp</span>
+                        <span className="truncate">Enviar WhatsApp</span>
                       </button>
                     ) : (
                       <button
@@ -841,7 +917,7 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                         id="a4-footer-send-btn"
                         disabled={!isSavedLocal}
                         onClick={handleEmail}
-                        className={`w-full py-3.5 px-4 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
+                        className={`w-full py-3.5 px-3 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
                           isSavedLocal
                             ? 'bg-sky-400 hover:bg-sky-300 text-neutral-950 shadow-lg hover:shadow-sky-400/30 active:scale-[0.98] cursor-pointer ring-2 ring-sky-400/40'
                             : 'bg-neutral-200 text-neutral-400 border border-neutral-300 cursor-not-allowed shadow-none'
@@ -857,7 +933,7 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                             isSavedLocal ? 'text-neutral-950' : 'text-neutral-400'
                           }`}
                         />
-                        <span className="truncate">Enviar por Email</span>
+                        <span className="truncate">Enviar Email</span>
                       </button>
                     )}
                   </div>
@@ -867,12 +943,12 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                     <div>
                       {!isSavedLocal ? (
                         <span className="text-amber-700 font-medium">
-                          * Pulsa <strong>"Guardar Factura"</strong> para activar el envío por {preferredChannel === 'whatsapp' ? 'WhatsApp' : 'Email'}.
+                          * Pulsa <strong>"Guardar Factura"</strong> para activar la impresión y el envío por {preferredChannel === 'whatsapp' ? 'WhatsApp' : 'Email'}.
                         </span>
                       ) : (
                         <span className="text-emerald-700 font-bold inline-flex items-center gap-1">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 inline" />
-                          <span>Factura guardada. Envío por {preferredChannel === 'whatsapp' ? 'WhatsApp' : 'Email'} activado y listo.</span>
+                          <span>Factura guardada. Impresión y envío por {preferredChannel === 'whatsapp' ? 'WhatsApp' : 'Email'} activados.</span>
                         </span>
                       )}
                     </div>

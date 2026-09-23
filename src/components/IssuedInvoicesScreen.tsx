@@ -462,29 +462,32 @@ export const IssuedInvoicesScreen: React.FC<IssuedInvoicesScreenProps> = ({
                           </div>
                         </div>
 
-                        {/* Desglose Fiscal (Base, IVA, IRPF, Total) */}
-                        <div className="pt-2 border-t border-neutral-850/80 space-y-2 bg-neutral-900/60 p-3 rounded-xl border border-neutral-800">
-                          <div className="flex items-center justify-between text-sm sm:text-base text-neutral-300">
-                            <span>Base Imponible:</span>
-                            <span className="font-mono font-bold">{formatCurrency(totals.base)}</span>
+                        {/* Desglose Fiscal (Base, IVA, IRPF, Total) - Recuadro con fondo Gris 5% (#f2f2f2) */}
+                        <div
+                          className="pt-2 border-t border-neutral-850/80 space-y-2 p-3.5 rounded-xl border border-neutral-300 text-neutral-900 shadow-xs"
+                          style={{ backgroundColor: '#f2f2f2' }}
+                        >
+                          <div className="flex items-center justify-between text-sm sm:text-base text-neutral-700">
+                            <span className="font-semibold">Base Imponible:</span>
+                            <span className="font-mono font-bold text-neutral-900">{formatCurrency(totals.base)}</span>
                           </div>
-                          <div className="flex items-center justify-between text-sm sm:text-base text-neutral-300">
-                            <span>IVA ({inv.ivaRate ?? 21}%):</span>
-                            <span className="font-mono font-bold text-amber-300/90">
+                          <div className="flex items-center justify-between text-sm sm:text-base text-neutral-700">
+                            <span className="font-semibold">IVA ({inv.ivaRate ?? 21}%):</span>
+                            <span className="font-mono font-bold text-amber-800">
                               +{formatCurrency(totals.ivaAmount)}
                             </span>
                           </div>
                           {(inv.irpfRate ?? 0) > 0 && (
-                            <div className="flex items-center justify-between text-sm sm:text-base text-neutral-300">
-                              <span>Retención IRPF ({inv.irpfRate}%):</span>
-                              <span className="font-mono font-bold text-rose-300">
+                            <div className="flex items-center justify-between text-sm sm:text-base text-neutral-700">
+                              <span className="font-semibold">Retención IRPF ({inv.irpfRate}%):</span>
+                              <span className="font-mono font-bold text-rose-700">
                                 -{formatCurrency(totals.irpfAmount)}
                               </span>
                             </div>
                           )}
-                          <div className="flex items-center justify-between text-base sm:text-lg font-black text-white pt-1.5 border-t border-neutral-700">
+                          <div className="flex items-center justify-between text-base sm:text-lg font-black text-neutral-950 pt-2 border-t border-neutral-300">
                             <span>TOTAL FACTURA:</span>
-                            <span className="font-mono text-amber-300">{formatCurrency(totals.total)}</span>
+                            <span className="font-mono text-xl sm:text-2xl font-black text-amber-700">{formatCurrency(totals.total)}</span>
                           </div>
                         </div>
 

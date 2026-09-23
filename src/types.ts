@@ -67,6 +67,7 @@ export interface ClientData {
   defaultSendEmail?: boolean; // Casilla para activar Email por defecto
   preferredDispatchChannel?: ClientDispatchChannel; // Medio seleccionado por defecto
   enableComplexInvoice?: boolean; // Mantenido por compatibilidad (sistema antiguo)
+  enableProductsCatalog?: boolean; // Casilla para activar/desactivar botón Añadir Producto en facturación
   conceptLines?: ClientConceptLine[]; // Líneas de conceptos preconfiguradas para este cliente
   habitualProducts?: BillableProduct[]; // Productos habituales (nuevo sistema: solo nombre+descripción)
   variableTrees?: ClientConceptVariableNode[]; // Árbol antiguo (mantenido por compatibilidad)

@@ -486,7 +486,11 @@ export const AccessScreen: React.FC<AccessScreenProps> = ({
                     d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2-6.4-4.8L1.9 17c1.8 3.7 5.6 6.5 10.1 6.5z"
                   />
                 </svg>
-                <span>Acceder con Google ({detectedGoogle?.email || 'iclomsinks@gmail.com'})</span>
+                <span>
+                  {detectedGoogle?.email
+                    ? `Acceder con Google (${detectedGoogle.email})`
+                    : 'Acceder con Google'}
+                </span>
               </button>
             </div>
           </form>

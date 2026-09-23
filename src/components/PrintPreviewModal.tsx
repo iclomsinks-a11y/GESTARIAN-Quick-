@@ -30,7 +30,39 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
 }) => {
   const [zoom, setZoom] = useState<number>(100);
 
-  // Keyboard shortcut listener: ESC to close, Ctrl+P / Cmd+P to print
+  const handleZoomOut = () => {
+    setZoom((prev) => Math.max(25, prev <= 50 ? prev - 5 : prev - 10));
+  };
+
+  const handleZoomIn = () => {
+    setZoom((prev) => Math.min(200, prev < 50 ? prev + 5 : prev + 10));
+  };
+
+  const handleResetZoom = () => {
+    setZoom(100);
+  };
+
+  const handleFitWidth = () => {
+    // Calcular zoom aproximado para pantalla actual
+    const screenWidth = window.innerWidth;
+    if (screenWidth < 640) {
+      setZoom(40);
+    } else if (screenWidth < 1024) {
+      setZoom(65);
+    } else {
+      setZoom(90);
+    }
+  };
+
+  // Auto-abrir el diálogo de la impresora preconfigurada en el dispositivo al abrir la vista de impresión
+  useEffect(() => {
+    const printTimer = setTimeout(() => {
+      handleTriggerPrint();
+    }, 280);
+    return () => clearTimeout(printTimer);
+  }, []);
+
+  // Keyboard shortcut listener: ESC to close, Ctrl+P / Cmd+P to print, +/- for zoom
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -38,6 +70,15 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
         e.preventDefault();
         handleTriggerPrint();
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === '-' || e.key === '_')) {
+        e.preventDefault();
+        handleZoomOut();
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '=')) {
+        e.preventDefault();
+        handleZoomIn();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === '0') {
+        e.preventDefault();
+        handleResetZoom();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -64,81 +105,79 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
       className="fixed inset-0 z-50 flex flex-col bg-neutral-950/90 backdrop-blur-md overflow-hidden text-neutral-100 print:bg-white print:text-neutral-900 print:static print:inset-auto print:overflow-visible"
     >
       {/* Top Action Toolbar (Hidden during print) */}
-      <header className="no-print shrink-0 h-14 bg-neutral-900 border-b border-neutral-800 px-4 sm:px-6 flex items-center justify-between gap-3 select-none">
+      <header className="no-print shrink-0 h-14 bg-neutral-900 border-b border-neutral-800 px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-3 select-none">
         {/* Left: Close/Back + Title */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             type="button"
             id="print-preview-close-btn"
             onClick={onClose}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-neutral-300 hover:text-white bg-neutral-800 hover:bg-neutral-700 transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold text-neutral-300 hover:text-white bg-neutral-800 hover:bg-neutral-700 transition-colors cursor-pointer shrink-0"
             title="Cerrar vista de impresión (Esc)"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Volver a edición</span>
+            <span className="hidden sm:inline">Volver</span>
           </button>
 
-          <div className="h-4 w-px bg-neutral-700 hidden sm:block" />
+          <div className="h-4 w-px bg-neutral-700 hidden sm:block shrink-0" />
 
-          <div className="flex items-center gap-2">
-            <FileText className="w-4 h-4 text-amber-400" />
-            <h2 className="text-sm font-bold text-neutral-100 truncate">
-              Vista de Impresión · Factura {invoice.number}
+          <div className="flex items-center gap-2 min-w-0">
+            <FileText className="w-4 h-4 text-amber-400 shrink-0" />
+            <h2 className="text-xs sm:text-sm font-bold text-neutral-100 truncate">
+              Factura {invoice.number}
             </h2>
-            <span className="hidden md:inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-amber-400/10 text-amber-300 border border-amber-400/30">
-              Formato A4 (210 × 297 mm)
+            <span className="hidden md:inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-amber-400/10 text-amber-300 border border-amber-400/30 shrink-0">
+              A4
             </span>
           </div>
         </div>
 
-        {/* Center: Zoom Controls */}
-        <div className="hidden lg:flex items-center gap-1.5 bg-neutral-950 px-2 py-1 rounded-xl border border-neutral-800 text-xs">
+        {/* Center: Zoom Controls in Header */}
+        <div className="flex items-center gap-1 bg-neutral-950 px-2 py-1 rounded-xl border border-neutral-800 text-xs shadow-inner">
           <button
             type="button"
-            onClick={() => setZoom((prev) => Math.max(50, prev - 10))}
-            className="p-1 rounded text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
-            title="Reducir zoom"
+            onClick={handleZoomOut}
+            className="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer"
+            title="Reducir zoom (-)"
           >
             <ZoomOut className="w-3.5 h-3.5" />
           </button>
-          <span className="font-mono text-neutral-300 w-12 text-center text-xs font-medium">
-            {zoom}%
-          </span>
           <button
             type="button"
-            onClick={() => setZoom((prev) => Math.min(150, prev + 10))}
-            className="p-1 rounded text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
-            title="Aumentar zoom"
+            onClick={handleResetZoom}
+            className="font-mono text-neutral-200 hover:text-amber-400 px-1 text-center text-xs font-bold transition-colors cursor-pointer"
+            title="Pulsar para restablecer al 100%"
           >
-            <ZoomIn className="w-3.5 h-3.5" />
+            {zoom}%
           </button>
           <button
             type="button"
-            onClick={() => setZoom(100)}
-            className="ml-1 px-1.5 py-0.5 rounded text-[10px] text-neutral-400 hover:text-amber-400 hover:bg-neutral-800 font-medium"
-            title="Restablecer zoom al 100%"
+            onClick={handleZoomIn}
+            className="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer"
+            title="Aumentar zoom (+)"
           >
-            100%
+            <ZoomIn className="w-3.5 h-3.5" />
           </button>
         </div>
 
         {/* Right: Print action & close */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <button
             type="button"
             id="print-preview-action-btn"
             onClick={handleTriggerPrint}
-            className="flex items-center gap-2 px-4 py-1.5 rounded-xl text-xs font-bold bg-amber-400 hover:bg-amber-300 text-neutral-950 shadow-md hover:shadow-amber-400/20 active:scale-95 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold bg-amber-400 hover:bg-amber-300 text-neutral-950 shadow-md hover:shadow-amber-400/20 active:scale-95 transition-all cursor-pointer"
             title="Imprimir documento o guardar como PDF (Ctrl+P)"
           >
             <Printer className="w-4 h-4 text-neutral-950" />
-            <span>Imprimir / Guardar PDF</span>
+            <span className="hidden sm:inline">Imprimir / PDF</span>
+            <span className="sm:hidden">Imprimir</span>
           </button>
 
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
+            className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer"
             title="Cerrar (Esc)"
           >
             <X className="w-5 h-5" />
@@ -147,14 +186,97 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
       </header>
 
       {/* Main Preview Container (Desk environment with real centered A4 paper) */}
-      <div className="flex-1 overflow-y-auto overflow-x-auto p-4 sm:p-8 lg:p-12 flex justify-center bg-neutral-900/90 print:bg-white print:p-0 print:m-0 print:overflow-visible">
+      <div className="relative flex-1 overflow-y-auto overflow-x-auto p-4 sm:p-8 lg:p-12 flex justify-center bg-neutral-900/90 print:bg-white print:p-0 print:m-0 print:overflow-visible">
+        {/* Floating Bottom Quick Zoom Dock */}
+        <div className="no-print fixed bottom-5 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1 sm:gap-2 bg-neutral-950/90 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-neutral-750 shadow-2xl text-xs select-none">
+          <button
+            type="button"
+            onClick={handleZoomOut}
+            disabled={zoom <= 25}
+            className="p-1.5 rounded-xl text-neutral-300 hover:text-white hover:bg-neutral-800 disabled:opacity-40 disabled:hover:bg-transparent transition-colors cursor-pointer flex items-center gap-1"
+            title="Disminuir zoom (-)"
+          >
+            <ZoomOut className="w-4 h-4" />
+            <span className="text-[11px] font-bold hidden sm:inline">-</span>
+          </button>
+
+          <div className="h-4 w-px bg-neutral-800" />
+
+          {/* Quick Zoom Presets */}
+          <div className="flex items-center gap-1 font-mono font-bold text-xs">
+            <button
+              type="button"
+              onClick={() => setZoom(35)}
+              className={`px-2 py-0.5 rounded-lg transition-colors cursor-pointer ${
+                zoom === 35 ? 'bg-amber-400 text-neutral-950' : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
+              }`}
+              title="Zoom miniatura 35%"
+            >
+              35%
+            </button>
+            <button
+              type="button"
+              onClick={() => setZoom(50)}
+              className={`px-2 py-0.5 rounded-lg transition-colors cursor-pointer ${
+                zoom === 50 ? 'bg-amber-400 text-neutral-950' : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
+              }`}
+              title="Zoom reducido 50%"
+            >
+              50%
+            </button>
+            <button
+              type="button"
+              onClick={() => setZoom(75)}
+              className={`hidden sm:inline-block px-2 py-0.5 rounded-lg transition-colors cursor-pointer ${
+                zoom === 75 ? 'bg-amber-400 text-neutral-950' : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
+              }`}
+              title="Zoom medio 75%"
+            >
+              75%
+            </button>
+            <button
+              type="button"
+              onClick={handleResetZoom}
+              className={`px-2 py-0.5 rounded-lg transition-colors cursor-pointer ${
+                zoom === 100 ? 'bg-amber-400 text-neutral-950' : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
+              }`}
+              title="Tamaño real 100%"
+            >
+              100%
+            </button>
+          </div>
+
+          <div className="h-4 w-px bg-neutral-800" />
+
+          <button
+            type="button"
+            onClick={handleZoomIn}
+            disabled={zoom >= 200}
+            className="p-1.5 rounded-xl text-neutral-300 hover:text-white hover:bg-neutral-800 disabled:opacity-40 disabled:hover:bg-transparent transition-colors cursor-pointer flex items-center gap-1"
+            title="Aumentar zoom (+)"
+          >
+            <ZoomIn className="w-4 h-4" />
+            <span className="text-[11px] font-bold hidden sm:inline">+</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleFitWidth}
+            className="ml-1 px-2.5 py-1 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-amber-300 hover:text-amber-200 font-bold text-[11px] transition-colors cursor-pointer flex items-center gap-1 shadow-sm"
+            title="Ajustar zoom al tamaño de tu pantalla"
+          >
+            <Maximize2 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Ajustar</span>
+          </button>
+        </div>
+
         <div
           style={{
             transform: zoom !== 100 ? `scale(${zoom / 100})` : undefined,
             transformOrigin: 'top center',
             transition: 'transform 0.15s ease-out',
           }}
-          className="print:transform-none"
+          className="print:transform-none pb-20"
         >
           {/* Pristine A4 Sheet in Print Layout (No inputs, no edit widgets, 100% true to print) */}
           <div

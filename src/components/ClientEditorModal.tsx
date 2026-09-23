@@ -11,6 +11,7 @@ import {
   FileText,
   Check,
   Sliders,
+  Package,
 } from 'lucide-react';
 import { ClientData, ClientDispatchChannel } from '../types';
 import { saveClientToDb } from '../utils/database';
@@ -40,6 +41,7 @@ export const ClientEditorModal: React.FC<ClientEditorModalProps> = ({
     defaultSendWhatsApp: client.defaultSendWhatsApp ?? true,
     defaultSendEmail: client.defaultSendEmail ?? false,
     enableComplexInvoice: client.enableComplexInvoice ?? false,
+    enableProductsCatalog: client.enableProductsCatalog ?? false,
   });
   const [activeField, setActiveField] = useState<ClientInputField>(initialField);
 
@@ -65,6 +67,7 @@ export const ClientEditorModal: React.FC<ClientEditorModalProps> = ({
         defaultSendWhatsApp: preferred === 'whatsapp',
         defaultSendEmail: preferred === 'email',
         enableComplexInvoice: client.enableComplexInvoice ?? false,
+        enableProductsCatalog: client.enableProductsCatalog ?? false,
       });
       setActiveField(initialField || 'name');
     }
@@ -407,6 +410,87 @@ export const ClientEditorModal: React.FC<ClientEditorModalProps> = ({
                   </div>
                 </label>
               </div>
+            </div>
+          </div>
+
+          {/* CASILLAS DE CONFIGURACIÓN DE FACTURACIÓN */}
+          <div className="pt-2 space-y-3">
+            {/* 1. BOTÓN LÍNEA COMPLEJA EN FACTURACIÓN */}
+            <div className="bg-neutral-900/90 border border-neutral-800 rounded-2xl p-4 sm:p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                  <Sliders className="w-4 h-4 text-amber-400" />
+                  <span>Botón Línea Compleja en Facturas</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      enableComplexInvoice: !prev.enableComplexInvoice,
+                    }))
+                  }
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer border ${
+                    formData.enableComplexInvoice
+                      ? 'bg-amber-400 text-neutral-950 border-amber-300 shadow-md shadow-amber-400/20'
+                      : 'bg-neutral-950 text-neutral-400 border-neutral-800 hover:text-white'
+                  }`}
+                >
+                  <div
+                    className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
+                      formData.enableComplexInvoice
+                        ? 'bg-neutral-950 border-neutral-950 text-amber-400'
+                        : 'bg-neutral-700 border-neutral-600'
+                    }`}
+                  >
+                    {formData.enableComplexInvoice && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                  </div>
+                  <span>{formData.enableComplexInvoice ? 'Activado' : 'Desactivado'}</span>
+                </button>
+              </div>
+
+              <p className="text-xs text-neutral-300 leading-relaxed">
+                Controla si el botón <strong>«Línea Compleja ▾»</strong> aparece en la hoja A4 al emitir o editar facturas para este cliente. Si está desactivado, no se mostrará en la hoja de factura.
+              </p>
+            </div>
+
+            {/* 2. BOTÓN AÑADIR PRODUCTO EN FACTURACIÓN */}
+            <div className="bg-neutral-900/90 border border-neutral-800 rounded-2xl p-4 sm:p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                  <Package className="w-4 h-4 text-amber-400" />
+                  <span>Botón Añadir Producto en Facturas</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      enableProductsCatalog: !prev.enableProductsCatalog,
+                    }))
+                  }
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer border ${
+                    formData.enableProductsCatalog
+                      ? 'bg-amber-400 text-neutral-950 border-amber-300 shadow-md shadow-amber-400/20'
+                      : 'bg-neutral-950 text-neutral-400 border-neutral-800 hover:text-white'
+                  }`}
+                >
+                  <div
+                    className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
+                      formData.enableProductsCatalog
+                        ? 'bg-neutral-950 border-neutral-950 text-amber-400'
+                        : 'bg-neutral-700 border-neutral-600'
+                    }`}
+                  >
+                    {formData.enableProductsCatalog && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                  </div>
+                  <span>{formData.enableProductsCatalog ? 'Activado' : 'Desactivado'}</span>
+                </button>
+              </div>
+
+              <p className="text-xs text-neutral-300 leading-relaxed">
+                Controla si el botón <strong>«Añadir Producto»</strong> aparece en la hoja A4 al emitir o editar facturas para este cliente. Si está desactivado, solo se mostrarán las opciones activas.
+              </p>
             </div>
           </div>
 
