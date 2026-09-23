@@ -257,8 +257,8 @@ svg.lucide-message-square,
 [data-theme="light"] svg.lucide-message-square,
 [data-theme="light"] button svg.lucide-message-circle,
 [data-theme="light"] button svg.lucide-message-square,
-[data-theme="indigo"] svg.lucide-message-circle,
-[data-theme="indigo"] svg.lucide-message-square {
+[data-theme="pastel"] svg.lucide-message-circle,
+[data-theme="pastel"] svg.lucide-message-square {
   color: #25D366 !important;
 }
 
@@ -268,8 +268,8 @@ svg.lucide-trash-2,
 [data-theme="light"] svg.lucide-trash-2,
 [data-theme="light"] button svg.lucide-trash,
 [data-theme="light"] button svg.lucide-trash-2,
-[data-theme="indigo"] svg.lucide-trash,
-[data-theme="indigo"] svg.lucide-trash-2 {
+[data-theme="pastel"] svg.lucide-trash,
+[data-theme="pastel"] svg.lucide-trash-2 {
   color: #EF4444 !important;
 }
 
@@ -285,10 +285,10 @@ svg.lucide-pencil,
 [data-theme="light"] button svg.lucide-edit-2,
 [data-theme="light"] button svg.lucide-edit-3,
 [data-theme="light"] button svg.lucide-pencil,
-[data-theme="indigo"] svg.lucide-edit,
-[data-theme="indigo"] svg.lucide-edit-2,
-[data-theme="indigo"] svg.lucide-edit-3,
-[data-theme="indigo"] svg.lucide-pencil {
+[data-theme="pastel"] svg.lucide-edit,
+[data-theme="pastel"] svg.lucide-edit-2,
+[data-theme="pastel"] svg.lucide-edit-3,
+[data-theme="pastel"] svg.lucide-pencil {
   color: #808080 !important;
 }
 
@@ -693,85 +693,793 @@ svg.lucide-pencil,
 }
 
 /* ========================================================================= */
-/* TEMA COBALTO TECH & ESMERALDA (AZUL MARINO PROFUNDO)                     */
+/* TEMA TONOS PASTEL (FONDOS, BOTONES E INPUTS PASTEL CON TEXTO OSCURO)     */
 /* (Excepto página de inicio #home-screen-minimalist)                         */
 /* ========================================================================= */
 
-[data-theme="indigo"] {
-  color-scheme: dark;
+[data-theme="pastel"] {
+  color-scheme: light;
 }
 
-[data-theme="indigo"] body {
-  background-color: #080d1a;
-  color: #f8fafc;
+[data-theme="pastel"] body {
+  background-color: #f8f5ee;
+  color: #1c1917;
 }
 
-[data-theme="indigo"] .theme-app-shell {
-  background-color: #080d1a !important;
+[data-theme="pastel"] .theme-app-shell {
+  background-color: #f8f5ee !important;
+  color: #1c1917 !important;
 }
 
-[data-theme="indigo"] .lateral-scroll-container > section:not(#page-screen-home) {
-  background-color: #080d1a;
+[data-theme="pastel"] .lateral-scroll-container > section:not(#page-screen-home) {
+  background-color: #f8f5ee !important;
+  color: #1c1917 !important;
 }
 
-[data-theme="indigo"] .bg-neutral-950:not(#home-screen-minimalist, #home-screen-minimalist *) {
-  background-color: #0b1120;
+/* Tarjetas y Contenedores en Suave Crema / Vainilla Pastel */
+[data-theme="pastel"] .bg-neutral-950:not(#home-screen-minimalist, #home-screen-minimalist *),
+[data-theme="pastel"] .bg-neutral-900:not(#home-screen-minimalist, #home-screen-minimalist *) {
+  background-color: #fbf9f4 !important;
+  color: #1c1917 !important;
 }
 
-[data-theme="indigo"] .bg-neutral-900:not(#home-screen-minimalist, #home-screen-minimalist *) {
-  background-color: #0f172a;
+[data-theme="pastel"] .bg-neutral-900\/80:not(#home-screen-minimalist *),
+[data-theme="pastel"] .bg-neutral-900\/90:not(#home-screen-minimalist *),
+[data-theme="pastel"] .bg-neutral-900\/95:not(#home-screen-minimalist *),
+[data-theme="pastel"] .bg-neutral-900\/98:not(#home-screen-minimalist *),
+[data-theme="pastel"] .bg-neutral-950\/80:not(#home-screen-minimalist *),
+[data-theme="pastel"] .bg-neutral-950\/90:not(#home-screen-minimalist *),
+[data-theme="pastel"] .bg-neutral-950\/95:not(#home-screen-minimalist *),
+[data-theme="pastel"] .bg-neutral-950\/98:not(#home-screen-minimalist *) {
+  background-color: #fbf9f4 !important;
+  color: #1c1917 !important;
 }
 
-[data-theme="indigo"] .bg-neutral-900\/80:not(#home-screen-minimalist *),
-[data-theme="indigo"] .bg-neutral-900\/90:not(#home-screen-minimalist *),
-[data-theme="indigo"] .bg-neutral-900\/95:not(#home-screen-minimalist *),
-[data-theme="indigo"] .bg-neutral-900\/98:not(#home-screen-minimalist *),
-[data-theme="indigo"] .bg-neutral-950\/80:not(#home-screen-minimalist *),
-[data-theme="indigo"] .bg-neutral-950\/90:not(#home-screen-minimalist *),
-[data-theme="indigo"] .bg-neutral-950\/95:not(#home-screen-minimalist *),
-[data-theme="indigo"] .bg-neutral-950\/98:not(#home-screen-minimalist *) {
-  background-color: #131d33;
+[data-theme="pastel"] .bg-neutral-800:not(#home-screen-minimalist *),
+[data-theme="pastel"] .bg-neutral-850:not(#home-screen-minimalist *),
+[data-theme="pastel"] .bg-neutral-700\/40:not(#home-screen-minimalist *),
+[data-theme="pastel"] .bg-neutral-800\/40:not(#home-screen-minimalist *),
+[data-theme="pastel"] .bg-neutral-800\/60:not(#home-screen-minimalist *) {
+  background-color: #f3ede2 !important;
+  color: #1c1917 !important;
 }
 
-[data-theme="indigo"] .bg-neutral-800:not(#home-screen-minimalist *),
-[data-theme="indigo"] .bg-neutral-850:not(#home-screen-minimalist *) {
-  background-color: #1e293b;
+[data-theme="pastel"] .hover\:bg-neutral-850:hover:not(#home-screen-minimalist *),
+[data-theme="pastel"] .hover\:bg-neutral-800:hover:not(#home-screen-minimalist *),
+[data-theme="pastel"] .hover\:bg-neutral-900:hover:not(#home-screen-minimalist *) {
+  background-color: #ede5d8 !important;
+  color: #1c1917 !important;
 }
 
-[data-theme="indigo"] .border-neutral-800:not(#home-screen-minimalist *),
-[data-theme="indigo"] .border-neutral-850:not(#home-screen-minimalist *),
-[data-theme="indigo"] .border-neutral-700:not(#home-screen-minimalist *) {
-  border-color: #1e3a5f;
+/* Bordes en Tonos Pastel Arena / Ceniza */
+[data-theme="pastel"] .border-neutral-800:not(#home-screen-minimalist *),
+[data-theme="pastel"] .border-neutral-850:not(#home-screen-minimalist *),
+[data-theme="pastel"] .border-neutral-700:not(#home-screen-minimalist *),
+[data-theme="pastel"] .border-neutral-600:not(#home-screen-minimalist *),
+[data-theme="pastel"] .border-neutral-800\/80:not(#home-screen-minimalist *),
+[data-theme="pastel"] .border-neutral-800\/90:not(#home-screen-minimalist *) {
+  border-color: #dfd6c7 !important;
 }
 
-[data-theme="indigo"] .text-amber-400:not(#home-screen-minimalist *),
-[data-theme="indigo"] .text-amber-300:not(#home-screen-minimalist *) {
-  color: #38bdf8;
+/* ========================================================================= */
+/* TEXTOS EN TONALIDADES OSCURAS PARA MÁXIMO CONTRASTE (TEMA TONOS PASTEL)   */
+/* ========================================================================= */
+
+[data-theme="pastel"] .text-white:not(#home-screen-minimalist *),
+[data-theme="pastel"] .text-stone-100:not(#home-screen-minimalist *),
+[data-theme="pastel"] .text-neutral-100:not(#home-screen-minimalist *) {
+  color: #1c1917 !important; /* Negro carbón oscuro */
 }
 
-[data-theme="indigo"] .bg-amber-400:not(#home-screen-minimalist *) {
-  background-color: #0284c7;
-  color: #ffffff;
+[data-theme="pastel"] .text-stone-200:not(#home-screen-minimalist *),
+[data-theme="pastel"] .text-neutral-200:not(#home-screen-minimalist *) {
+  color: #292524 !important;
 }
 
-[data-theme="indigo"] .hover\:bg-amber-300:hover:not(#home-screen-minimalist *),
-[data-theme="indigo"] .hover\:bg-amber-400:hover:not(#home-screen-minimalist *) {
-  background-color: #0369a1;
+[data-theme="pastel"] .text-stone-300:not(#home-screen-minimalist *),
+[data-theme="pastel"] .text-neutral-300:not(#home-screen-minimalist *) {
+  color: #44403c !important;
 }
 
-[data-theme="indigo"] .border-amber-400:not(#home-screen-minimalist *),
-[data-theme="indigo"] .border-amber-400\/40:not(#home-screen-minimalist *),
-[data-theme="indigo"] .border-amber-400\/60:not(#home-screen-minimalist *) {
-  border-color: #38bdf8;
+[data-theme="pastel"] .text-stone-400:not(#home-screen-minimalist *),
+[data-theme="pastel"] .text-neutral-400:not(#home-screen-minimalist *) {
+  color: #57534e !important;
 }
 
-[data-theme="indigo"] .bg-amber-400\/10:not(#home-screen-minimalist *),
-[data-theme="indigo"] .bg-amber-400\/15:not(#home-screen-minimalist *),
-[data-theme="indigo"] .bg-amber-400\/20:not(#home-screen-minimalist *) {
-  background-color: rgba(56, 189, 248, 0.15);
+[data-theme="pastel"] .text-stone-500:not(#home-screen-minimalist *),
+[data-theme="pastel"] .text-neutral-500:not(#home-screen-minimalist *) {
+  color: #78716c !important;
 }
 
-[data-theme="indigo"] .lateral-scroll-container::-webkit-scrollbar-thumb {
-  background-color: rgba(56, 189, 248, 0.4);
+/* Acentos y destacados en ámbar tostado de alto contraste */
+[data-theme="pastel"] .text-amber-400:not(#home-screen-minimalist *),
+[data-theme="pastel"] .text-amber-300:not(#home-screen-minimalist *) {
+  color: #9c6328 !important;
 }
+
+[data-theme="pastel"] .border-amber-400:not(#home-screen-minimalist *),
+[data-theme="pastel"] .border-amber-400\/40:not(#home-screen-minimalist *),
+[data-theme="pastel"] .border-amber-400\/60:not(#home-screen-minimalist *) {
+  border-color: #dfbe8c !important;
+}
+
+[data-theme="pastel"] .bg-amber-400\/10:not(#home-screen-minimalist *),
+[data-theme="pastel"] .bg-amber-400\/15:not(#home-screen-minimalist *),
+[data-theme="pastel"] .bg-amber-400\/20:not(#home-screen-minimalist *) {
+  background-color: #faefe0 !important;
+}
+
+/* ========================================================================= */
+/* INPUTS, TEXTAREAS Y SELECTS: RELLENO PASTEL CLARO Y TEXTO OSCURO          */
+/* ========================================================================= */
+
+[data-theme="pastel"] input:not([type="checkbox"], [type="radio"]):not(#home-screen-minimalist *),
+[data-theme="pastel"] textarea:not(#home-screen-minimalist *),
+[data-theme="pastel"] select:not(#home-screen-minimalist *) {
+  background-color: #fbf7f0 !important; /* Relleno pastel crema suave */
+  border-color: #d8cdbc !important;
+  color: #1c1917 !important; /* Texto oscuro de alto contraste */
+}
+
+[data-theme="pastel"] input::placeholder,
+[data-theme="pastel"] textarea::placeholder {
+  color: #8c827a !important;
+}
+
+[data-theme="pastel"] input:focus,
+[data-theme="pastel"] textarea:focus,
+[data-theme="pastel"] select:focus {
+  border-color: #c2ab87 !important;
+  background-color: #ffffff !important;
+}
+
+/* ========================================================================= */
+/* RELLENOS DE BOTONES EN TONOS PASTEL CON TEXTOS OSCUROS                    */
+/* ========================================================================= */
+
+[data-theme="pastel"] button:not(#home-screen-minimalist *),
+[data-theme="pastel"] [role="button"]:not(#home-screen-minimalist *),
+[data-theme="pastel"] .btn:not(#home-screen-minimalist *) {
+  color: #292524 !important; /* Texto oscuro */
+}
+
+[data-theme="pastel"] button span,
+[data-theme="pastel"] button p,
+[data-theme="pastel"] button div,
+[data-theme="pastel"] button label,
+[data-theme="pastel"] button strong {
+  color: inherit;
+}
+
+/* Botones Principales Ámbar -> Pastel Melocotón / Ámbar Cálido */
+[data-theme="pastel"] .bg-amber-400:not(#home-screen-minimalist *),
+[data-theme="pastel"] .bg-amber-300:not(#home-screen-minimalist *),
+[data-theme="pastel"] .bg-amber-500:not(#home-screen-minimalist *),
+[data-theme="pastel"] button.bg-amber-400:not(#home-screen-minimalist *),
+[data-theme="pastel"] button.bg-amber-300:not(#home-screen-minimalist *),
+[data-theme="pastel"] #save-company-full-btn,
+[data-theme="pastel"] #submit-ai-logo-btn,
+[data-theme="pastel"] #btn-open-ai-logo-generator,
+[data-theme="pastel"] #btn-open-ai-logo-generator-replace {
+  background-color: #f6dfba !important; /* Relleno pastel ámbar/melocotón */
+  border: 1.5px solid #dfbe8c !important;
+  color: #382005 !important; /* Marrón oscuro para alto contraste */
+  font-weight: 700 !important;
+}
+
+[data-theme="pastel"] .bg-amber-400 *:not(#home-screen-minimalist *),
+[data-theme="pastel"] button.bg-amber-400 *:not(#home-screen-minimalist *),
+[data-theme="pastel"] #save-company-full-btn *,
+[data-theme="pastel"] #submit-ai-logo-btn *,
+[data-theme="pastel"] #btn-open-ai-logo-generator *,
+[data-theme="pastel"] #btn-open-ai-logo-generator-replace * {
+  color: #382005 !important;
+}
+
+[data-theme="pastel"] button.bg-amber-400:hover:not(#home-screen-minimalist *),
+[data-theme="pastel"] button.bg-amber-300:hover:not(#home-screen-minimalist *),
+[data-theme="pastel"] #save-company-full-btn:hover,
+[data-theme="pastel"] #submit-ai-logo-btn:hover,
+[data-theme="pastel"] #btn-open-ai-logo-generator:hover {
+  background-color: #edd1a4 !important;
+  border-color: #c99b5b !important;
+  color: #221200 !important;
+}
+
+/* Botones Verde / Esmeralda -> Pastel Menta Salvia */
+[data-theme="pastel"] .bg-emerald-600:not(#home-screen-minimalist *),
+[data-theme="pastel"] .bg-emerald-500:not(#home-screen-minimalist *),
+[data-theme="pastel"] .bg-green-600:not(#home-screen-minimalist *),
+[data-theme="pastel"] button.bg-emerald-600:not(#home-screen-minimalist *),
+[data-theme="pastel"] button.bg-emerald-500:not(#home-screen-minimalist *) {
+  background-color: #d5eedc !important; /* Pastel menta */
+  border: 1.5px solid #a3d7b2 !important;
+  color: #0c381a !important; /* Verde bosque oscuro */
+}
+
+[data-theme="pastel"] .bg-emerald-600 *:not(#home-screen-minimalist *),
+[data-theme="pastel"] button.bg-emerald-600 *:not(#home-screen-minimalist *) {
+  color: #0c381a !important;
+}
+
+[data-theme="pastel"] button.bg-emerald-600:hover:not(#home-screen-minimalist *),
+[data-theme="pastel"] button.bg-emerald-500:hover:not(#home-screen-minimalist *) {
+  background-color: #c2e5cb !important;
+}
+
+/* Botones Azul / Celeste / Lavanda -> Pastel Cielo Suave */
+[data-theme="pastel"] .bg-blue-600:not(#home-screen-minimalist *),
+[data-theme="pastel"] .bg-blue-500:not(#home-screen-minimalist *),
+[data-theme="pastel"] .bg-sky-500:not(#home-screen-minimalist *),
+[data-theme="pastel"] .bg-sky-600:not(#home-screen-minimalist *),
+[data-theme="pastel"] button.bg-blue-600:not(#home-screen-minimalist *),
+[data-theme="pastel"] button.bg-sky-500:not(#home-screen-minimalist *) {
+  background-color: #d9ebfc !important; /* Pastel cielo suave */
+  border: 1.5px solid #a6cdfa !important;
+  color: #0c325c !important; /* Azul marino oscuro */
+}
+
+[data-theme="pastel"] .bg-blue-600 *:not(#home-screen-minimalist *),
+[data-theme="pastel"] button.bg-blue-600 *:not(#home-screen-minimalist *) {
+  color: #0c325c !important;
+}
+
+[data-theme="pastel"] button.bg-blue-600:hover:not(#home-screen-minimalist *),
+[data-theme="pastel"] button.bg-sky-500:hover:not(#home-screen-minimalist *) {
+  background-color: #c4dffa !important;
+}
+
+/* Botones Rojo / Peligro -> Pastel Rosa Fresa Suave */
+[data-theme="pastel"] .bg-red-600:not(#home-screen-minimalist *),
+[data-theme="pastel"] .bg-red-500:not(#home-screen-minimalist *),
+[data-theme="pastel"] .bg-rose-600:not(#home-screen-minimalist *),
+[data-theme="pastel"] button.bg-red-600:not(#home-screen-minimalist *),
+[data-theme="pastel"] button.bg-red-500:not(#home-screen-minimalist *) {
+  background-color: #fcdada !important; /* Pastel rosa fresa suave */
+  border: 1.5px solid #f7afaf !important;
+  color: #631313 !important; /* Rojo vino oscuro */
+}
+
+[data-theme="pastel"] .bg-red-600 *:not(#home-screen-minimalist *),
+[data-theme="pastel"] button.bg-red-600 *:not(#home-screen-minimalist *) {
+  color: #631313 !important;
+}
+
+[data-theme="pastel"] button.bg-red-600:hover:not(#home-screen-minimalist *),
+[data-theme="pastel"] button.bg-red-500:hover:not(#home-screen-minimalist *) {
+  background-color: #f8c3c3 !important;
+}
+
+/* Botones Secundarios / Ajustes en Configuración */
+[data-theme="pastel"] #config-btn-verifactu,
+[data-theme="pastel"] #config-btn-sequence,
+[data-theme="pastel"] #config-btn-user-session,
+[data-theme="pastel"] #config-btn-save-device,
+[data-theme="pastel"] #btn-replay-splash-screen,
+[data-theme="pastel"] #btn-scan-upcoming-payments {
+  background-color: #f3ede2 !important; /* Vainilla pastel */
+  border: 1.5px solid #dfd6c7 !important;
+  color: #292524 !important; /* Texto oscuro */
+  font-weight: 600 !important;
+}
+
+[data-theme="pastel"] #config-btn-verifactu *,
+[data-theme="pastel"] #config-btn-sequence *,
+[data-theme="pastel"] #config-btn-user-session *,
+[data-theme="pastel"] #config-btn-save-device *,
+[data-theme="pastel"] #btn-replay-splash-screen *,
+[data-theme="pastel"] #btn-scan-upcoming-payments * {
+  color: #292524 !important;
+}
+
+[data-theme="pastel"] #config-btn-verifactu:hover,
+[data-theme="pastel"] #config-btn-sequence:hover,
+[data-theme="pastel"] #config-btn-user-session:hover,
+[data-theme="pastel"] #config-btn-save-device:hover,
+[data-theme="pastel"] #btn-replay-splash-screen:hover,
+[data-theme="pastel"] #btn-scan-upcoming-payments:hover {
+  background-color: #eae1d2 !important;
+  border-color: #c2ab87 !important;
+}
+
+/* Botones flotantes de desplazamiento lateral */
+[data-theme="pastel"] #btn-preview-prev-page,
+[data-theme="pastel"] #btn-preview-next-page {
+  background-color: #fbf9f4 !important;
+  border-color: #dfd6c7 !important;
+  color: #292524 !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06) !important;
+}
+
+[data-theme="pastel"] #btn-preview-prev-page svg,
+[data-theme="pastel"] #btn-preview-next-page svg {
+  color: #9c6328 !important;
+}
+
+[data-theme="pastel"] #btn-preview-prev-page:hover,
+[data-theme="pastel"] #btn-preview-next-page:hover {
+  background-color: #f3ede2 !important;
+  border-color: #dfbe8c !important;
+}
+
+/* Tarjeta Especial Rastreo de Facturas en Gmail */
+[data-theme="pastel"] #gmail-scanner-config-card {
+  background: #fdfaf4 !important; /* Relleno en tono pastel muy claro */
+  background-image: linear-gradient(135deg, #fefcf9 0%, #faf3e8 100%) !important;
+  border: 1.5px solid #e8decb !important;
+  box-shadow: 0 4px 18px -2px rgba(180, 140, 70, 0.08) !important;
+}
+
+[data-theme="pastel"] #gmail-scanner-config-card h4 {
+  color: #241a10 !important; /* Texto oscuro de alto contraste */
+  font-weight: 700 !important;
+}
+
+[data-theme="pastel"] #gmail-scanner-config-card p {
+  color: #4a4036 !important;
+  font-weight: 500 !important;
+}
+
+[data-theme="pastel"] #gmail-scanner-config-card .gmail-card-icon {
+  background-color: #faefe0 !important;
+  border: 1.5px solid #dfcdb5 !important;
+  color: #9c6328 !important;
+}
+
+[data-theme="pastel"] #gmail-scanner-config-card .gmail-card-badge {
+  background-color: #f7e7d2 !important;
+  border: 1px solid #dfc3a4 !important;
+  color: #5c350c !important;
+}
+
+[data-theme="pastel"] #gmail-scanner-config-card #btn-config-gmail-scanner {
+  background-color: #f6dfba !important;
+  border: 1.5px solid #dfbe8c !important;
+  color: #382005 !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="pastel"] #gmail-scanner-config-card #btn-config-gmail-scanner:hover {
+  background-color: #edd1a4 !important;
+  border-color: #c99b5b !important;
+}
+
+/* Light Theme Adaptations for Gmail Scanner Card */
+[data-theme="light"] #gmail-scanner-config-card {
+  background: #fbf8f2 !important;
+  background-image: linear-gradient(135deg, #ffffff 0%, #f7f0e4 100%) !important;
+  border: 1.5px solid #e3d7c4 !important;
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] #gmail-scanner-config-card h4 {
+  color: #1a1612 !important;
+}
+
+[data-theme="light"] #gmail-scanner-config-card p {
+  color: #52473c !important;
+}
+
+[data-theme="light"] #gmail-scanner-config-card .gmail-card-icon {
+  background-color: #faefe0 !important;
+  border-color: #dfcdb5 !important;
+  color: #9c6328 !important;
+}
+
+[data-theme="light"] #gmail-scanner-config-card .gmail-card-badge {
+  background-color: #f7e7d2 !important;
+  border-color: #dfc3a4 !important;
+  color: #5c350c !important;
+}
+
+[data-theme="light"] #gmail-scanner-config-card #btn-config-gmail-scanner {
+  background-color: #f6dfba !important;
+  border: 1.5px solid #dfbe8c !important;
+  color: #382005 !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="light"] #gmail-scanner-config-card #btn-config-gmail-scanner:hover {
+  background-color: #edd1a4 !important;
+}
+
+/* Scrollbar para Tema Tonos Pastel */
+[data-theme="pastel"] ::-webkit-scrollbar-track,
+[data-theme="pastel"] .lateral-scroll-container::-webkit-scrollbar-track {
+  background: #f8f5ee !important;
+}
+
+[data-theme="pastel"] ::-webkit-scrollbar-thumb,
+[data-theme="pastel"] .lateral-scroll-container::-webkit-scrollbar-thumb {
+  background-color: #dfbe8c !important;
+  border-radius: 9999px;
+  border: 1.5px solid #f8f5ee !important;
+}
+
+[data-theme="pastel"] ::-webkit-scrollbar-thumb:hover,
+[data-theme="pastel"] .lateral-scroll-container::-webkit-scrollbar-thumb:hover {
+  background-color: #c99b5b !important;
+}
+
+[data-theme="pastel"] .lateral-scroll-container,
+[data-theme="pastel"] * {
+  scrollbar-color: #dfbe8c #f8f5ee !important;
+}
+
+/* ========================================================================= */
+/* TEMA BLUE (FONDOS BEIGE MUY CLARO & CELESTE, TEXTOS AZUL OSCURO / NEGRO)   */
+/* (Excepto página de inicio #home-screen-minimalist)                         */
+/* ========================================================================= */
+
+[data-theme="blue"] {
+  color-scheme: light;
+}
+
+[data-theme="blue"] body {
+  background-color: #f4f8fb;
+  color: #091b36;
+}
+
+[data-theme="blue"] .theme-app-shell {
+  background-color: #f4f8fb !important;
+  color: #091b36 !important;
+}
+
+[data-theme="blue"] .lateral-scroll-container > section:not(#page-screen-home) {
+  background-color: #f4f8fb !important;
+  color: #091b36 !important;
+}
+
+/* Tarjetas y Contenedores en Beige Muy Claro / Blanco Celeste */
+[data-theme="blue"] .bg-neutral-950:not(#home-screen-minimalist, #home-screen-minimalist *),
+[data-theme="blue"] .bg-neutral-900:not(#home-screen-minimalist, #home-screen-minimalist *) {
+  background-color: #f8fbfe !important;
+  color: #091b36 !important;
+}
+
+[data-theme="blue"] .bg-neutral-900\/80:not(#home-screen-minimalist *),
+[data-theme="blue"] .bg-neutral-900\/90:not(#home-screen-minimalist *),
+[data-theme="blue"] .bg-neutral-900\/95:not(#home-screen-minimalist *),
+[data-theme="blue"] .bg-neutral-900\/98:not(#home-screen-minimalist *),
+[data-theme="blue"] .bg-neutral-950\/80:not(#home-screen-minimalist *),
+[data-theme="blue"] .bg-neutral-950\/90:not(#home-screen-minimalist *),
+[data-theme="blue"] .bg-neutral-950\/95:not(#home-screen-minimalist *),
+[data-theme="blue"] .bg-neutral-950\/98:not(#home-screen-minimalist *) {
+  background-color: #f8fbfe !important;
+  color: #091b36 !important;
+}
+
+[data-theme="blue"] .bg-neutral-800:not(#home-screen-minimalist *),
+[data-theme="blue"] .bg-neutral-850:not(#home-screen-minimalist *),
+[data-theme="blue"] .bg-neutral-700\/40:not(#home-screen-minimalist *),
+[data-theme="blue"] .bg-neutral-800\/40:not(#home-screen-minimalist *),
+[data-theme="blue"] .bg-neutral-800\/60:not(#home-screen-minimalist *) {
+  background-color: #e9f2fa !important;
+  color: #091b36 !important;
+}
+
+[data-theme="blue"] .hover\:bg-neutral-850:hover:not(#home-screen-minimalist *),
+[data-theme="blue"] .hover\:bg-neutral-800:hover:not(#home-screen-minimalist *),
+[data-theme="blue"] .hover\:bg-neutral-900:hover:not(#home-screen-minimalist *) {
+  background-color: #ddebf8 !important;
+  color: #091b36 !important;
+}
+
+/* Bordes en Tonos Celeste Ceniza / Beige Suave */
+[data-theme="blue"] .border-neutral-800:not(#home-screen-minimalist *),
+[data-theme="blue"] .border-neutral-850:not(#home-screen-minimalist *),
+[data-theme="blue"] .border-neutral-700:not(#home-screen-minimalist *),
+[data-theme="blue"] .border-neutral-600:not(#home-screen-minimalist *),
+[data-theme="blue"] .border-neutral-800\/80:not(#home-screen-minimalist *),
+[data-theme="blue"] .border-neutral-800\/90:not(#home-screen-minimalist *) {
+  border-color: #cfe0f2 !important;
+}
+
+/* ========================================================================= */
+/* TEXTOS EN AZUL OSCURO, NEGRO Y GRIS OSCURO (TEMA BLUE)                    */
+/* ========================================================================= */
+
+[data-theme="blue"] .text-white:not(#home-screen-minimalist *),
+[data-theme="blue"] .text-stone-100:not(#home-screen-minimalist *),
+[data-theme="blue"] .text-neutral-100:not(#home-screen-minimalist *) {
+  color: #091b36 !important; /* Azul muy oscuro / negro carbón azulado */
+}
+
+[data-theme="blue"] .text-stone-200:not(#home-screen-minimalist *),
+[data-theme="blue"] .text-neutral-200:not(#home-screen-minimalist *) {
+  color: #0f294a !important; /* Azul marino profundo */
+}
+
+[data-theme="blue"] .text-stone-300:not(#home-screen-minimalist *),
+[data-theme="blue"] .text-neutral-300:not(#home-screen-minimalist *) {
+  color: #1e3a5f !important; /* Azul oscuro grisáceo */
+}
+
+[data-theme="blue"] .text-stone-400:not(#home-screen-minimalist *),
+[data-theme="blue"] .text-neutral-400:not(#home-screen-minimalist *) {
+  color: #334e68 !important; /* Gris azulado oscuro */
+}
+
+[data-theme="blue"] .text-stone-500:not(#home-screen-minimalist *),
+[data-theme="blue"] .text-neutral-500:not(#home-screen-minimalist *) {
+  color: #486581 !important; /* Gris azulado medio */
+}
+
+/* Acentos y destacados en Celeste y Azul Vibrante de alto contraste */
+[data-theme="blue"] .text-amber-400:not(#home-screen-minimalist *),
+[data-theme="blue"] .text-amber-300:not(#home-screen-minimalist *) {
+  color: #0284c7 !important; /* Celeste / azul vibrante */
+}
+
+[data-theme="blue"] .border-amber-400:not(#home-screen-minimalist *),
+[data-theme="blue"] .border-amber-400\/40:not(#home-screen-minimalist *),
+[data-theme="blue"] .border-amber-400\/60:not(#home-screen-minimalist *) {
+  border-color: #7dd3fc !important;
+}
+
+[data-theme="blue"] .bg-amber-400\/10:not(#home-screen-minimalist *),
+[data-theme="blue"] .bg-amber-400\/15:not(#home-screen-minimalist *),
+[data-theme="blue"] .bg-amber-400\/20:not(#home-screen-minimalist *) {
+  background-color: #e0f2fe !important;
+}
+
+/* ========================================================================= */
+/* INPUTS, TEXTAREAS Y SELECTS: RELLENO BEIGE CELESTE MUY CLARO Y TEXTO OSCURO*/
+/* ========================================================================= */
+
+[data-theme="blue"] input:not([type="checkbox"], [type="radio"]):not(#home-screen-minimalist *),
+[data-theme="blue"] textarea:not(#home-screen-minimalist *),
+[data-theme="blue"] select:not(#home-screen-minimalist *) {
+  background-color: #f4f9fd !important; /* Relleno beige celeste muy claro */
+  border-color: #bcd8f0 !important;
+  color: #091b36 !important; /* Texto azul oscuro de alto contraste */
+}
+
+[data-theme="blue"] input::placeholder,
+[data-theme="blue"] textarea::placeholder {
+  color: #64748b !important;
+}
+
+[data-theme="blue"] input:focus,
+[data-theme="blue"] textarea:focus,
+[data-theme="blue"] select:focus {
+  border-color: #38bdf8 !important;
+  background-color: #ffffff !important;
+}
+
+/* ========================================================================= */
+/* RELLENOS DE BOTONES EN TONOS CELESTE CON TEXTOS EN AZUL OSCURO / NEGRO   */
+/* ========================================================================= */
+
+[data-theme="blue"] button:not(#home-screen-minimalist *),
+[data-theme="blue"] [role="button"]:not(#home-screen-minimalist *),
+[data-theme="blue"] .btn:not(#home-screen-minimalist *) {
+  color: #091b36 !important; /* Texto azul oscuro */
+}
+
+[data-theme="blue"] button span,
+[data-theme="blue"] button p,
+[data-theme="blue"] button div,
+[data-theme="blue"] button label,
+[data-theme="blue"] button strong {
+  color: inherit;
+}
+
+/* Botones Principales Ámbar -> Celeste Claro Pastel */
+[data-theme="blue"] .bg-amber-400:not(#home-screen-minimalist *),
+[data-theme="blue"] .bg-amber-300:not(#home-screen-minimalist *),
+[data-theme="blue"] .bg-amber-500:not(#home-screen-minimalist *),
+[data-theme="blue"] button.bg-amber-400:not(#home-screen-minimalist *),
+[data-theme="blue"] button.bg-amber-300:not(#home-screen-minimalist *),
+[data-theme="blue"] #save-company-full-btn,
+[data-theme="blue"] #submit-ai-logo-btn,
+[data-theme="blue"] #btn-open-ai-logo-generator,
+[data-theme="blue"] #btn-open-ai-logo-generator-replace {
+  background-color: #bae6fd !important; /* Relleno celeste claro */
+  border: 1.5px solid #7dd3fc !important;
+  color: #082f49 !important; /* Azul marino oscuro para alto contraste */
+  font-weight: 700 !important;
+}
+
+[data-theme="blue"] .bg-amber-400 *:not(#home-screen-minimalist *),
+[data-theme="blue"] button.bg-amber-400 *:not(#home-screen-minimalist *),
+[data-theme="blue"] #save-company-full-btn *,
+[data-theme="blue"] #submit-ai-logo-btn *,
+[data-theme="blue"] #btn-open-ai-logo-generator *,
+[data-theme="blue"] #btn-open-ai-logo-generator-replace * {
+  color: #082f49 !important;
+}
+
+[data-theme="blue"] button.bg-amber-400:hover:not(#home-screen-minimalist *),
+[data-theme="blue"] button.bg-amber-300:hover:not(#home-screen-minimalist *),
+[data-theme="blue"] #save-company-full-btn:hover,
+[data-theme="blue"] #submit-ai-logo-btn:hover,
+[data-theme="blue"] #btn-open-ai-logo-generator:hover {
+  background-color: #93c5fd !important;
+  border-color: #60a5fa !important;
+  color: #082f49 !important;
+}
+
+/* Botones Verde / Esmeralda -> Menta Hielo Suave */
+[data-theme="blue"] .bg-emerald-600:not(#home-screen-minimalist *),
+[data-theme="blue"] .bg-emerald-500:not(#home-screen-minimalist *),
+[data-theme="blue"] .bg-green-600:not(#home-screen-minimalist *),
+[data-theme="blue"] button.bg-emerald-600:not(#home-screen-minimalist *),
+[data-theme="blue"] button.bg-emerald-500:not(#home-screen-minimalist *) {
+  background-color: #d1fae5 !important;
+  border: 1.5px solid #a7f3d0 !important;
+  color: #064e3b !important;
+}
+
+[data-theme="blue"] .bg-emerald-600 *:not(#home-screen-minimalist *),
+[data-theme="blue"] button.bg-emerald-600 *:not(#home-screen-minimalist *) {
+  color: #064e3b !important;
+}
+
+[data-theme="blue"] button.bg-emerald-600:hover:not(#home-screen-minimalist *),
+[data-theme="blue"] button.bg-emerald-500:hover:not(#home-screen-minimalist *) {
+  background-color: #a7f3d0 !important;
+}
+
+/* Botones Azul / Celeste -> Celeste Cielo Suave */
+[data-theme="blue"] .bg-blue-600:not(#home-screen-minimalist *),
+[data-theme="blue"] .bg-blue-500:not(#home-screen-minimalist *),
+[data-theme="blue"] .bg-sky-500:not(#home-screen-minimalist *),
+[data-theme="blue"] .bg-sky-600:not(#home-screen-minimalist *),
+[data-theme="blue"] button.bg-blue-600:not(#home-screen-minimalist *),
+[data-theme="blue"] button.bg-sky-500:not(#home-screen-minimalist *) {
+  background-color: #dbeafe !important;
+  border: 1.5px solid #93c5fd !important;
+  color: #0c4a6e !important;
+}
+
+[data-theme="blue"] .bg-blue-600 *:not(#home-screen-minimalist *),
+[data-theme="blue"] button.bg-blue-600 *:not(#home-screen-minimalist *) {
+  color: #0c4a6e !important;
+}
+
+[data-theme="blue"] button.bg-blue-600:hover:not(#home-screen-minimalist *),
+[data-theme="blue"] button.bg-sky-500:hover:not(#home-screen-minimalist *) {
+  background-color: #bfdbfe !important;
+}
+
+/* Botones Rojo / Peligro -> Rosa Fresa Suave */
+[data-theme="blue"] .bg-red-600:not(#home-screen-minimalist *),
+[data-theme="blue"] .bg-red-500:not(#home-screen-minimalist *),
+[data-theme="blue"] .bg-rose-600:not(#home-screen-minimalist *),
+[data-theme="blue"] button.bg-red-600:not(#home-screen-minimalist *),
+[data-theme="blue"] button.bg-red-500:not(#home-screen-minimalist *) {
+  background-color: #fee2e2 !important;
+  border: 1.5px solid #fca5a5 !important;
+  color: #7f1d1d !important;
+}
+
+[data-theme="blue"] .bg-red-600 *:not(#home-screen-minimalist *),
+[data-theme="blue"] button.bg-red-600 *:not(#home-screen-minimalist *) {
+  color: #7f1d1d !important;
+}
+
+[data-theme="blue"] button.bg-red-600:hover:not(#home-screen-minimalist *),
+[data-theme="blue"] button.bg-red-500:hover:not(#home-screen-minimalist *) {
+  background-color: #fecaca !important;
+}
+
+/* Botones Secundarios / Ajustes en Configuración */
+[data-theme="blue"] #config-btn-verifactu,
+[data-theme="blue"] #config-btn-sequence,
+[data-theme="blue"] #config-btn-user-session,
+[data-theme="blue"] #config-btn-save-device,
+[data-theme="blue"] #btn-replay-splash-screen,
+[data-theme="blue"] #btn-scan-upcoming-payments {
+  background-color: #e6f1fb !important;
+  border: 1.5px solid #cfe0f2 !important;
+  color: #0f294a !important;
+  font-weight: 600 !important;
+}
+
+[data-theme="blue"] #config-btn-verifactu *,
+[data-theme="blue"] #config-btn-sequence *,
+[data-theme="blue"] #config-btn-user-session *,
+[data-theme="blue"] #config-btn-save-device *,
+[data-theme="blue"] #btn-replay-splash-screen *,
+[data-theme="blue"] #btn-scan-upcoming-payments * {
+  color: #0f294a !important;
+}
+
+[data-theme="blue"] #config-btn-verifactu:hover,
+[data-theme="blue"] #config-btn-sequence:hover,
+[data-theme="blue"] #config-btn-user-session:hover,
+[data-theme="blue"] #config-btn-save-device:hover,
+[data-theme="blue"] #btn-replay-splash-screen:hover,
+[data-theme="blue"] #btn-scan-upcoming-payments:hover {
+  background-color: #d4e7f7 !important;
+  border-color: #93c5fd !important;
+}
+
+/* Botones flotantes de desplazamiento lateral */
+[data-theme="blue"] #btn-preview-prev-page,
+[data-theme="blue"] #btn-preview-next-page {
+  background-color: #f8fbfe !important;
+  border-color: #cfe0f2 !important;
+  color: #0f294a !important;
+  box-shadow: 0 10px 25px -5px rgba(15, 41, 74, 0.06) !important;
+}
+
+[data-theme="blue"] #btn-preview-prev-page svg,
+[data-theme="blue"] #btn-preview-next-page svg {
+  color: #0284c7 !important;
+}
+
+[data-theme="blue"] #btn-preview-prev-page:hover,
+[data-theme="blue"] #btn-preview-next-page:hover {
+  background-color: #e6f1fb !important;
+  border-color: #7dd3fc !important;
+}
+
+/* Tarjeta Especial Rastreo de Facturas en Gmail */
+[data-theme="blue"] #gmail-scanner-config-card {
+  background: #f8fbfe !important;
+  background-image: linear-gradient(135deg, #f8fbfe 0%, #eaf4fd 100%) !important;
+  border: 1.5px solid #cfe0f2 !important;
+  box-shadow: 0 4px 18px -2px rgba(2, 132, 199, 0.08) !important;
+}
+
+[data-theme="blue"] #gmail-scanner-config-card h4 {
+  color: #091b36 !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="blue"] #gmail-scanner-config-card p {
+  color: #1e3a5f !important;
+  font-weight: 500 !important;
+}
+
+[data-theme="blue"] #gmail-scanner-config-card .gmail-card-icon {
+  background-color: #e0f2fe !important;
+  border: 1.5px solid #bae6fd !important;
+  color: #0284c7 !important;
+}
+
+[data-theme="blue"] #gmail-scanner-config-card .gmail-card-badge {
+  background-color: #dbeafe !important;
+  border: 1px solid #93c5fd !important;
+  color: #0c4a6e !important;
+}
+
+[data-theme="blue"] #gmail-scanner-config-card #btn-config-gmail-scanner {
+  background-color: #bae6fd !important;
+  border: 1.5px solid #7dd3fc !important;
+  color: #082f49 !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="blue"] #gmail-scanner-config-card #btn-config-gmail-scanner:hover {
+  background-color: #93c5fd !important;
+  border-color: #60a5fa !important;
+}
+
+/* Scrollbar para Tema Blue */
+[data-theme="blue"] ::-webkit-scrollbar-track,
+[data-theme="blue"] .lateral-scroll-container::-webkit-scrollbar-track {
+  background: #f0f7fc !important;
+}
+
+[data-theme="blue"] ::-webkit-scrollbar-thumb,
+[data-theme="blue"] .lateral-scroll-container::-webkit-scrollbar-thumb {
+  background-color: #7dd3fc !important;
+  border-radius: 9999px;
+  border: 1.5px solid #f0f7fc !important;
+}
+
+[data-theme="blue"] ::-webkit-scrollbar-thumb:hover,
+[data-theme="blue"] .lateral-scroll-container::-webkit-scrollbar-thumb:hover {
+  background-color: #38bdf8 !important;
+}
+
+[data-theme="blue"] .lateral-scroll-container,
+[data-theme="blue"] * {
+  scrollbar-color: #7dd3fc #f0f7fc !important;
+}
+
+
 

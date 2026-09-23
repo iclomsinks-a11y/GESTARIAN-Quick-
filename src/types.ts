@@ -201,5 +201,5 @@ export interface ReceivedInvoice {
   createdAt: number;
 }
 
-export type AppTheme = 'dark' | 'light' | 'indigo';
+export type AppTheme = 'dark' | 'light' | 'pastel' | 'blue';
 

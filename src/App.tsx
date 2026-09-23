@@ -91,6 +91,15 @@ import { EmailDispatchModal } from './components/EmailDispatchModal';
 import { ProductsDatabaseModal } from './components/ProductsDatabaseModal';
 import { InvoiceEditorModal } from './components/InvoiceEditorModal';
 import { PrintPreviewModal } from './components/PrintPreviewModal';
+import { GmailInvoiceScannerModal } from './components/GmailInvoiceScannerModal';
+import {
+  isScheduledScanDue,
+  scanGmailForInvoices,
+  scanGmailViaImap,
+  getGmailScannerConfig,
+  getDetectedGmailInvoices,
+} from './services/gmailInvoiceScannerService';
+import { getAccessToken, initAuth } from './services/googleAuthService';
 import { ClientsScreen } from './components/ClientsScreen';
 import { ClientEditorModal } from './components/ClientEditorModal';
 import { IssuedInvoicesScreen } from './components/IssuedInvoicesScreen';
@@ -344,6 +353,67 @@ export default function App() {
   );
   const [isExpenseFormOpen, setIsExpenseFormOpen] = useState(false);
   const [expenseInitialData, setExpenseInitialData] = useState<Partial<ReceivedInvoice> | null>(null);
+  const [isGmailScannerOpen, setIsGmailScannerOpen] = useState(false);
+  const [pendingGmailInvoicesNotice, setPendingGmailInvoicesNotice] = useState<number>(0);
+
+  // Initialize Auth state listener
+  useEffect(() => {
+    const unsub = initAuth();
+    return () => unsub();
+  }, []);
+
+  // Check pending detected Gmail invoices on startup
+  useEffect(() => {
+    const detected = getDetectedGmailInvoices(currentUser?.email);
+    const pendingCount = detected.filter((d) => d.status === 'pending').length;
+    setPendingGmailInvoicesNotice(pendingCount);
+  }, [isGmailScannerOpen, currentUser]);
+
+  // Daily automated Gmail scan check (default 18:00)
+  useEffect(() => {
+    const checkScheduledGmailScan = async () => {
+      if (isScheduledScanDue(currentUser?.email)) {
+        const config = getGmailScannerConfig(currentUser?.email);
+
+        // 1. If App Password (16-char key) is configured
+        if (config.appPassword && config.appPasswordEmail) {
+          try {
+            const scanResult = await scanGmailViaImap(config.appPasswordEmail, config.appPassword, undefined, currentUser?.email);
+            if (scanResult.success && scanResult.detectedCount > 0) {
+              setPendingGmailInvoicesNotice((prev) => prev + scanResult.detectedCount);
+              showToast(
+                `🔔 Rastreador Gmail: Se han detectado ${scanResult.detectedCount} nueva(s) factura(s) en tu correo (18:00 h).`
+              );
+            }
+          } catch (err) {
+            console.warn('Scheduled Gmail IMAP scan warning:', err);
+          }
+          return;
+        }
+
+        // 2. Otherwise try OAuth token
+        const token = await getAccessToken();
+        if (token) {
+          try {
+            const scanResult = await scanGmailForInvoices(token, undefined, currentUser?.email);
+            if (scanResult.success && scanResult.detectedCount > 0) {
+              setPendingGmailInvoicesNotice((prev) => prev + scanResult.detectedCount);
+              showToast(
+                `🔔 Rastreador Gmail: Se han detectado ${scanResult.detectedCount} nueva(s) factura(s) en tu correo (18:00 h).`
+              );
+            }
+          } catch (err) {
+            console.warn('Scheduled Gmail scan warning:', err);
+          }
+        }
+      }
+    };
+
+    // Check immediately and then every 60 seconds
+    checkScheduledGmailScan();
+    const interval = setInterval(checkScheduledGmailScan, 60000);
+    return () => clearInterval(interval);
+  }, [currentUser]);
 
   // Revisa y sincroniza proveedores: si hay facturas recibidas de proveedores que no están creados, los crea automáticamente
   useEffect(() => {
@@ -453,13 +523,56 @@ export default function App() {
     showToast(`Factura de "${newInv.supplierName}" guardada y proveedor actualizado.`);
   };
 
-  const handleDeleteReceivedInvoice = (id: string) => {
+  const handleDeleteReceivedInvoice = (idOrNumber: string) => {
+    if (!idOrNumber) return;
     setReceivedInvoices((prev) => {
-      const updated = prev.filter((i) => i.id !== id);
+      const updated = prev.filter(
+        (i) => i.id !== idOrNumber && i.invoiceNumber !== idOrNumber && String(i.createdAt) !== idOrNumber
+      );
       saveReceivedInvoicesList(updated);
       return updated;
     });
-    showToast('Factura recibida eliminada.');
+    showToast('Factura recibida eliminada correctamente.');
+  };
+
+  const handleImportMultipleReceivedInvoices = (newInvoices: ReceivedInvoice[]) => {
+    if (newInvoices.length === 0) return;
+    setReceivedInvoices((prev) => {
+      const updated = [...newInvoices, ...prev];
+      saveReceivedInvoicesList(updated);
+      return updated;
+    });
+
+    // Sync providers
+    const currentStoredProviders = getStoredProviders();
+    newInvoices.forEach((inv) => {
+      if (inv.supplierName && inv.supplierName.trim()) {
+        const trimmedName = inv.supplierName.trim();
+        const trimmedCif = (inv.supplierCif || '').trim().toUpperCase();
+        const exists = currentStoredProviders.some(
+          (p) =>
+            (trimmedCif && p.cif && p.cif.toUpperCase() === trimmedCif) ||
+            (p.name && p.name.toLowerCase() === trimmedName.toLowerCase())
+        );
+        if (!exists) {
+          const newProvider: ProviderData = {
+            id: `prov-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+            name: trimmedName,
+            cif: trimmedCif,
+            address: inv.supplierAddress || '',
+            phone: inv.supplierPhone || '',
+            email: inv.supplierEmail || '',
+            logoUrl: '',
+            isDefault: false,
+            createdAt: Date.now(),
+          };
+          saveProviderToDb(newProvider);
+          currentStoredProviders.push(newProvider);
+        }
+      }
+    });
+    setProviders(getStoredProviders());
+    showToast(`✅ ${newInvoices.length} facturas añadidas a Facturas Recibidas y proveedores sincronizados.`);
   };
 
   // Modals state
@@ -1177,8 +1290,8 @@ export default function App() {
         <header className={`no-print sticky top-0 z-30 w-full backdrop-blur-md px-3 sm:px-6 py-2 transition-all ${
           theme === 'light'
             ? 'bg-[#f3f4f6]/95 border-b border-neutral-300/80 shadow-sm'
-            : theme === 'indigo'
-            ? 'bg-[#0b1120]/95 border-b border-[#1e3a5f]'
+            : theme === 'pastel'
+            ? 'bg-[#f5efe6]/95 border-b border-[#e5dcd0] shadow-sm'
             : 'bg-neutral-950/95 border-b border-neutral-800/80'
         }`}>
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 h-10">
@@ -1193,7 +1306,11 @@ export default function App() {
               >
                 <span
                   className={`font-extralight tracking-[0.22em] text-xs sm:text-sm uppercase leading-none ${
-                    theme === 'light' ? 'text-[#0f2b5c] font-bold' : 'text-[#FEFCE9]'
+                    theme === 'light'
+                      ? 'text-[#0f2b5c] font-bold'
+                      : theme === 'pastel'
+                      ? 'text-[#2d251e] font-bold'
+                      : 'text-[#FEFCE9]'
                   }`}
                   style={{ fontFamily: "'Montserrat', sans-serif" }}
                 >
@@ -1201,7 +1318,11 @@ export default function App() {
                 </span>
                 <span
                   className={`text-[9px] sm:text-[10px] font-semibold tracking-wider leading-tight mt-0.5 ${
-                    theme === 'light' ? 'text-[#0ea5e9]' : theme === 'indigo' ? 'text-[#38bdf8]' : 'text-amber-400'
+                    theme === 'light'
+                      ? 'text-[#0ea5e9]'
+                      : theme === 'pastel'
+                      ? 'text-[#9c6328]'
+                      : 'text-amber-400'
                   }`}
                   style={{ fontFamily: "'Montserrat', sans-serif" }}
                 >
@@ -1225,7 +1346,11 @@ export default function App() {
                   setPeriodType(nextPeriod);
                   showToast(`Filtro: ${nextPeriod.charAt(0).toUpperCase() + nextPeriod.slice(1)}`);
                 }}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-amber-400 bg-amber-400/10 hover:bg-amber-400/20 text-amber-300 hover:text-amber-200 text-xs sm:text-sm font-bold transition-all cursor-pointer shadow-sm active:scale-95 capitalize"
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border text-xs sm:text-sm font-bold transition-all cursor-pointer shadow-sm active:scale-95 capitalize ${
+                  theme === 'pastel'
+                    ? 'border-[#dfbe8c] bg-[#f6dfba] text-[#382005] hover:bg-[#edd1a4]'
+                    : 'border-amber-400 bg-amber-400/10 hover:bg-amber-400/20 text-amber-300 hover:text-amber-200'
+                }`}
                 title="Pulsar para alternar entre Mensual, Trimestral y Anual"
               >
                 <Filter className="w-3.5 h-3.5 text-amber-400" />
@@ -1253,7 +1378,15 @@ export default function App() {
       </AnimatePresence>
 
       {/* Main Content: 5 Pages with Lateral Scroll (Desplazamiento Lateral) */}
-      <main className={`flex-1 min-h-0 flex flex-col overflow-hidden relative ${activePageIndex === 0 ? 'bg-black' : 'bg-neutral-900/95'}`}>
+      <main className={`flex-1 min-h-0 flex flex-col overflow-hidden relative ${
+        activePageIndex === 0
+          ? 'bg-black'
+          : theme === 'light'
+          ? 'bg-[#faf7f2]'
+          : theme === 'pastel'
+          ? 'bg-[#f8f5ee]'
+          : 'bg-neutral-900/95'
+      }`}>
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
@@ -1261,11 +1394,7 @@ export default function App() {
           onTouchEnd={handleTouchEnd}
           className={`lateral-scroll-container flex-1 min-h-0 w-full overflow-x-auto overflow-y-hidden flex snap-x snap-mandatory scroll-smooth touch-pan-x ${
             activePageIndex === 0
-              ? theme === 'light'
-                ? 'bg-[#faf9f6]'
-                : theme === 'indigo'
-                ? 'bg-[#080d1a]'
-                : 'bg-black'
+              ? 'bg-black'
               : ''
           }`}
           style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}
@@ -1275,13 +1404,9 @@ export default function App() {
             id="page-screen-home"
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
-            className={`w-full min-w-full flex-shrink-0 snap-start snap-always overflow-hidden h-full flex flex-col items-center justify-center p-0 m-0 touch-pan-x select-none ${
-              theme === 'light' ? 'bg-[#faf9f6]' : theme === 'indigo' ? 'bg-[#080d1a]' : 'bg-black'
-            }`}
+            className="w-full min-w-full flex-shrink-0 snap-start snap-always overflow-hidden h-full flex flex-col items-center justify-center p-0 m-0 touch-pan-x select-none bg-black"
           >
-            <div className={`w-full h-full flex flex-col items-center justify-center overflow-hidden relative touch-pan-x ${
-              theme === 'light' ? 'bg-[#faf9f6]' : theme === 'indigo' ? 'bg-[#080d1a]' : 'bg-black'
-            }`}>
+            <div className="w-full h-full flex flex-col items-center justify-center overflow-hidden relative touch-pan-x bg-black">
               <HomeScreen
                 onNewInvoice={handleNewInvoice}
                 onOpenInvoicesDb={() => scrollToPage(2)}
@@ -1361,6 +1486,7 @@ export default function App() {
               }}
               onSaveReceivedInvoice={handleSaveReceivedInvoice}
               onDeleteReceivedInvoice={handleDeleteReceivedInvoice}
+              onOpenGmailScanner={() => setIsGmailScannerOpen(true)}
             />
           </section>
 
@@ -1404,7 +1530,7 @@ export default function App() {
               currentTheme={theme}
               onSelectTheme={(newTheme) => {
                 setTheme(newTheme);
-                showToast(`Tema cambiado a ${newTheme === 'light' ? 'Claro' : newTheme === 'indigo' ? 'Cobalto Tech' : 'Oscuro'}`);
+                showToast(`Tema cambiado a ${newTheme === 'light' ? 'Claro' : newTheme === 'pastel' ? 'Tonos Pastel' : 'Oscuro'}`);
               }}
               providers={providers}
               onOpenProvidersDb={() => scrollToPage(3)}
@@ -1442,12 +1568,21 @@ export default function App() {
               onReplaySplash={() => setShowSplash(true)}
               onOpenWhatsAppModal={() => setIsWhatsAppModalOpen(true)}
               onOpenEmailModal={() => setIsEmailModalOpen(true)}
+              onOpenGmailScanner={() => setIsGmailScannerOpen(true)}
             />
           </section>
         </div>
       </main>
 
       {/* Modals & Full Screen Dialogs */}
+      <GmailInvoiceScannerModal
+        isOpen={isGmailScannerOpen}
+        onClose={() => setIsGmailScannerOpen(false)}
+        onImportInvoice={handleSaveReceivedInvoice}
+        onImportMultiple={handleImportMultipleReceivedInvoices}
+        showToast={showToast}
+        currentUserEmail={currentUser?.email}
+      />
       <ClientsDatabaseModal
         isOpen={isClientsModalOpen}
         onClose={() => setIsClientsModalOpen(false)}

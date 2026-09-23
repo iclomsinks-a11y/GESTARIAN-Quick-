@@ -127,28 +127,30 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </div>
       </div>
 
-      {/* Botón Sesión / Login ubicado abajo a 10px del borde de la ventana */}
-      <motion.div
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1.2, delay: 1.8, ease: [0.16, 1, 0.3, 1] }}
-        className="fixed bottom-[10px] left-1/2 -translate-x-1/2 z-30 flex items-center justify-center pointer-events-auto"
-        style={{ bottom: '10px' }}
-      >
-        <button
-          type="button"
-          id="btn-home-sesion-login"
-          onClick={onOpenAuthModal}
-          className="px-4 py-2 sm:py-2.5 rounded-full bg-neutral-900/80 hover:bg-neutral-800 text-[#FEFCE9] hover:text-white text-xs sm:text-sm font-medium tracking-[0.18em] uppercase flex items-center gap-2 border border-neutral-700/80 hover:border-amber-400/80 transition-all duration-300 cursor-pointer active:scale-95 backdrop-blur-md shadow-lg"
-          style={{
-            fontFamily: "'Montserrat', sans-serif",
-          }}
-          title={currentUser ? `Conectado como ${currentUser.name || currentUser.email}` : 'Iniciar Sesión / Registro'}
+      {/* Botón Sesión / Login ubicado abajo a 10px del borde de la ventana (solo si no se ha iniciado sesión) */}
+      {!currentUser && (
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1.2, delay: 1.8, ease: [0.16, 1, 0.3, 1] }}
+          className="fixed bottom-[10px] left-1/2 -translate-x-1/2 z-30 flex items-center justify-center pointer-events-auto"
+          style={{ bottom: '10px' }}
         >
-          <KeyRound className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-          <span>{currentUser?.name ? `SESIÓN: ${currentUser.name.split(' ')[0]}` : 'SESIÓN / LOGIN'}</span>
-        </button>
-      </motion.div>
+          <button
+            type="button"
+            id="btn-home-sesion-login"
+            onClick={onOpenAuthModal}
+            className="px-4 py-2 sm:py-2.5 rounded-full bg-neutral-900/80 hover:bg-neutral-800 text-[#FEFCE9] hover:text-white text-xs sm:text-sm font-medium tracking-[0.18em] uppercase flex items-center gap-2 border border-neutral-700/80 hover:border-amber-400/80 transition-all duration-300 cursor-pointer active:scale-95 backdrop-blur-md shadow-lg"
+            style={{
+              fontFamily: "'Montserrat', sans-serif",
+            }}
+            title="Iniciar Sesión / Registro"
+          >
+            <KeyRound className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <span>SESIÓN / LOGIN</span>
+          </button>
+        </motion.div>
+      )}
     </div>
   );
 };

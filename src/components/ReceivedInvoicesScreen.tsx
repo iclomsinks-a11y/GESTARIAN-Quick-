@@ -31,6 +31,7 @@ interface ReceivedInvoicesScreenProps {
   onSaveInvoice: (invoice: ReceivedInvoice) => void;
   onDeleteInvoice: (id: string) => void;
   providers?: ProviderData[];
+  onOpenGmailScanner?: () => void;
 }
 
 export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
@@ -38,6 +39,7 @@ export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
   onSaveInvoice,
   onDeleteInvoice,
   providers = [],
+  onOpenGmailScanner,
 }) => {
   const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -46,6 +48,15 @@ export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<ReceivedInvoice | null>(null);
+
+  const handleConfirmDelete = () => {
+    if (invoiceToDelete) {
+      const idToDelete = invoiceToDelete.id || invoiceToDelete.invoiceNumber || String(invoiceToDelete.createdAt || '');
+      onDeleteInvoice(idToDelete);
+      setInvoiceToDelete(null);
+    }
+  };
 
   // Form State
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -227,6 +238,21 @@ export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
         </div>
 
         <div className="flex items-center gap-2 sm:gap-2.5">
+          {/* Botón Rastreador Gmail */}
+          {onOpenGmailScanner && (
+            <button
+              type="button"
+              id="btn-open-gmail-scanner"
+              onClick={onOpenGmailScanner}
+              className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-amber-300 hover:text-amber-200 border border-amber-500/40 font-bold text-xs sm:text-sm shadow-sm transition-all active:scale-95 cursor-pointer shrink-0"
+              title="Rastreador de Facturas en Gmail (Rastreo automático a las 18:00)"
+            >
+              <Mail className="w-4 h-4 text-amber-400" />
+              <span className="hidden sm:inline">Gmail (18:00)</span>
+              <span className="sm:hidden">Gmail</span>
+            </button>
+          )}
+
           {/* Botón OCR Cámara */}
           <button
             type="button"
@@ -285,16 +311,17 @@ export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 items-start">
-          {filteredInvoices.map((inv) => {
-            const isExpanded = expandedInvoiceId === inv.id;
+          {filteredInvoices.map((inv, idx) => {
+            const targetId = inv.id || inv.invoiceNumber || String(inv.createdAt || idx);
+            const isExpanded = expandedInvoiceId === targetId;
             const hasAnyExpanded = expandedInvoiceId !== null;
             const isDimmed = hasAnyExpanded && !isExpanded;
             const phone = getSupplierPhone(inv);
 
             return (
               <motion.div
-                key={inv.id}
-                id={`received-invoice-card-${inv.id}`}
+                key={targetId}
+                id={`received-invoice-card-${targetId}`}
                 layout
                 transition={{ duration: 0.25, ease: 'easeInOut' }}
                 className={`group relative rounded-2xl border-2 transition-all duration-300 flex flex-col justify-between overflow-hidden shadow-lg ${
@@ -305,7 +332,7 @@ export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
               >
                 {/* LÍNEA 1: Nombre del Proveedor y Número de factura en la cabecera (Al pulsar se expande/contrae) */}
                 <div
-                  onClick={() => toggleExpand(inv.id)}
+                  onClick={() => toggleExpand(targetId)}
                   className="px-4 pt-3.5 pb-1.5 flex items-center justify-between gap-2 cursor-pointer hover:bg-neutral-800/40 transition-colors select-none"
                   title="Pulsa para expandir o contraer todos los datos de la factura recibida"
                 >
@@ -406,12 +433,10 @@ export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
                   {/* Icono 5: Eliminar Flotante (Rojo sólido, 1.5px) */}
                   <button
                     type="button"
-                    id={`btn-delete-received-invoice-${inv.id}`}
+                    id={`btn-delete-received-invoice-${targetId}`}
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (window.confirm('¿Estás seguro de que deseas eliminar esta factura recibida?')) {
-                        onDeleteInvoice(inv.id);
-                      }
+                      setInvoiceToDelete(inv);
                     }}
                     className="p-1 text-[#EF4444] hover:text-red-400 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
                     style={{ color: '#EF4444' }}
@@ -594,9 +619,7 @@ export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                if (window.confirm('¿Estás seguro de que deseas eliminar esta factura recibida?')) {
-                                  onDeleteInvoice(inv.id);
-                                }
+                                setInvoiceToDelete(inv);
                               }}
                               className="inline-flex items-center gap-2 text-sm sm:text-base text-[#EF4444] hover:text-red-300 transition-colors py-1.5 px-3 rounded-lg hover:bg-red-950/50 cursor-pointer font-bold"
                               title="Eliminar factura recibida"
@@ -697,6 +720,41 @@ export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
                 alt="Comprobante completo"
                 className="max-h-[70vh] w-auto rounded-lg object-contain"
               />
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Modal de Confirmación para Eliminar Factura Recibida */}
+      {invoiceToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl text-center">
+            <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 mx-auto flex items-center justify-center">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-white">¿Eliminar Factura Recibida?</h3>
+            <p className="text-sm text-neutral-300">
+              ¿Estás seguro de que deseas eliminar la factura recibida de{' '}
+              <span className="font-bold text-amber-300">
+                {invoiceToDelete.supplierName || 'Proveedor'}
+              </span>{' '}
+              ({invoiceToDelete.invoiceNumber || 'S/N'})? Esta acción eliminará permanentemente la tarjeta de la factura.
+            </p>
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setInvoiceToDelete(null)}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-sm font-semibold transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                id="btn-confirm-delete-received-invoice"
+                onClick={handleConfirmDelete}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-bold shadow-lg hover:shadow-red-600/30 transition-all cursor-pointer"
+              >
+                Sí, eliminar
+              </button>
             </div>
           </div>
         </div>

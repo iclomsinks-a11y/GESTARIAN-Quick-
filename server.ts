@@ -3,6 +3,8 @@ import path from 'path';
 import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type } from '@google/genai';
+import { ImapFlow } from 'imapflow';
+import { simpleParser } from 'mailparser';
 
 dotenv.config();
 
@@ -398,7 +400,226 @@ Si algún campo textual no está en la imagen, devuelve una cadena vacía. Si al
     }
   });
 
-  // Vite development middleware or static production serving
+  // Test IMAP Connection using 16-character Google App Password
+  app.post('/api/test-imap-connection', async (req, res) => {
+    const { email, appPassword } = req.body;
+    if (!email || !appPassword) {
+      return res.status(400).json({ success: false, error: 'Debes proporcionar el correo Gmail y la contraseña de aplicación de 16 caracteres.' });
+    }
+
+    const cleanPass = appPassword.replace(/\s+/g, '');
+    const client = new ImapFlow({
+      host: 'imap.gmail.com',
+      port: 993,
+      secure: true,
+      auth: {
+        user: email.trim(),
+        pass: cleanPass,
+      },
+      logger: false,
+    });
+
+    try {
+      await client.connect();
+      await client.logout();
+      return res.json({ success: true, message: 'Conexión IMAP establecida exitosamente con Gmail.' });
+    } catch (err: any) {
+      console.warn('IMAP Test connection error:', err?.message);
+      return res.status(401).json({
+        success: false,
+        error: err?.message?.includes('Invalid credentials')
+          ? 'Contraseña de aplicación de 16 caracteres incorrecta o acceso no permitido. Genera una nueva en myaccount.google.com/apppasswords'
+          : `Error al conectar por IMAP: ${err?.message || 'Verifica tus credenciales'}`,
+      });
+    }
+  });
+
+  // Scan Invoices via IMAP using 16-character Google App Password
+  app.post('/api/scan-imap-invoices', async (req, res) => {
+    const { email, appPassword, maxEmails = 15 } = req.body;
+    if (!email || !appPassword) {
+      return res.status(400).json({ success: false, error: 'Credenciales de Gmail requeridas.' });
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ success: false, error: 'Falta GEMINI_API_KEY en el servidor.' });
+    }
+
+    const cleanPass = appPassword.replace(/\s+/g, '');
+    const client = new ImapFlow({
+      host: 'imap.gmail.com',
+      port: 993,
+      secure: true,
+      auth: {
+        user: email.trim(),
+        pass: cleanPass,
+      },
+      logger: false,
+    });
+
+    try {
+      await client.connect();
+      const lock = await client.getMailboxLock('INBOX');
+
+      const detectedInvoices: any[] = [];
+
+      try {
+        // Fetch the latest messages (up to maxEmails)
+        const messages = client.fetch({ seq: `1:*` }, { source: true, envelope: true, uid: true });
+        const allFetched: any[] = [];
+
+        for await (const msg of messages) {
+          allFetched.push(msg);
+        }
+
+        // Process from most recent to oldest
+        const recentMessages = allFetched.reverse().slice(0, maxEmails);
+
+        const ai = new GoogleGenAI({
+          apiKey,
+          httpOptions: { headers: { 'User-Agent': 'aistudio-build' } },
+        });
+
+        for (const msg of recentMessages) {
+          try {
+            const parsed = await simpleParser(msg.source);
+            const subject = parsed.subject || 'Sin asunto';
+            const from = parsed.from?.text || 'Desconocido';
+            const date = parsed.date ? parsed.date.toISOString() : new Date().toISOString();
+
+            // Look for attachments (PDF, images)
+            const attachments = parsed.attachments || [];
+            const invoiceAttachments = attachments.filter((att) => {
+              const ct = (att.contentType || '').toLowerCase();
+              const fn = (att.filename || '').toLowerCase();
+              return (
+                ct.includes('pdf') ||
+                ct.includes('image') ||
+                fn.endsWith('.pdf') ||
+                fn.endsWith('.png') ||
+                fn.endsWith('.jpg') ||
+                fn.endsWith('.jpeg')
+              );
+            });
+
+            if (invoiceAttachments.length === 0) continue;
+
+            for (const att of invoiceAttachments) {
+              const base64Content = att.content.toString('base64');
+              const mimeType = att.contentType || (att.filename?.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
+
+              const prompt = `Analiza esta factura recibida o ticket de gasto. Extrae en formato JSON con la máxima precisión:
+- supplierName: Razón social del emisor/proveedor
+- supplierCif: CIF o NIF del proveedor
+- supplierAddress: Dirección
+- supplierPhone: Teléfono
+- supplierEmail: Email
+- invoiceNumber: Número o serie de la factura
+- invoiceDate: Fecha (YYYY-MM-DD)
+- concept: Descripción del producto o servicio
+- category: Suministros, Materiales, Servicios Profesionales, Software, Alquiler, Dietas o Varios
+- baseImponible: Base imponible en euros (número)
+- ivaRate: % de IVA (número, ej. 21)
+- ivaAmount: Cuota de IVA (número)
+- irpfRate: % de retención IRPF (número, o 0)
+- irpfAmount: Cuota IRPF (número, o 0)
+- totalAmount: Total a pagar en euros (número)`;
+
+              const candidateModels = ['gemini-3.1-flash-lite', 'gemini-3.8-flash', 'gemini-flash-latest'];
+              const { result: geminiRes } = await executeGeminiWithFallback(ai, candidateModels, async (model) => {
+                return await ai.models.generateContent({
+                  model,
+                  contents: [
+                    { inlineData: { data: base64Content, mimeType } },
+                    { text: prompt },
+                  ],
+                  config: {
+                    responseMimeType: 'application/json',
+                    responseSchema: {
+                      type: Type.OBJECT,
+                      properties: {
+                        supplierName: { type: Type.STRING },
+                        supplierCif: { type: Type.STRING },
+                        supplierAddress: { type: Type.STRING },
+                        supplierPhone: { type: Type.STRING },
+                        supplierEmail: { type: Type.STRING },
+                        invoiceNumber: { type: Type.STRING },
+                        invoiceDate: { type: Type.STRING },
+                        concept: { type: Type.STRING },
+                        category: { type: Type.STRING },
+                        baseImponible: { type: Type.NUMBER },
+                        ivaRate: { type: Type.NUMBER },
+                        ivaAmount: { type: Type.NUMBER },
+                        irpfRate: { type: Type.NUMBER },
+                        irpfAmount: { type: Type.NUMBER },
+                        totalAmount: { type: Type.NUMBER },
+                      },
+                      required: ['supplierName', 'baseImponible', 'totalAmount'],
+                    },
+                  },
+                });
+              });
+
+              const parsedOcr = JSON.parse(geminiRes.text || '{}');
+              const base = Number(parsedOcr.baseImponible || 0);
+              const ivaRate = Number(parsedOcr.ivaRate || 21);
+              const ivaAmt = Number(parsedOcr.ivaAmount || ((base * ivaRate) / 100));
+              const irpfRate = Number(parsedOcr.irpfRate || 0);
+              const irpfAmt = Number(parsedOcr.irpfAmount || ((base * irpfRate) / 100));
+              const total = Number(parsedOcr.totalAmount || (base + ivaAmt - irpfAmt));
+
+              detectedInvoices.push({
+                id: `imap-${msg.uid}-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
+                messageId: String(msg.uid),
+                subject,
+                from,
+                date,
+                attachmentFilename: att.filename || 'factura_adjunta.pdf',
+                attachmentMimeType: mimeType,
+                previewDataUrl: mimeType.startsWith('image/') ? `data:${mimeType};base64,${base64Content}` : undefined,
+                detectedAt: Date.now(),
+                status: 'pending',
+                extractedInvoice: {
+                  id: `rec-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
+                  supplierName: parsedOcr.supplierName || 'Proveedor',
+                  supplierCif: parsedOcr.supplierCif || '',
+                  supplierAddress: parsedOcr.supplierAddress || '',
+                  supplierPhone: parsedOcr.supplierPhone || '',
+                  supplierEmail: parsedOcr.supplierEmail || from,
+                  invoiceNumber: parsedOcr.invoiceNumber || `FAC-${String(msg.uid).slice(-5)}`,
+                  date: parsedOcr.invoiceDate || date.split('T')[0],
+                  concept: parsedOcr.concept || `Gasto desde correo: ${subject}`,
+                  category: parsedOcr.category || 'Suministros',
+                  baseImponible: Number(base.toFixed(2)),
+                  ivaRate: Number(ivaRate),
+                  ivaAmount: Number(ivaAmt.toFixed(2)),
+                  irpfRate: Number(irpfRate),
+                  irpfAmount: Number(irpfAmt.toFixed(2)),
+                  totalAmount: Number(total.toFixed(2)),
+                  scannedWithOcr: true,
+                  ocrModel: 'gemini-vision-ocr',
+                  notes: `Rastreado vía Gmail IMAP.\nAsunto: ${subject}\nDe: ${from}\nAdjunto: ${att.filename}`,
+                  capturedImageUrl: mimeType.startsWith('image/') ? `data:${mimeType};base64,${base64Content}` : undefined,
+                  createdAt: Date.now(),
+                },
+              });
+            }
+          } catch (e: any) {
+            console.warn('Error processing message uid', msg.uid, e?.message);
+          }
+        }
+      } finally {
+        lock.release();
+      }
+
+      await client.logout();
+      return res.json({ success: true, count: detectedInvoices.length, invoices: detectedInvoices });
+    } catch (err: any) {
+      console.error('Error in /api/scan-imap-invoices:', err);
+      return res.status(500).json({ success: false, error: err?.message || 'Error al conectar con Gmail IMAP.' });
+    }
+  });
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },

@@ -96,6 +96,7 @@ interface ConfigurationScreenProps {
   onOpenWhatsAppModal?: () => void;
   onOpenEmailModal?: () => void;
   receivedInvoices?: ReceivedInvoice[];
+  onOpenGmailScanner?: () => void;
 }
 
 export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
@@ -130,6 +131,7 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
   onOpenWhatsAppModal,
   onOpenEmailModal,
   receivedInvoices = [],
+  onOpenGmailScanner,
 }) => {
   // Local state for full company editing
   const [formData, setFormData] = useState<CompanyData>({ ...company });
@@ -828,7 +830,7 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 pt-1">
             {/* Opción 1: Tema Oscuro */}
             <button
               type="button"
@@ -905,40 +907,83 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
               </div>
             </button>
 
-            {/* Opción 3: Tema Cobalto Tech */}
+            {/* Opción 3: Tema Tonos Pastel */}
             <button
               type="button"
-              id="theme-btn-indigo"
-              onClick={() => onSelectTheme && onSelectTheme('indigo')}
+              id="theme-btn-pastel"
+              onClick={() => onSelectTheme && onSelectTheme('pastel')}
               className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between gap-4 ${
-                currentTheme === 'indigo'
-                  ? 'bg-[#0b1120] border-cyan-400 shadow-lg shadow-cyan-400/10 ring-2 ring-cyan-400/30'
+                currentTheme === 'pastel'
+                  ? 'bg-[#fcfaf6] border-[#dfbe8c] text-neutral-900 shadow-lg shadow-amber-900/5 ring-2 ring-[#e6c99c]'
                   : 'bg-neutral-950/60 border-neutral-800 hover:border-neutral-700 hover:bg-neutral-950'
               }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#1e293b] border border-cyan-400/40 flex items-center justify-center text-cyan-400">
+                  <div className="w-8 h-8 rounded-xl bg-[#f6dfba] border border-[#dfbe8c] flex items-center justify-center text-[#4a2e0a]">
                     <Sparkles className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-white uppercase tracking-wider">Cobalto Tech</h4>
-                    <span className="text-[10px] text-cyan-400 font-mono font-semibold">Azul Noche & Cian</span>
+                    <h4 className={`text-sm font-bold uppercase tracking-wider ${currentTheme === 'pastel' ? 'text-neutral-900' : 'text-white'}`}>
+                      Tonos Pastel
+                    </h4>
+                    <span className="text-[10px] text-[#9c6328] font-mono font-semibold">Pastel Suave & Texto Oscuro</span>
                   </div>
                 </div>
-                {currentTheme === 'indigo' && (
-                  <span className="p-1 rounded-full bg-cyan-400 text-neutral-950 font-bold">
+                {currentTheme === 'pastel' && (
+                  <span className="p-1 rounded-full bg-[#f6dfba] text-[#382005] border border-[#dfbe8c] font-bold">
                     <Check className="w-3.5 h-3.5" />
                   </span>
                 )}
               </div>
-              <p className="text-xs text-neutral-400 leading-relaxed">
-                Estilo marino tech en azul noche slate con contrastes en cian, índigo y esmeralda.
+              <p className={`text-xs leading-relaxed ${currentTheme === 'pastel' ? 'text-neutral-700' : 'text-neutral-400'}`}>
+                Fondos claros y pasteles cálidos, rellenos de botones e inputs en tonalidades pastel y textos oscuros de alto contraste.
               </p>
-              <div className="flex items-center gap-2 pt-1 border-t border-neutral-800">
-                <span className="w-3.5 h-3.5 rounded-full bg-[#0b1120] border border-neutral-700" />
-                <span className="w-3.5 h-3.5 rounded-full bg-[#1e293b] border border-neutral-700" />
-                <span className="w-3.5 h-3.5 rounded-full bg-cyan-400" />
+              <div className="flex items-center gap-2 pt-1 border-t border-neutral-200">
+                <span className="w-3.5 h-3.5 rounded-full bg-[#f8f5ee] border border-[#d8cdbc]" title="Fondo Crema Pastel" />
+                <span className="w-3.5 h-3.5 rounded-full bg-[#f6dfba] border border-[#dfbe8c]" title="Pastel Ámbar Suave" />
+                <span className="w-3.5 h-3.5 rounded-full bg-[#d5eedc] border border-[#a3d7b2]" title="Pastel Menta Salvia" />
+                <span className="w-3.5 h-3.5 rounded-full bg-[#d9ebfc] border border-[#a6cdfa]" title="Pastel Lavanda Cielo" />
+              </div>
+            </button>
+
+            {/* Opción 4: Tema Blue (Celeste & Beige Claro con Textos Oscuros) */}
+            <button
+              type="button"
+              id="theme-btn-blue"
+              onClick={() => onSelectTheme && onSelectTheme('blue')}
+              className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between gap-4 ${
+                currentTheme === 'blue'
+                  ? 'bg-[#f4f9fd] border-[#7dd3fc] text-[#0f2444] shadow-lg shadow-sky-900/5 ring-2 ring-[#38bdf8]/40'
+                  : 'bg-neutral-950/60 border-neutral-800 hover:border-neutral-700 hover:bg-neutral-950'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-[#bae6fd] border border-[#7dd3fc] flex items-center justify-center text-[#082f49]">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className={`text-sm font-bold uppercase tracking-wider ${currentTheme === 'blue' ? 'text-[#091b36]' : 'text-white'}`}>
+                      Tema Blue
+                    </h4>
+                    <span className="text-[10px] text-[#0284c7] font-mono font-semibold">Celeste & Beige Claro</span>
+                  </div>
+                </div>
+                {currentTheme === 'blue' && (
+                  <span className="p-1 rounded-full bg-[#bae6fd] text-[#082f49] border border-[#7dd3fc] font-bold">
+                    <Check className="w-3.5 h-3.5" />
+                  </span>
+                )}
+              </div>
+              <p className={`text-xs leading-relaxed ${currentTheme === 'blue' ? 'text-[#1e3a5f]' : 'text-neutral-400'}`}>
+                Fondos en beige muy claro y celeste suave, rellenos de tarjetas e inputs en tonos celestes claros y textos en azul oscuro, negro y gris oscuro.
+              </p>
+              <div className="flex items-center gap-2 pt-1 border-t border-neutral-200">
+                <span className="w-3.5 h-3.5 rounded-full bg-[#f4f8fb] border border-[#cfe0f2]" title="Fondo Beige Celeste Muy Claro" />
+                <span className="w-3.5 h-3.5 rounded-full bg-[#bae6fd] border border-[#7dd3fc]" title="Celeste Claro" />
+                <span className="w-3.5 h-3.5 rounded-full bg-[#e0f2fe] border border-[#bae6fd]" title="Celeste Hielo Suave" />
+                <span className="w-3.5 h-3.5 rounded-full bg-[#0f2444]" title="Texto Azul Oscuro Profundo" />
               </div>
             </button>
           </div>
@@ -1262,6 +1307,40 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Módulo Especial: Detección Automática de Facturas en Gmail */}
+          {onOpenGmailScanner && (
+            <div
+              id="gmail-scanner-config-card"
+              className="p-5 rounded-2xl bg-gradient-to-r from-neutral-950 via-amber-950/20 to-neutral-950 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg transition-all"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="gmail-card-icon w-11 h-11 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                  <Mail className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-bold text-white">Rastreo de Facturas en Gmail</h4>
+                    <span className="gmail-card-badge px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono text-[10px] font-bold">
+                      18:00 h diario
+                    </span>
+                  </div>
+                  <p className="text-xs text-neutral-400 mt-0.5 max-w-xl">
+                    Escaneo inteligente de correos entrantes para detectar facturas adjuntas en PDF o imagen, extraer sus datos fiscales con IA e importarlas a tus facturas recibidas.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                id="btn-config-gmail-scanner"
+                onClick={onOpenGmailScanner}
+                className="py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs transition-all shadow-md hover:shadow-amber-500/20 flex items-center gap-2 shrink-0 cursor-pointer"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Configurar y Escanear</span>
+              </button>
+            </div>
+          )}
 
           {/* Historial Técnico de Envíos Realizados */}
           <div className="p-4 rounded-2xl bg-neutral-950/70 border border-neutral-800 space-y-3">

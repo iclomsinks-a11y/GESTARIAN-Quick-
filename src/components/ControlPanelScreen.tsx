@@ -25,6 +25,7 @@ interface ControlPanelScreenProps {
   // Actions for Received Invoices
   onSaveReceivedInvoice: (invoice: ReceivedInvoice) => void;
   onDeleteReceivedInvoice: (id: string) => void;
+  onOpenGmailScanner?: () => void;
   // Sub-view can be controlled or internally managed
   initialSubView?: 'emitidas' | 'recibidas';
 }
@@ -64,6 +65,7 @@ export const ControlPanelScreen: React.FC<ControlPanelScreenProps> = ({
   onPrintInvoice,
   onSaveReceivedInvoice,
   onDeleteReceivedInvoice,
+  onOpenGmailScanner,
   initialSubView = 'emitidas',
 }) => {
   // State for switching between Issued and Received invoices
@@ -373,6 +375,7 @@ export const ControlPanelScreen: React.FC<ControlPanelScreenProps> = ({
             onSaveInvoice={onSaveReceivedInvoice}
             onDeleteInvoice={onDeleteReceivedInvoice}
             providers={providers}
+            onOpenGmailScanner={onOpenGmailScanner}
           />
         )}
       </div>
