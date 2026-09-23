@@ -22,8 +22,6 @@ import {
   Sliders,
   KeyRound,
   Smartphone,
-  Maximize2,
-  Minimize2,
   Eye,
   Filter,
 } from 'lucide-react';
@@ -112,67 +110,6 @@ const STORAGE_CURRENT_KEY = 'gestarian_active_invoice';
 const STORAGE_VIEW_KEY = 'gestarian_active_view';
 
 export default function App() {
-  // Draggable Fullscreen Toggle for AI Studio Preview Mode only
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [pos, setPos] = useState({ x: 40, y: 120 });
-  const [isDragging, setIsDragging] = useState(false);
-  const dragRef = React.useRef({ startX: 0, startY: 0, initialX: 40, initialY: 120 });
-
-  useEffect(() => {
-    const isDev = typeof window !== 'undefined' && (
-      window.location.hostname.includes('ais-dev-') || 
-      window.location.hostname.includes('localhost')
-    );
-    setIsPreviewMode(isDev);
-
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-    };
-  }, []);
-
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen().catch(() => {});
-      }
-    }
-  };
-
-  const handlePointerDown = (e: React.PointerEvent) => {
-    setIsDragging(true);
-    dragRef.current = {
-      startX: e.clientX,
-      startY: e.clientY,
-      initialX: pos.x,
-      initialY: pos.y,
-    };
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-  };
-
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDragging) return;
-    const dx = e.clientX - dragRef.current.startX;
-    const dy = e.clientY - dragRef.current.startY;
-    setPos({
-      x: Math.max(10, Math.min(window.innerWidth - 50, dragRef.current.initialX + dx)),
-      y: Math.max(10, Math.min(window.innerHeight - 50, dragRef.current.initialY + dy)),
-    });
-  };
-
-  const handlePointerUp = (e: React.PointerEvent) => {
-    setIsDragging(false);
-    try {
-      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-    } catch {}
-  };
-
   // Theme state: dark | light | indigo
   const [theme, setTheme] = useState<AppTheme>(() => {
     return (localStorage.getItem('gestarian_app_theme') as AppTheme) || 'dark';
@@ -1189,36 +1126,6 @@ export default function App() {
 
   return (
     <div className="h-screen h-[100dvh] w-screen overflow-hidden bg-neutral-900 text-neutral-100 flex flex-col selection:bg-amber-400 selection:text-neutral-950 font-sans">
-      {/* Draggable Minimalist Fullscreen Toggle - ONLY in AI Studio Preview Mode */}
-      {isPreviewMode && (
-        <div
-          style={{
-            position: 'fixed',
-            left: `${pos.x}px`,
-            top: `${pos.y}px`,
-            zIndex: 99999,
-            touchAction: 'none',
-          }}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          className="cursor-grab active:cursor-grabbing select-none"
-          title="Arrastrar y alternar pantalla completa (Modo Preview)"
-        >
-          <button
-            type="button"
-            onClick={toggleFullscreen}
-            className="w-8 h-8 rounded-full bg-neutral-900/90 hover:bg-neutral-800 text-amber-400 border border-neutral-700/80 shadow-2xl flex items-center justify-center transition-transform hover:scale-110"
-          >
-            {isFullscreen ? (
-              <Minimize2 className="w-3.5 h-3.5 stroke-[1.5]" />
-            ) : (
-              <Maximize2 className="w-3.5 h-3.5 stroke-[1.5]" />
-            )}
-          </button>
-        </div>
-      )}
-
       {/* Intro Splash Screen "Gestarian Quick" (Appears at application start) */}
       <AnimatePresence>
         {showSplash && (
@@ -1230,18 +1137,18 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Floating External Preview Controls to Navigate Pages (Outside mobile viewer in preview environment) */}
-      <div className="no-print pointer-events-none fixed inset-y-0 left-0 right-0 z-40 flex items-center justify-between px-2 sm:px-4 md:px-8">
-        {/* Retroceder de Página (Left button) */}
+      {/* Floating External Preview Controls to Navigate Pages (PC & Tablet Landscape ONLY - Minimalist 2px 50% Gray Chevrons without circle or fill) */}
+      <div className="no-print pointer-events-none fixed inset-y-0 left-0 right-0 z-40 hidden md:landscape:flex lg:flex items-center justify-between px-3 sm:px-5 lg:px-8">
+        {/* Retroceder de Página (Left Chevron) */}
         <button
           type="button"
           id="btn-preview-prev-page"
           disabled={activePageIndex <= 0}
           onClick={() => scrollToPage(activePageIndex - 1)}
-          className={`pointer-events-auto group flex items-center gap-2 p-2.5 sm:px-4 sm:py-3 rounded-2xl border backdrop-blur-xl shadow-2xl transition-all duration-300 active:scale-95 cursor-pointer ${
+          className={`pointer-events-auto bg-transparent p-0 border-none outline-none transition-all duration-200 cursor-pointer active:scale-95 ${
             activePageIndex > 0
-              ? 'bg-neutral-950/90 hover:bg-neutral-900 text-stone-100 border-neutral-700/80 hover:border-amber-400/80 hover:shadow-amber-500/10'
-              : 'bg-neutral-950/40 text-neutral-600 border-neutral-800/40 cursor-not-allowed opacity-25'
+              ? 'text-neutral-400/50 hover:text-amber-400/90 hover:scale-110'
+              : 'text-neutral-600/20 cursor-not-allowed opacity-20'
           }`}
           title={
             activePageIndex > 0
@@ -1249,25 +1156,19 @@ export default function App() {
               : 'Primera página'
           }
         >
-          <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 group-hover:-translate-x-1 transition-transform" />
-          <div className="hidden md:flex flex-col text-left">
-            <span className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Retroceder</span>
-            <span className="text-xs font-semibold text-stone-200">
-              {activePageIndex > 0 ? PAGE_TITLES[activePageIndex - 1] : 'Inicio'}
-            </span>
-          </div>
+          <ChevronLeft className="w-8 h-8 lg:w-10 lg:h-10 stroke-[2] fill-none" />
         </button>
 
-        {/* Avanzar de Página (Right button) */}
+        {/* Avanzar de Página (Right Chevron) */}
         <button
           type="button"
           id="btn-preview-next-page"
           disabled={activePageIndex >= 4}
           onClick={() => scrollToPage(activePageIndex + 1)}
-          className={`pointer-events-auto group flex items-center gap-2 p-2.5 sm:px-4 sm:py-3 rounded-2xl border backdrop-blur-xl shadow-2xl transition-all duration-300 active:scale-95 cursor-pointer ${
+          className={`pointer-events-auto bg-transparent p-0 border-none outline-none transition-all duration-200 cursor-pointer active:scale-95 ${
             activePageIndex < 4
-              ? 'bg-neutral-950/90 hover:bg-neutral-900 text-stone-100 border-neutral-700/80 hover:border-amber-400/80 hover:shadow-amber-500/10'
-              : 'bg-neutral-950/40 text-neutral-600 border-neutral-800/40 cursor-not-allowed opacity-25'
+              ? 'text-neutral-400/50 hover:text-amber-400/90 hover:scale-110'
+              : 'text-neutral-600/20 cursor-not-allowed opacity-20'
           }`}
           title={
             activePageIndex < 4
@@ -1275,13 +1176,7 @@ export default function App() {
               : 'Última página'
           }
         >
-          <div className="hidden md:flex flex-col text-right">
-            <span className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Avanzar</span>
-            <span className="text-xs font-semibold text-stone-200">
-              {activePageIndex < 4 ? PAGE_TITLES[activePageIndex + 1] : 'Fin'}
-            </span>
-          </div>
-          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 group-hover:translate-x-1 transition-transform" />
+          <ChevronRight className="w-8 h-8 lg:w-10 lg:h-10 stroke-[2] fill-none" />
         </button>
       </div>
 

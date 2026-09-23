@@ -633,24 +633,15 @@ svg.lucide-pencil,
   scrollbar-color: #1d4ed8 #ffffff !important; /* Thumb azul, track blanco */
 }
 
-/* Indicadores / Botones de desplazamiento lateral flotantes */
-[data-theme="light"] #btn-preview-prev-page,
-[data-theme="light"] #btn-preview-next-page {
-  background-color: #ffffff !important; /* Fondo blanco */
-  border-color: #cbd5e1 !important;
-  color: #1e293b !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08) !important;
-}
-
-[data-theme="light"] #btn-preview-prev-page svg,
-[data-theme="light"] #btn-preview-next-page svg {
-  color: #1d4ed8 !important; /* Indicador / Flecha azul */
-}
-
-[data-theme="light"] #btn-preview-prev-page:hover,
-[data-theme="light"] #btn-preview-next-page:hover {
-  background-color: #f8fafc !important;
-  border-color: #1d4ed8 !important;
+/* Indicadores / Botones de desplazamiento lateral flotantes (Chevrones limpios flotantes) */
+#btn-preview-prev-page,
+#btn-preview-next-page {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 0 !important;
 }
 
 /* ========================================================================= */
@@ -943,25 +934,7 @@ svg.lucide-pencil,
   border-color: #c2ab87 !important;
 }
 
-/* Botones flotantes de desplazamiento lateral */
-[data-theme="pastel"] #btn-preview-prev-page,
-[data-theme="pastel"] #btn-preview-next-page {
-  background-color: #fbf9f4 !important;
-  border-color: #dfd6c7 !important;
-  color: #292524 !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06) !important;
-}
 
-[data-theme="pastel"] #btn-preview-prev-page svg,
-[data-theme="pastel"] #btn-preview-next-page svg {
-  color: #9c6328 !important;
-}
-
-[data-theme="pastel"] #btn-preview-prev-page:hover,
-[data-theme="pastel"] #btn-preview-next-page:hover {
-  background-color: #f3ede2 !important;
-  border-color: #dfbe8c !important;
-}
 
 /* Tarjeta Especial Rastreo de Facturas en Gmail */
 [data-theme="pastel"] #gmail-scanner-config-card {
@@ -1357,25 +1330,7 @@ svg.lucide-pencil,
   border-color: #93c5fd !important;
 }
 
-/* Botones flotantes de desplazamiento lateral */
-[data-theme="blue"] #btn-preview-prev-page,
-[data-theme="blue"] #btn-preview-next-page {
-  background-color: #f8fbfe !important;
-  border-color: #cfe0f2 !important;
-  color: #0f294a !important;
-  box-shadow: 0 10px 25px -5px rgba(15, 41, 74, 0.06) !important;
-}
 
-[data-theme="blue"] #btn-preview-prev-page svg,
-[data-theme="blue"] #btn-preview-next-page svg {
-  color: #0284c7 !important;
-}
-
-[data-theme="blue"] #btn-preview-prev-page:hover,
-[data-theme="blue"] #btn-preview-next-page:hover {
-  background-color: #e6f1fb !important;
-  border-color: #7dd3fc !important;
-}
 
 /* Tarjeta Especial Rastreo de Facturas en Gmail */
 [data-theme="blue"] #gmail-scanner-config-card {
