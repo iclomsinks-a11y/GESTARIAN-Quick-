@@ -251,15 +251,22 @@ input[type="number"] {
 /* COLORES UNIVERSALES: WhatsApp (Verde), Papelera (Rojo), Editar (Gris 50%) */
 /* ========================================================================= */
 
-svg.lucide-message-circle,
-svg.lucide-message-square,
-[data-theme="light"] svg.lucide-message-circle,
-[data-theme="light"] svg.lucide-message-square,
-[data-theme="light"] button svg.lucide-message-circle,
-[data-theme="light"] button svg.lucide-message-square,
-[data-theme="pastel"] svg.lucide-message-circle,
-[data-theme="pastel"] svg.lucide-message-square {
+svg.lucide-message-circle:not(.inactive-whatsapp):not(.text-neutral-500),
+svg.lucide-message-square:not(.inactive-whatsapp):not(.text-neutral-500),
+[data-theme="light"] svg.lucide-message-circle:not(.inactive-whatsapp):not(.text-neutral-500),
+[data-theme="light"] svg.lucide-message-square:not(.inactive-whatsapp):not(.text-neutral-500),
+[data-theme="light"] button svg.lucide-message-circle:not(.inactive-whatsapp):not(.text-neutral-500),
+[data-theme="light"] button svg.lucide-message-square:not(.inactive-whatsapp):not(.text-neutral-500),
+[data-theme="pastel"] svg.lucide-message-circle:not(.inactive-whatsapp):not(.text-neutral-500),
+[data-theme="pastel"] svg.lucide-message-square:not(.inactive-whatsapp):not(.text-neutral-500) {
   color: #25D366 !important;
+}
+
+svg.inactive-whatsapp,
+svg.inactive-icon,
+.inactive-whatsapp,
+.inactive-icon {
+  color: #737373 !important;
 }
 
 svg.lucide-trash,

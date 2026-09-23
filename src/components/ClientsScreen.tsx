@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import {
   Search,
   UserPlus,
+  User,
   Phone,
   Mail,
   MapPin,
@@ -48,8 +49,8 @@ interface ClientsScreenProps {
   providers?: ProviderData[];
 }
 
-// Icono personalizado de "+F" dentro de una hoja de factura emitida (Tamaño x1.5, línea 1.5px)
-const SheetPlusFIcon: React.FC<{ className?: string }> = ({ className = 'w-9 h-9' }) => (
+// Icono personalizado de "+F" dentro de una hoja de factura emitida (Tamaño x1.2, línea 1.5px)
+const SheetPlusFIcon: React.FC<{ className?: string }> = ({ className = 'w-10 h-10 sm:w-11 sm:h-11' }) => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
@@ -124,6 +125,7 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
   providers = [],
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [showSearchInput, setShowSearchInput] = useState(false);
   const [expandedClientId, setExpandedClientId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [clientToDelete, setClientToDelete] = useState<ClientData | null>(null);
@@ -311,42 +313,75 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
         </h1>
       </div>
 
-      {/* Cabecera limpia: Barra de Búsqueda y Botón +Nuevo */}
-      <div className="flex items-center justify-between gap-3 bg-neutral-950/80 border border-neutral-800/80 rounded-2xl p-3 sm:p-3.5 backdrop-blur-md shadow-lg">
-        {/* Campo de Búsqueda */}
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="text"
-            id="clients-search-input"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar por nombre, NIF, teléfono, email..."
-            className="w-full pl-9 pr-7 py-2.5 rounded-xl bg-neutral-900 border border-neutral-700/80 text-xs sm:text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-amber-400 transition-colors"
-          />
-          {searchTerm && (
-            <button
-              type="button"
-              onClick={() => setSearchTerm('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white text-xs px-1 cursor-pointer"
-              title="Limpiar búsqueda"
-            >
-              ✕
-            </button>
-          )}
-        </div>
+      {/* Cabecera limpia: Botón Buscar y Botón +Cliente */}
+      <div className="flex items-center justify-between gap-2.5 sm:gap-3 bg-neutral-950/80 border border-neutral-800/80 rounded-2xl p-3 sm:p-3.5 backdrop-blur-md shadow-lg">
+        {/* Botón Buscar */}
+        <button
+          type="button"
+          onClick={() => setShowSearchInput((prev) => !prev)}
+          className="h-11 sm:h-12 inline-flex items-center justify-center gap-2 px-4 sm:px-5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-amber-400 border border-neutral-700/80 transition-all cursor-pointer shrink-0"
+          title="Buscar clientes"
+        >
+          <Search className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 stroke-[2.5]" />
+          <span className="text-xl sm:text-2xl font-black text-amber-400 leading-none">Buscar</span>
+        </button>
 
-        {/* Botón +Nuevo (Relleno transparente) */}
+        {/* Botón + y Dibujito del Cliente (iconos x1.5) */}
         <button
           type="button"
           id="btn-nuevo-cliente-page"
           onClick={onOpenNewClientForm}
-          className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-transparent hover:bg-amber-400/15 text-amber-400 hover:text-amber-300 border-2 border-amber-400 font-extrabold text-xs sm:text-sm shadow-sm transition-all active:scale-95 cursor-pointer shrink-0"
+          className="h-11 sm:h-12 inline-flex items-center justify-center gap-2 px-4 sm:px-5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-amber-400 border border-neutral-700/80 transition-all cursor-pointer shrink-0"
+          title="Añadir nuevo cliente"
         >
-          <UserPlus className="w-4 h-4 text-amber-400 stroke-[2.2]" />
-          <span>+ Nuevo</span>
+          <span className="text-3xl sm:text-4xl font-black text-amber-400 leading-none">+</span>
+          <User className="w-8 h-8 sm:w-9 sm:h-9 text-amber-400 stroke-[2.5]" />
         </button>
       </div>
+
+      {/* Desplegable de Campo de Búsqueda al pulsar Buscar */}
+      <AnimatePresence>
+        {(showSearchInput || searchTerm) && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="relative w-full max-w-lg mx-auto pt-1 pb-1">
+              <input
+                type="text"
+                id="clients-search-input"
+                autoFocus
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar por nombre, NIF, teléfono, email..."
+                className="w-full pl-3.5 pr-8 py-2.5 rounded-xl bg-neutral-900 border border-neutral-700 text-sm sm:text-base text-white placeholder-neutral-500 focus:outline-none focus:border-amber-400 transition-colors shadow-inner"
+              />
+              {searchTerm ? (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white text-xs px-1 cursor-pointer"
+                  title="Limpiar búsqueda"
+                >
+                  ✕
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowSearchInput(false)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white text-xs px-1 cursor-pointer"
+                  title="Cerrar búsqueda"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Grid de Tarjetas de Clientes */}
       {filteredClients.length === 0 ? (
@@ -395,7 +430,7 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
                   <button
                     type="button"
                     onClick={() => onSelectClientForInvoice(client)}
-                    className="text-left text-base sm:text-lg font-bold text-white hover:text-amber-300 transition-colors truncate flex-1 min-w-0 cursor-pointer focus:outline-none"
+                    className="text-left text-xl sm:text-2xl font-extrabold text-white hover:text-amber-300 transition-colors truncate flex-1 min-w-0 cursor-pointer focus:outline-none"
                     title={`Seleccionar y cargar los datos de ${client.name} en la factura`}
                   >
                     {client.name}
@@ -417,19 +452,19 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
                   </button>
                 </div>
 
-                {/* LÍNEA 2: Fila de SEIS Iconos Grandes FLOTANTES (x1.5 más grandes, trazo 1.5px): Teléfono, WhatsApp, +F, Productos Facturables, Editar y Eliminar */}
-                <div className="px-2 sm:px-3 pt-1 pb-2.5 grid grid-cols-6 place-items-center gap-0.5 sm:gap-1">
-                  {/* Icono 1: Teléfono Flotante (Celeste, 1.5px) */}
+                {/* LÍNEA 2: Fila de CINCO Iconos Grandes FLOTANTES (x1.2 tamaño aumentado): Teléfono, WhatsApp, +F, Editar y Eliminar */}
+                <div className="px-2 sm:px-3 pt-1 pb-2.5 grid grid-cols-5 place-items-center gap-1 sm:gap-2">
+                  {/* Icono 1: Teléfono Flotante (Celeste) */}
                   <button
                     type="button"
                     onClick={(e) => handlePhoneClick(client.phone, e)}
                     className="p-1 text-sky-400 hover:text-sky-300 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
                     title={client.phone ? `Llamar a ${client.phone}` : 'Sin teléfono (pulsa editar)'}
                   >
-                    <Phone className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm" />
+                    <Phone className="w-10 h-10 sm:w-11 sm:h-11 stroke-[1.5] drop-shadow-sm" />
                   </button>
 
-                  {/* Icono 2: WhatsApp Flotante (Verde sólido, 1.5px) */}
+                  {/* Icono 2: WhatsApp Flotante (Verde sólido) */}
                   <button
                     type="button"
                     onClick={(e) => handleWhatsAppClick(client, e)}
@@ -437,10 +472,10 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
                     style={{ color: '#25D366' }}
                     title={client.phone ? `Abrir chat de WhatsApp` : 'Sin teléfono para WhatsApp'}
                   >
-                    <MessageCircle className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm text-[#25D366]" style={{ color: '#25D366' }} />
+                    <MessageCircle className="w-10 h-10 sm:w-11 sm:h-11 stroke-[1.5] drop-shadow-sm text-[#25D366]" style={{ color: '#25D366' }} />
                   </button>
 
-                  {/* Icono 3: +F dentro de una hoja Flotante (Facturar a este cliente, 1.5px) */}
+                  {/* Icono 3: +F dentro de una hoja Flotante (Facturar a este cliente) */}
                   <button
                     type="button"
                     onClick={(e) => {
@@ -450,25 +485,10 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
                     className="p-1 text-amber-400 hover:text-amber-300 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
                     title="Emitir factura a este cliente (+F)"
                   >
-                    <SheetPlusFIcon className="w-8 h-8 sm:w-9 sm:h-9 drop-shadow-sm" />
+                    <SheetPlusFIcon className="w-10 h-10 sm:w-11 sm:h-11 drop-shadow-sm" />
                   </button>
 
-                  {/* Icono 4: Catálogo de Productos Facturables (1.5px) */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (onOpenProductsDb) {
-                        onOpenProductsDb();
-                      }
-                    }}
-                    className="p-1 text-amber-400 hover:text-amber-300 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
-                    title="Catálogo de Productos Facturables"
-                  >
-                    <Package className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm" />
-                  </button>
-
-                  {/* Icono 5: Editar Flotante (Gris 50%, 1.5px) */}
+                  {/* Icono 4: Editar Flotante (Gris 50%) */}
                   <button
                     type="button"
                     onClick={(e) => {
@@ -479,10 +499,10 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
                     style={{ color: '#808080' }}
                     title="Editar todos los datos del cliente"
                   >
-                    <Edit3 className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm text-[#808080]" style={{ color: '#808080' }} />
+                    <Edit3 className="w-10 h-10 sm:w-11 sm:h-11 stroke-[1.5] drop-shadow-sm text-[#808080]" style={{ color: '#808080' }} />
                   </button>
 
-                  {/* Icono 6: Eliminar Cliente Flotante (Rojo sólido, 1.5px) */}
+                  {/* Icono 5: Eliminar Cliente Flotante (Rojo sólido) */}
                   <button
                     type="button"
                     id={`btn-delete-client-${clientId}`}
@@ -494,184 +514,110 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
                     style={{ color: '#EF4444' }}
                     title="Eliminar este cliente completamente"
                   >
-                    <Trash2 className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm text-[#EF4444]" style={{ color: '#EF4444' }} />
+                    <Trash2 className="w-10 h-10 sm:w-11 sm:h-11 stroke-[1.5] drop-shadow-sm text-[#EF4444]" style={{ color: '#EF4444' }} />
                   </button>
                 </div>
 
-                {/* SECCIÓN Y BOTÓN DE LÍNEAS COMPLEJAS DEL CLIENTE */}
-                <div className="w-full px-3.5 pt-1 space-y-2">
-                  <div className="flex items-center justify-between gap-2 pt-1 border-t border-neutral-800/80 flex-wrap">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400/90 flex items-center gap-1.5">
-                      <FolderTree className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Líneas Complejas ({client.lineasComplejas?.length || 0})</span>
-                    </span>
-
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      {/* Casilla interactiva para activar/desactivar botón Línea Compleja en la factura */}
-                      <label
-                        onClick={(e) => e.stopPropagation()}
-                        className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs font-semibold cursor-pointer transition-all select-none ${
-                          client.enableComplexInvoice
-                            ? 'bg-amber-400/20 border-amber-400/60 text-amber-300 shadow-xs'
-                            : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:text-neutral-200 hover:border-neutral-700'
-                        }`}
-                        title="Habilitar o deshabilitar que aparezca el botón 'Línea Compleja' en la hoja A4 de la factura para este cliente"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={Boolean(client.enableComplexInvoice)}
-                          onChange={(e) => {
-                            e.stopPropagation();
-                            handleToggleEnableComplexInvoice(client, e.target.checked);
-                          }}
-                          className="w-3.5 h-3.5 rounded border-neutral-700 bg-neutral-950 text-amber-400 focus:ring-amber-400/50 accent-amber-400 cursor-pointer"
-                        />
-                        <span className="text-[11px]">
-                          {client.enableComplexInvoice ? 'Línea Compleja: Sí' : 'Activar en Factura'}
-                        </span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                {/* SECCIÓN Y BOTÓN DE PRODUCTOS HABITUALES DEL CLIENTE */}
-                <div className="w-full px-3.5 pb-3 space-y-2">
-                  <div className="flex items-center justify-between gap-2 pt-1 border-t border-neutral-800/80 flex-wrap">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400/90 flex items-center gap-1.5">
-                      <Package className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Productos Habituales ({client.habitualProducts?.length || 0})</span>
-                    </span>
-
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      {/* Casilla interactiva para activar/desactivar botón Añadir Producto en facturación */}
-                      <label
-                        onClick={(e) => e.stopPropagation()}
-                        className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs font-semibold cursor-pointer transition-all select-none ${
-                          client.enableProductsCatalog
-                            ? 'bg-amber-400/20 border-amber-400/60 text-amber-300 shadow-xs'
-                            : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:text-neutral-200 hover:border-neutral-700'
-                        }`}
-                        title="Activar o desactivar que aparezca el botón 'Añadir Producto' en la factura al facturar a este cliente"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={Boolean(client.enableProductsCatalog)}
-                          onChange={(e) => {
-                            e.stopPropagation();
-                            handleToggleEnableProductsCatalog(client, e.target.checked);
-                          }}
-                          className="w-3.5 h-3.5 rounded border-neutral-700 bg-neutral-950 text-amber-400 focus:ring-amber-400/50 accent-amber-400 cursor-pointer"
-                        />
-                        <span className="text-[11px]">
-                          {client.enableProductsCatalog ? 'Botón Factura: Sí' : 'Activar en Factura'}
-                        </span>
-                      </label>
-
+                {/* CONTROLES DIRECTAMENTE DEBAJO DE LA LÍNEA DE SEIS ICONOS */}
+                <div className="w-full px-3 pt-1 pb-3 space-y-2 border-t border-neutral-800/80">
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {/* COLUMNA 1: LÍNEA COMPLEJA */}
+                    <div className="flex flex-col items-center justify-start gap-1 bg-white/5 p-2 rounded-xl border border-neutral-800/60">
+                      {/* Botón Alternar Línea Compleja (Sin dibujito, texto x1.75) */}
                       <button
                         type="button"
-                        id={`btn-add-habitual-product-${clientId}`}
-                        onClick={(e) => handleOpenAddHabitualProduct(client, e)}
-                        className="px-2.5 py-1 rounded-lg bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/40 text-amber-300 font-semibold text-xs flex items-center gap-1 transition-all active:scale-95 cursor-pointer"
-                        title="Añadir producto habitual para este cliente mediante descripción y foto o URL"
+                        id={`btn-toggle-complex-${clientId}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleEnableComplexInvoice(client, !client.enableComplexInvoice);
+                        }}
+                        className={`w-full py-2 px-2 rounded-xl border font-black text-sm sm:text-base flex items-center justify-center transition-all shadow-sm active:scale-95 cursor-pointer ${
+                          client.enableComplexInvoice
+                            ? 'bg-emerald-600 hover:bg-emerald-500 border-emerald-400 text-white shadow-emerald-900/30'
+                            : 'bg-neutral-800 hover:bg-neutral-750 border-neutral-700 text-neutral-400'
+                        }`}
+                        title="Activar/Desactivar Línea Compleja en facturas"
                       >
-                        <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                        <span>Añadir Producto</span>
+                        <span className="truncate">Línea Compleja</span>
                       </button>
+
+                      {/* Texto ON / OFF debajo del botón (x1.75) */}
+                      <span
+                        className={`text-sm sm:text-base font-black uppercase tracking-wider ${
+                          client.enableComplexInvoice ? 'text-emerald-400' : 'text-neutral-500'
+                        }`}
+                      >
+                        {client.enableComplexInvoice ? 'ON' : 'OFF'}
+                      </span>
+
+                      {/* Botón Configurar Línea Compleja (Dibujito + "Configurar") */}
+                      {client.enableComplexInvoice && (
+                        <button
+                          type="button"
+                          id={`btn-lineas-complejas-${clientId}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setLineasComplejasClient(client);
+                            setIsLineasComplejasOpen(true);
+                          }}
+                          className="w-full mt-0.5 py-1.5 px-2 rounded-xl bg-amber-400 hover:bg-amber-300 border border-amber-300 text-neutral-950 font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
+                          title="Configurar estructuras de concepto en niveles para este cliente"
+                        >
+                          <FolderTree className="w-4 h-4 text-neutral-950 shrink-0 stroke-[2.5]" />
+                          <span className="truncate">Configurar</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* COLUMNA 2: AÑADIR PRODUCTO */}
+                    <div className="flex flex-col items-center justify-start gap-1 bg-white/5 p-2 rounded-xl border border-neutral-800/60">
+                      {/* Botón Alternar Añadir Producto (Cajita + "+Producto", texto x1.75) */}
+                      <button
+                        type="button"
+                        id={`btn-toggle-products-${clientId}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleEnableProductsCatalog(client, !client.enableProductsCatalog);
+                        }}
+                        className={`w-full py-2 px-2 rounded-xl border font-black text-sm sm:text-base flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer ${
+                          client.enableProductsCatalog
+                            ? 'bg-emerald-600 hover:bg-emerald-500 border-emerald-400 text-white shadow-emerald-900/30'
+                            : 'bg-neutral-800 hover:bg-neutral-750 border-neutral-700 text-neutral-400'
+                        }`}
+                        title="Activar/Desactivar Añadir Producto en facturas"
+                      >
+                        <Package className="w-4 h-4 shrink-0 stroke-[2.2]" />
+                        <span className="truncate">+Producto</span>
+                      </button>
+
+                      {/* Texto ON / OFF debajo del botón (x1.75) */}
+                      <span
+                        className={`text-sm sm:text-base font-black uppercase tracking-wider ${
+                          client.enableProductsCatalog ? 'text-emerald-400' : 'text-neutral-500'
+                        }`}
+                      >
+                        {client.enableProductsCatalog ? 'ON' : 'OFF'}
+                      </span>
+
+                      {/* Botón Configurar Productos (Cajita + "Configurar") */}
+                      {client.enableProductsCatalog && (
+                        <button
+                          type="button"
+                          id={`btn-productos-cliente-${clientId}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setProductosClient(client);
+                            setIsProductosOpen(true);
+                          }}
+                          className="w-full mt-0.5 py-1.5 px-2 rounded-xl bg-amber-400 hover:bg-amber-300 border border-amber-300 text-neutral-950 font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
+                          title="Configurar productos habituales de este cliente para insertar en facturas"
+                        >
+                          <Package className="w-4 h-4 text-neutral-950 shrink-0 stroke-[2.5]" />
+                          <span className="truncate">Configurar</span>
+                        </button>
+                      )}
                     </div>
                   </div>
-
-                  {/* Lista de productos habituales si existen */}
-                  {client.habitualProducts && client.habitualProducts.length > 0 && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                      {client.habitualProducts.map((prod) => (
-                        <div
-                          key={prod.id}
-                          className="flex items-center justify-between gap-2 p-2 rounded-xl bg-neutral-950/80 border border-neutral-800 text-xs hover:border-neutral-700 transition-all"
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            {prod.imageUrl ? (
-                              <img
-                                src={prod.imageUrl}
-                                alt={prod.name}
-                                className="w-9 h-9 rounded-lg object-cover border border-neutral-700 shrink-0"
-                                onError={(e) => {
-                                  (e.currentTarget as HTMLImageElement).style.display = 'none';
-                                }}
-                              />
-                            ) : (
-                              <div className="w-9 h-9 rounded-lg bg-neutral-850 border border-neutral-700 flex items-center justify-center text-neutral-400 shrink-0">
-                                <Package className="w-4 h-4 text-blue-400/80" />
-                              </div>
-                            )}
-                            <div className="min-w-0">
-                              <p className="font-bold text-neutral-200 truncate">{prod.name}</p>
-                              {(prod.price ?? 0) > 0 && (
-                                <p className="text-[11px] font-mono text-blue-300 font-semibold">
-                                  {formatCurrency(prod.price ?? 0)}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-1 shrink-0">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onSelectClientForInvoice(client);
-                              }}
-                              className="px-2 py-1 rounded-md bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-[10px] tracking-wider transition-all active:scale-95 cursor-pointer"
-                              title="Facturar este cliente (+F)"
-                            >
-                              +F
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => handleDeleteHabitualProduct(client, prod.id, e)}
-                              className="p-1 rounded-md hover:bg-rose-950/60 text-[#EF4444] hover:text-red-400 transition-colors cursor-pointer"
-                              style={{ color: '#EF4444' }}
-                              title="Eliminar producto habitual"
-                            >
-                              <Trash2 className="w-3.5 h-3.5 text-[#EF4444]" style={{ color: '#EF4444' }} />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* BOTONES: CONFIGURAR LÍNEAS COMPLEJAS Y PRODUCTOS DEL CLIENTE */}
-                <div className="w-full flex flex-wrap items-center justify-center gap-2 pb-3 px-3">
-                  <button
-                    type="button"
-                    id={`btn-lineas-complejas-${clientId}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setLineasComplejasClient(client);
-                      setIsLineasComplejasOpen(true);
-                    }}
-                    className="flex-1 py-2 px-2.5 sm:px-3 rounded-xl border-2 border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 hover:text-amber-200 font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
-                    title="Configurar estructuras de concepto en niveles para este cliente"
-                  >
-                    <FolderTree className="w-4 h-4 text-amber-400 shrink-0 stroke-[2.2]" />
-                    <span className="truncate">Configurar Líneas Complejas</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    id={`btn-productos-cliente-${clientId}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setProductosClient(client);
-                      setIsProductosOpen(true);
-                    }}
-                    className="flex-1 py-2 px-2.5 sm:px-3 rounded-xl border-2 border-amber-500/40 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
-                    title="Configurar productos habituales de este cliente para insertar en facturas"
-                  >
-                    <Package className="w-4 h-4 text-amber-400 shrink-0 stroke-[2.2]" />
-                    <span className="truncate">Configurar Productos</span>
-                  </button>
                 </div>
 
                 {/* ZONA EXPANDIBLE: Aparece de modo fluido al pulsar el nombre con texto aumentado x1.5 */}
@@ -686,30 +632,14 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
                       className="overflow-hidden"
                     >
                       <div className="p-4 sm:p-5 bg-neutral-950/80 border-t border-neutral-800 space-y-4 text-base text-neutral-200">
-                        {/* CIF / NIF (Texto x1.5) */}
+                        {/* CIF / NIF (Sin recuadro, sin botón de copiar, tamaño x1.5) */}
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-sm sm:text-base font-bold uppercase tracking-wider text-neutral-400">
                             NIF / CIF:
                           </span>
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono text-base sm:text-lg font-bold text-amber-300 bg-amber-400/10 px-3 py-1 rounded-lg border border-amber-400/30">
-                              {client.nif || 'SIN CIF'}
-                            </span>
-                            {client.nif && (
-                              <button
-                                type="button"
-                                onClick={(e) => handleCopyNif(client.nif, clientId, e)}
-                                className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer"
-                                title="Copiar NIF"
-                              >
-                                {copiedId === clientId ? (
-                                  <Check className="w-5 h-5 text-emerald-400" />
-                                ) : (
-                                  <Copy className="w-5 h-5" />
-                                )}
-                              </button>
-                            )}
-                          </div>
+                          <span className="font-mono text-xl sm:text-2xl font-bold text-amber-300">
+                            {client.nif || 'SIN CIF'}
+                          </span>
                         </div>
 
                         {/* Domicilio completo (Texto x1.5) */}
@@ -729,37 +659,38 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
                           </div>
                         </div>
 
-                        {/* Teléfono & Email (Texto x1.5) */}
+                        {/* Teléfono & Email (Tono más oscuro/cálido igual que CIF/NIF: text-amber-300) */}
                         <div className="space-y-2 pt-1 border-t border-neutral-850/80">
                           <div className="flex items-center justify-between gap-2">
                             <span className="text-sm sm:text-base font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
-                              <Phone className="w-4.5 h-4.5 text-sky-400 stroke-[1.5]" />
+                              <Phone className="w-4.5 h-4.5 text-amber-400 stroke-[1.5]" />
                               <span>Teléfono:</span>
                             </span>
-                            <span className="font-mono text-sky-300 text-base sm:text-lg font-bold">
+                            <span className="font-mono text-amber-300 text-xl sm:text-2xl font-bold">
                               {client.phone || <span className="text-neutral-500 italic font-normal text-sm">No asignado</span>}
                             </span>
                           </div>
 
                           <div className="flex items-center justify-between gap-2">
                             <span className="text-sm sm:text-base font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
-                              <Mail className="w-4.5 h-4.5 text-sky-400 stroke-[1.5]" />
+                              <Mail className="w-4.5 h-4.5 text-amber-400 stroke-[1.5]" />
                               <span>Email:</span>
                             </span>
-                            <span className="text-sky-300 text-base sm:text-lg truncate max-w-[240px]">
-                              {client.email || <span className="text-neutral-500 italic text-sm">No asignado</span>}
+                            <span className="text-amber-300 text-xl sm:text-2xl font-bold truncate max-w-[280px]">
+                              {client.email || <span className="text-neutral-500 italic text-sm font-normal">No asignado</span>}
                             </span>
                           </div>
                         </div>
 
-                        {/* Envío preferente en la tarjeta (Texto x1.5) */}
+                        {/* Envío preferente en la tarjeta (Icono WhatsApp grande verde e Icono Email grande rojo) */}
                         <div className="pt-2 border-t border-neutral-850/80 space-y-2">
                           <div className="flex items-center justify-between gap-2">
                             <span className="text-sm sm:text-base font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
                               <Send className="w-4.5 h-4.5 text-neutral-400" />
                               <span>Envío Preferente:</span>
                             </span>
-                            <div className="flex items-center gap-1.5 bg-neutral-900 p-1 rounded-xl border border-neutral-800">
+                            <div className="flex items-center gap-3">
+                              {/* Botón WhatsApp Grande (Verde si activo, gris sin relleno si desactivado) */}
                               <button
                                 type="button"
                                 onClick={() => {
@@ -774,14 +705,20 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
                                     });
                                   }
                                 }}
-                                className={`px-3 py-1 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                                className={`p-2 sm:p-2.5 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-center active:scale-95 ${
                                   preferred === 'whatsapp'
-                                    ? 'bg-[#25D366] text-neutral-950 shadow-md'
-                                    : 'text-neutral-400 hover:text-white'
+                                    ? 'bg-[#25D366]/20 border-[#25D366] text-[#25D366] shadow-lg shadow-[#25D366]/25'
+                                    : 'bg-transparent border-neutral-700 text-neutral-500 hover:border-neutral-500 hover:text-neutral-400'
                                 }`}
+                                title="Establecer WhatsApp como canal de envío preferente"
                               >
-                                WhatsApp
+                                <MessageCircle
+                                  className={`w-8 h-8 sm:w-9 sm:h-9 stroke-[1.8] drop-shadow-sm ${preferred === 'whatsapp' ? '' : 'inactive-whatsapp text-neutral-500'}`}
+                                  style={{ color: preferred === 'whatsapp' ? '#25D366' : '#737373' }}
+                                />
                               </button>
+
+                              {/* Botón Email Sobre Grande (Rojo si activo, gris sin relleno si desactivado) */}
                               <button
                                 type="button"
                                 onClick={() => {
@@ -796,84 +733,29 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
                                     });
                                   }
                                 }}
-                                className={`px-3 py-1 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                                className={`p-2 sm:p-2.5 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-center active:scale-95 ${
                                   preferred === 'email'
-                                    ? 'bg-sky-400 text-neutral-950 shadow-md'
-                                    : 'text-neutral-400 hover:text-white'
+                                    ? 'bg-red-500/20 border-red-500 text-red-500 shadow-lg shadow-red-500/25'
+                                    : 'bg-transparent border-neutral-700 text-neutral-500 hover:border-neutral-500 hover:text-neutral-400'
                                 }`}
+                                title="Establecer Email como canal de envío preferente"
                               >
-                                Email
+                                <Mail
+                                  className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.8] drop-shadow-sm"
+                                  style={{ color: preferred === 'email' ? '#EF4444' : '#737373' }}
+                                />
                               </button>
                             </div>
                           </div>
                         </div>
 
-                        {/* Estado: Líneas Complejas */}
-                        <div className="flex items-center justify-between gap-3 pt-2 border-t border-neutral-850/80 text-sm sm:text-base">
-                          <span className="font-bold text-neutral-400 flex items-center gap-1.5">
-                            <FolderTree className="w-4 h-4 text-amber-400" />
-                            <span>Botón Línea Compleja:</span>
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleToggleEnableComplexInvoice(client, !client.enableComplexInvoice)}
-                            className={`text-xs sm:text-sm font-bold px-3 py-1 rounded-lg border transition-all cursor-pointer ${
-                              client.enableComplexInvoice
-                                ? 'bg-amber-400 text-neutral-950 border-amber-300 shadow-sm'
-                                : 'bg-neutral-900 text-neutral-400 border-neutral-800 hover:text-white'
-                            }`}
-                          >
-                            {client.enableComplexInvoice ? '✓ Mostrado en Factura' : '✕ Oculto en Factura'}
-                          </button>
-                        </div>
-
-                        {/* Estado: Botón Añadir Producto en Facturación */}
-                        <div className="flex items-center justify-between gap-3 pt-2 border-t border-neutral-850/80 text-sm sm:text-base">
-                          <span className="font-bold text-neutral-400 flex items-center gap-1.5">
-                            <Package className="w-4 h-4 text-amber-400" />
-                            <span>Botón Añadir Producto:</span>
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleToggleEnableProductsCatalog(client, !client.enableProductsCatalog)}
-                            className={`text-xs sm:text-sm font-bold px-3 py-1 rounded-lg border transition-all cursor-pointer ${
-                              client.enableProductsCatalog
-                                ? 'bg-amber-400 text-neutral-950 border-amber-300 shadow-sm'
-                                : 'bg-neutral-900 text-neutral-400 border-neutral-800 hover:text-white'
-                            }`}
-                          >
-                            {client.enableProductsCatalog ? '✓ Mostrado en Factura' : '✕ Oculto en Factura'}
-                          </button>
-                        </div>
-
-                        {/* Observaciones / Notas si las tiene (Texto x1.5) */}
+                        {/* Observaciones / Notas si las tiene (Texto x2) */}
                         {client.notes && (
-                          <div className="pt-2 border-t border-neutral-850/80 text-sm sm:text-base text-neutral-300">
-                            <span className="font-bold text-neutral-200">Notas: </span>
-                            <span className="italic">{client.notes}</span>
+                          <div className="pt-2 border-t border-neutral-850/80 text-xl sm:text-2xl text-neutral-200 leading-relaxed">
+                            <span className="font-extrabold text-amber-300">Notas: </span>
+                            <span className="italic text-white font-medium">{client.notes}</span>
                           </div>
                         )}
-
-                        {/* Botón de eliminar en el pie expandido (Texto x1.5) */}
-                        <div className="pt-3 border-t border-neutral-850 flex items-center justify-between">
-                          <button
-                            type="button"
-                            onClick={() => setClientToDelete(client)}
-                            className="inline-flex items-center gap-2 text-sm sm:text-base text-[#EF4444] hover:text-red-400 transition-colors py-1.5 px-2.5 rounded-lg hover:bg-rose-950/50 cursor-pointer font-medium"
-                          >
-                            <Trash2 className="w-4.5 h-4.5 stroke-[1.5] text-[#EF4444]" style={{ color: '#EF4444' }} />
-                            <span>Eliminar cliente</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => onEditClient(client)}
-                            className="inline-flex items-center gap-2 text-sm sm:text-base text-[#808080] hover:text-neutral-300 transition-colors py-1.5 px-3 rounded-lg hover:bg-neutral-800/50 cursor-pointer font-bold"
-                          >
-                            <Edit3 className="w-4.5 h-4.5 stroke-[1.5] text-[#808080]" style={{ color: '#808080' }} />
-                            <span>Editar datos</span>
-                          </button>
-                        </div>
                       </div>
                     </motion.div>
                   )}

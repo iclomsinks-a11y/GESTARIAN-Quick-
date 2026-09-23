@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   Search,
   Building2,
+  Factory,
   Phone,
   Mail,
   MapPin,
@@ -28,9 +29,9 @@ interface ProvidersScreenProps {
   onSelectProviderForExpense?: (provider: ProviderData) => void;
 }
 
-// Icono personalizado de "+G" dentro de una hoja de factura/gasto (Tamaño x1.5, línea 1.5px)
+// Icono personalizado de "+G" dentro de una hoja de factura/gasto (Tamaño x1.2, línea 1.5px)
 // Simétrico al "+F" de clientes
-const SheetPlusGIcon: React.FC<{ className?: string }> = ({ className = 'w-9 h-9' }) => (
+const SheetPlusGIcon: React.FC<{ className?: string }> = ({ className = 'w-10 h-10 sm:w-11 sm:h-11' }) => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
@@ -68,6 +69,7 @@ export const ProvidersScreen: React.FC<ProvidersScreenProps> = ({
   onSelectProviderForExpense,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [showSearchInput, setShowSearchInput] = useState(false);
   const [expandedProviderId, setExpandedProviderId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [copiedIbanId, setCopiedIbanId] = useState<string | null>(null);
@@ -144,42 +146,75 @@ export const ProvidersScreen: React.FC<ProvidersScreenProps> = ({
         </h1>
       </div>
 
-      {/* Cabecera limpia: Barra de Búsqueda y Botón +Nuevo */}
-      <div className="flex items-center justify-between gap-3 bg-neutral-950/80 border border-neutral-800/80 rounded-2xl p-3 sm:p-3.5 backdrop-blur-md shadow-lg">
-        {/* Campo de Búsqueda */}
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="text"
-            id="providers-search-input"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar por nombre, CIF, teléfono, email, IBAN..."
-            className="w-full pl-9 pr-7 py-2.5 rounded-xl bg-neutral-900 border border-neutral-700/80 text-xs sm:text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-amber-400 transition-colors"
-          />
-          {searchTerm && (
-            <button
-              type="button"
-              onClick={() => setSearchTerm('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white text-xs px-1 cursor-pointer"
-              title="Limpiar búsqueda"
-            >
-              ✕
-            </button>
-          )}
-        </div>
+      {/* Cabecera limpia: Botón Buscar y Botón +Proveedor */}
+      <div className="flex items-center justify-between gap-2.5 sm:gap-3 bg-neutral-950/80 border border-neutral-800/80 rounded-2xl p-3 sm:p-3.5 backdrop-blur-md shadow-lg">
+        {/* Botón Buscar */}
+        <button
+          type="button"
+          onClick={() => setShowSearchInput((prev) => !prev)}
+          className="h-11 sm:h-12 inline-flex items-center justify-center gap-2 px-4 sm:px-5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-amber-400 border border-neutral-700/80 transition-all cursor-pointer shrink-0"
+          title="Buscar proveedores"
+        >
+          <Search className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 stroke-[2.5]" />
+          <span className="text-xl sm:text-2xl font-black text-amber-400 leading-none">Buscar</span>
+        </button>
 
-        {/* Botón +Nuevo (Relleno transparente) */}
+        {/* Botón + y Dibujito de Fábrica (iconos x1.5) */}
         <button
           type="button"
           id="btn-nuevo-proveedor-page"
           onClick={onOpenNewProviderForm}
-          className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-transparent hover:bg-amber-400/15 text-amber-400 hover:text-amber-300 border-2 border-amber-400 font-extrabold text-xs sm:text-sm shadow-sm transition-all active:scale-95 cursor-pointer shrink-0"
+          className="h-11 sm:h-12 inline-flex items-center justify-center gap-2 px-4 sm:px-5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-amber-400 border border-neutral-700/80 transition-all cursor-pointer shrink-0"
+          title="Añadir nuevo proveedor"
         >
-          <Building2 className="w-4 h-4 text-amber-400 stroke-[2.2]" />
-          <span>+ Nuevo</span>
+          <span className="text-3xl sm:text-4xl font-black text-amber-400 leading-none">+</span>
+          <Factory className="w-8 h-8 sm:w-9 sm:h-9 text-amber-400 stroke-[2.5]" />
         </button>
       </div>
+
+      {/* Desplegable de Campo de Búsqueda al pulsar Buscar */}
+      <AnimatePresence>
+        {(showSearchInput || searchTerm) && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="relative w-full max-w-lg mx-auto pt-1 pb-1">
+              <input
+                type="text"
+                id="providers-search-input"
+                autoFocus
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar por nombre, CIF, teléfono, email, IBAN..."
+                className="w-full pl-3.5 pr-8 py-2.5 rounded-xl bg-neutral-900 border border-neutral-700 text-sm sm:text-base text-white placeholder-neutral-500 focus:outline-none focus:border-amber-400 transition-colors shadow-inner"
+              />
+              {searchTerm ? (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white text-xs px-1 cursor-pointer"
+                  title="Limpiar búsqueda"
+                >
+                  ✕
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowSearchInput(false)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white text-xs px-1 cursor-pointer"
+                  title="Cerrar búsqueda"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Grid de Tarjetas de Proveedores */}
       {filteredProviders.length === 0 ? (
@@ -226,7 +261,7 @@ export const ProvidersScreen: React.FC<ProvidersScreenProps> = ({
                   title="Pulsa el nombre para expandir o contraer todos los datos del proveedor"
                 >
                   <div className="flex items-center gap-2 truncate flex-1 min-w-0">
-                    <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-amber-300 transition-colors truncate">
+                    <h3 className="text-xl sm:text-2xl font-extrabold text-white group-hover:text-amber-300 transition-colors truncate">
                       {provider.name}
                     </h3>
                   </div>
@@ -239,19 +274,19 @@ export const ProvidersScreen: React.FC<ProvidersScreenProps> = ({
                   </div>
                 </div>
 
-                {/* LÍNEA 2: Fila de 5 Iconos Grandes FLOTANTES SIN ENVOLTORIO (x1.5 más grandes, trazo 1.5px): Teléfono celeste, WhatsApp, +G en hoja, Editar y Eliminar */}
-                <div className="px-3 pt-1 pb-3.5 grid grid-cols-5 place-items-center gap-1">
-                  {/* Icono 1: Teléfono Flotante (Celeste, 1.5px) */}
+                {/* LÍNEA 2: Fila de 5 Iconos Grandes FLOTANTES (x1.2 tamaño aumentado): Teléfono celeste, WhatsApp, +G en hoja, Editar y Eliminar */}
+                <div className="px-3 pt-1 pb-3.5 grid grid-cols-5 place-items-center gap-1 sm:gap-2">
+                  {/* Icono 1: Teléfono Flotante */}
                   <button
                     type="button"
                     onClick={(e) => handlePhoneClick(provider.phone, e)}
-                    className="p-1 text-sky-400 hover:text-sky-300 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
+                    className="p-1 text-amber-400 hover:text-amber-300 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
                     title={provider.phone ? `Llamar a ${provider.phone}` : 'Sin teléfono (pulsa editar)'}
                   >
-                    <Phone className="w-9 h-9 stroke-[1.5] drop-shadow-sm" />
+                    <Phone className="w-10 h-10 sm:w-11 sm:h-11 stroke-[1.5] drop-shadow-sm" />
                   </button>
 
-                  {/* Icono 2: WhatsApp Flotante (Verde sólido, 1.5px) */}
+                  {/* Icono 2: WhatsApp Flotante (Verde sólido) */}
                   <button
                     type="button"
                     onClick={(e) => handleWhatsAppClick(provider, e)}
@@ -259,10 +294,10 @@ export const ProvidersScreen: React.FC<ProvidersScreenProps> = ({
                     style={{ color: '#25D366' }}
                     title={provider.phone ? `Abrir chat de WhatsApp` : 'Sin teléfono para WhatsApp'}
                   >
-                    <MessageCircle className="w-9 h-9 stroke-[1.5] drop-shadow-sm text-[#25D366]" style={{ color: '#25D366' }} />
+                    <MessageCircle className="w-10 h-10 sm:w-11 sm:h-11 stroke-[1.5] drop-shadow-sm text-[#25D366]" style={{ color: '#25D366' }} />
                   </button>
 
-                  {/* Icono 3: +G dentro de una hoja Flotante (Registrar gasto / factura recibida de este proveedor, 1.5px) */}
+                  {/* Icono 3: +G dentro de una hoja Flotante (Registrar gasto / factura recibida de este proveedor) */}
                   <button
                     type="button"
                     onClick={(e) => {
@@ -274,10 +309,10 @@ export const ProvidersScreen: React.FC<ProvidersScreenProps> = ({
                     className="p-1 text-amber-400 hover:text-amber-300 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
                     title="Registrar factura recibida / gasto de este proveedor (+G)"
                   >
-                    <SheetPlusGIcon className="w-9 h-9 drop-shadow-sm" />
+                    <SheetPlusGIcon className="w-10 h-10 sm:w-11 sm:h-11 drop-shadow-sm" />
                   </button>
 
-                  {/* Icono 4: Editar Flotante (Gris 50%, 1.5px) */}
+                  {/* Icono 4: Editar Flotante (Gris 50%) */}
                   <button
                     type="button"
                     onClick={(e) => {
@@ -288,10 +323,10 @@ export const ProvidersScreen: React.FC<ProvidersScreenProps> = ({
                     style={{ color: '#808080' }}
                     title="Editar todos los datos del proveedor"
                   >
-                    <Edit3 className="w-9 h-9 stroke-[1.5] drop-shadow-sm text-[#808080]" style={{ color: '#808080' }} />
+                    <Edit3 className="w-10 h-10 sm:w-11 sm:h-11 stroke-[1.5] drop-shadow-sm text-[#808080]" style={{ color: '#808080' }} />
                   </button>
 
-                  {/* Icono 5: Eliminar Proveedor Flotante (Rojo sólido, 1.5px) */}
+                  {/* Icono 5: Eliminar Proveedor Flotante (Rojo sólido) */}
                   <button
                     type="button"
                     id={`btn-delete-provider-${providerId}`}
@@ -303,7 +338,7 @@ export const ProvidersScreen: React.FC<ProvidersScreenProps> = ({
                     style={{ color: '#EF4444' }}
                     title="Eliminar este proveedor completamente"
                   >
-                    <Trash2 className="w-9 h-9 stroke-[1.5] drop-shadow-sm text-[#EF4444]" style={{ color: '#EF4444' }} />
+                    <Trash2 className="w-10 h-10 sm:w-11 sm:h-11 stroke-[1.5] drop-shadow-sm text-[#EF4444]" style={{ color: '#EF4444' }} />
                   </button>
                 </div>
 
@@ -319,30 +354,14 @@ export const ProvidersScreen: React.FC<ProvidersScreenProps> = ({
                       className="overflow-hidden"
                     >
                       <div className="p-4 sm:p-5 bg-neutral-950/80 border-t border-neutral-800 space-y-4 text-base text-neutral-200">
-                        {/* CIF / NIF (Texto x1.5) */}
+                        {/* CIF / NIF (Sin recuadro, sin botón de copiar, tamaño x1.5) */}
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-sm sm:text-base font-bold uppercase tracking-wider text-neutral-400">
                             NIF / CIF:
                           </span>
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono text-base sm:text-lg font-bold text-amber-300 bg-amber-400/10 px-3 py-1 rounded-lg border border-amber-400/30">
-                              {provider.cif || 'SIN CIF'}
-                            </span>
-                            {provider.cif && (
-                              <button
-                                type="button"
-                                onClick={(e) => handleCopyCif(provider.cif, providerId, e)}
-                                className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer"
-                                title="Copiar CIF"
-                              >
-                                {copiedId === providerId ? (
-                                  <Check className="w-5 h-5 text-emerald-400" />
-                                ) : (
-                                  <Copy className="w-5 h-5" />
-                                )}
-                              </button>
-                            )}
-                          </div>
+                          <span className="font-mono text-xl sm:text-2xl font-bold text-amber-300">
+                            {provider.cif || 'SIN CIF'}
+                          </span>
                         </div>
 
                         {/* Domicilio completo (Texto x1.5) */}
@@ -362,25 +381,25 @@ export const ProvidersScreen: React.FC<ProvidersScreenProps> = ({
                           </div>
                         </div>
 
-                        {/* Teléfono & Email (Texto x1.5) */}
+                        {/* Teléfono & Email (Mismo color y tamaño que NIF/CIF: text-amber-300 / text-xl sm:text-2xl) */}
                         <div className="space-y-2 pt-1 border-t border-neutral-850/80">
                           <div className="flex items-center justify-between gap-2">
                             <span className="text-sm sm:text-base font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
-                              <Phone className="w-4.5 h-4.5 text-sky-400 stroke-[1.5]" />
+                              <Phone className="w-4.5 h-4.5 text-amber-400 stroke-[1.5]" />
                               <span>Teléfono:</span>
                             </span>
-                            <span className="font-mono text-sky-300 text-base sm:text-lg font-bold">
+                            <span className="font-mono text-amber-300 text-xl sm:text-2xl font-bold">
                               {provider.phone || <span className="text-neutral-500 italic font-normal text-sm">No asignado</span>}
                             </span>
                           </div>
 
                           <div className="flex items-center justify-between gap-2">
                             <span className="text-sm sm:text-base font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
-                              <Mail className="w-4.5 h-4.5 text-sky-400 stroke-[1.5]" />
+                              <Mail className="w-4.5 h-4.5 text-amber-400 stroke-[1.5]" />
                               <span>Email:</span>
                             </span>
-                            <span className="text-sky-300 text-base sm:text-lg truncate max-w-[240px]">
-                              {provider.email || <span className="text-neutral-500 italic text-sm">No asignado</span>}
+                            <span className="text-amber-300 text-xl sm:text-2xl font-bold truncate max-w-[280px]">
+                              {provider.email || <span className="text-neutral-500 italic text-sm font-normal">No asignado</span>}
                             </span>
                           </div>
                         </div>
@@ -400,7 +419,7 @@ export const ProvidersScreen: React.FC<ProvidersScreenProps> = ({
                               )}
                             </div>
                             {provider.iban && (
-                              <div className="flex items-center justify-between gap-2 pl-6 bg-neutral-900/70 p-2 rounded-xl border border-neutral-800">
+                              <div className="flex items-center justify-between gap-2 pl-6 bg-white/5 p-2 rounded-xl border border-neutral-800/60">
                                 <span className="font-mono text-xs sm:text-sm text-amber-300 font-semibold truncate">
                                   {provider.iban}
                                 </span>
@@ -428,27 +447,6 @@ export const ProvidersScreen: React.FC<ProvidersScreenProps> = ({
                             <span className="italic">{provider.notes}</span>
                           </div>
                         )}
-
-                        {/* Botón de eliminar y editar en el pie expandido */}
-                        <div className="pt-3 border-t border-neutral-850 flex items-center justify-between">
-                          <button
-                            type="button"
-                            onClick={() => setProviderToDelete(provider)}
-                            className="inline-flex items-center gap-2 text-sm sm:text-base text-[#EF4444] hover:text-red-400 transition-colors py-1.5 px-2.5 rounded-lg hover:bg-rose-950/50 cursor-pointer font-medium"
-                          >
-                            <Trash2 className="w-4.5 h-4.5 stroke-[1.5] text-[#EF4444]" style={{ color: '#EF4444' }} />
-                            <span>Eliminar proveedor</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => onEditProvider(provider)}
-                            className="inline-flex items-center gap-2 text-sm sm:text-base text-[#808080] hover:text-neutral-300 transition-colors py-1.5 px-3 rounded-lg hover:bg-neutral-800/50 cursor-pointer font-bold"
-                          >
-                            <Edit3 className="w-4.5 h-4.5 stroke-[1.5] text-[#808080]" style={{ color: '#808080' }} />
-                            <span>Editar datos</span>
-                          </button>
-                        </div>
                       </div>
                     </motion.div>
                   )}
@@ -491,7 +489,7 @@ export const ProvidersScreen: React.FC<ProvidersScreenProps> = ({
                 {providerToDelete.phone && (
                   <div className="flex items-center gap-2 text-xs text-neutral-400">
                     <span>Tel:</span>
-                    <span className="text-sky-300 font-mono">{providerToDelete.phone}</span>
+                    <span className="text-amber-300 font-mono">{providerToDelete.phone}</span>
                   </div>
                 )}
                 {providerToDelete.iban && (

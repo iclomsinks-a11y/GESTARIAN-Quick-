@@ -86,8 +86,8 @@ export const NewProviderFullScreenForm: React.FC<NewProviderFullScreenFormProps>
       <div className="px-6 py-4 flex items-center justify-between border-b border-neutral-800 shrink-0 bg-neutral-950">
         <div className="flex flex-col items-start">
           <h1
-            className="text-lg sm:text-xl font-thin tracking-[0.25em] uppercase leading-none select-none text-[#FEFCE9]"
-            style={{ fontFamily: "'Montserrat', 'Cinzel', sans-serif" }}
+            className="text-lg sm:text-xl font-thin tracking-[0.25em] uppercase leading-none select-none"
+            style={{ fontFamily: "'Montserrat', 'Cinzel', sans-serif", color: '#808080' }}
           >
             GESTARIAN
           </h1>
@@ -198,18 +198,33 @@ export const NewProviderFullScreenForm: React.FC<NewProviderFullScreenFormProps>
             </span>
           </div>
 
-          {/* Domicilio fiscal */}
+          {/* Banco */}
           <div className="relative flex items-center justify-between w-full rounded-2xl border border-neutral-800 bg-neutral-900 focus-within:border-sky-400 focus-within:bg-sky-950/20 p-4 transition-all">
             <input
               type="text"
               value={formData.bankName}
               onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
               onFocus={(e) => centerInTop60Viewer(e.currentTarget)}
-              placeholder="Domicilio fiscal o Banco"
-              className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-[18px] sm:text-xl font-extrabold text-white placeholder-neutral-600 pr-3"
+              placeholder="Nombre de la entidad bancaria"
+              className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-xl sm:text-2xl font-extrabold text-white placeholder-neutral-600 pr-3"
             />
             <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-400 shrink-0 pl-3 border-l border-neutral-800 select-none pointer-events-none">
-              Domicilio Fiscal
+              Banco
+            </span>
+          </div>
+
+          {/* Número de Cuenta / IBAN */}
+          <div className="relative flex items-center justify-between w-full rounded-2xl border border-neutral-800 bg-neutral-900 focus-within:border-sky-400 focus-within:bg-sky-950/20 p-4 transition-all">
+            <input
+              type="text"
+              value={formData.iban}
+              onChange={(e) => setFormData({ ...formData, iban: e.target.value.toUpperCase() })}
+              onFocus={(e) => centerInTop60Viewer(e.currentTarget)}
+              placeholder="ES00 0000 0000 0000 0000 0000"
+              className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-xl sm:text-2xl font-mono font-extrabold text-amber-300 uppercase placeholder-neutral-600 pr-3"
+            />
+            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-400 shrink-0 pl-3 border-l border-neutral-800 select-none pointer-events-none">
+              Número de Cuenta
             </span>
           </div>
 

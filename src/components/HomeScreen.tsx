@@ -35,9 +35,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       id="home-screen-minimalist"
       className="h-full w-full max-h-full max-w-full flex items-center justify-center relative overflow-hidden select-none touch-pan-x p-4"
     >
-      <div className="relative z-10 w-full max-w-lg flex flex-col items-center justify-center text-center my-auto overflow-hidden">
-        {/* Gestarian Quick Animation: Zoom in from further away with fade in (2 seconds duration) - centered */}
-        <div className="w-full max-w-md mx-auto flex flex-col items-center justify-center">
+      <div className="relative z-10 w-full flex flex-col items-center justify-center text-center my-auto overflow-hidden">
+        {/* Gestarian Quick Animation: Zoom in from further away with fade in (2 seconds duration) - centered, occupying 80% available screen width */}
+        <div className="w-[80vw] max-w-[80vw] mx-auto flex flex-col items-center justify-center">
           <motion.div
             initial={{ scale: 0.2, opacity: 0, filter: 'blur(10px)' }}
             animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
@@ -45,9 +45,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             className="w-full text-center relative flex flex-col items-center justify-center"
             style={{ willChange: 'transform, opacity, filter' }}
           >
-            <div className="flex flex-col items-end mx-auto w-fit">
+            <div className="flex flex-col items-end mx-auto w-full text-center">
               <h1
-                className="home-title-gestarian text-[clamp(1.8rem,9.6vw,5.4rem)] font-[100] tracking-[0.1em] sm:tracking-[0.25em] uppercase leading-none select-none text-[#FEFCE9] text-center"
+                className="home-title-gestarian w-full text-[clamp(2.2rem,11.8vw,11rem)] font-[100] tracking-[0.08em] sm:tracking-[0.15em] uppercase leading-none select-none text-[#FEFCE9] text-center"
                 style={{
                   fontFamily: "'Montserrat', sans-serif",
                   fontWeight: 100,
@@ -58,12 +58,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 GESTARIAN
               </h1>
               <span
-                className="home-subtitle-quick text-[14px] sm:text-lg md:text-xl font-[100] tracking-[0.15em] sm:tracking-[0.25em] text-[#808080] text-right self-end mt-1.5"
+                className="home-subtitle-quick text-[clamp(1rem,3.2vw,3rem)] font-[100] tracking-[0.15em] sm:tracking-[0.25em] text-[#808080] text-right self-end mt-1 sm:mt-2"
                 style={{
                   fontFamily: "'Montserrat', 'Plus Jakarta Sans', sans-serif",
                   fontWeight: 100,
                   color: '#808080',
-                  fontSize: '1.2em',
                   WebkitTextStroke: '2px #808080',
                   paintOrder: 'stroke fill',
                 }}

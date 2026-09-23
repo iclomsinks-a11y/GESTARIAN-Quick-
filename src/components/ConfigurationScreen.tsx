@@ -838,8 +838,8 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
               onClick={() => onSelectTheme && onSelectTheme('dark')}
               className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between gap-4 ${
                 currentTheme === 'dark'
-                  ? 'bg-neutral-950 border-amber-400 shadow-lg shadow-amber-400/10 ring-2 ring-amber-400/30'
-                  : 'bg-neutral-950/60 border-neutral-800 hover:border-neutral-700 hover:bg-neutral-950'
+                  ? 'bg-white/5 border-amber-400 shadow-lg shadow-amber-400/10 ring-2 ring-amber-400/30'
+                  : 'bg-white/5 border-neutral-800 hover:border-neutral-700 hover:bg-white/10'
               }`}
             >
               <div className="flex items-center justify-between">
@@ -876,7 +876,7 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
               className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between gap-4 ${
                 currentTheme === 'light'
                   ? 'bg-white border-sky-500 text-neutral-900 shadow-lg shadow-sky-500/10 ring-2 ring-sky-400/30'
-                  : 'bg-neutral-950/60 border-neutral-800 hover:border-neutral-700 hover:bg-neutral-950'
+                  : 'bg-white/5 border-neutral-800 hover:border-neutral-700 hover:bg-white/10'
               }`}
             >
               <div className="flex items-center justify-between">
@@ -915,7 +915,7 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
               className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between gap-4 ${
                 currentTheme === 'pastel'
                   ? 'bg-[#fcfaf6] border-[#dfbe8c] text-neutral-900 shadow-lg shadow-amber-900/5 ring-2 ring-[#e6c99c]'
-                  : 'bg-neutral-950/60 border-neutral-800 hover:border-neutral-700 hover:bg-neutral-950'
+                  : 'bg-white/5 border-neutral-800 hover:border-neutral-700 hover:bg-white/10'
               }`}
             >
               <div className="flex items-center justify-between">
@@ -955,7 +955,7 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
               className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between gap-4 ${
                 currentTheme === 'blue'
                   ? 'bg-[#f4f9fd] border-[#7dd3fc] text-[#0f2444] shadow-lg shadow-sky-900/5 ring-2 ring-[#38bdf8]/40'
-                  : 'bg-neutral-950/60 border-neutral-800 hover:border-neutral-700 hover:bg-neutral-950'
+                  : 'bg-white/5 border-neutral-800 hover:border-neutral-700 hover:bg-white/10'
               }`}
             >
               <div className="flex items-center justify-between">

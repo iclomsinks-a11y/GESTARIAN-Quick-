@@ -166,9 +166,9 @@ export const GestarianSplash: React.FC<GestarianSplashProps> = ({
       </header>
 
       {/* Center Stage: GESTARIAN typography & Auth Controls */}
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 py-8 w-full max-w-4xl mx-auto my-auto text-center">
-        {/* Animated Brand Title */}
-        <div className="w-full flex flex-col items-center justify-center my-auto">
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 py-8 w-full max-w-7xl mx-auto my-auto text-center">
+        {/* Animated Brand Title - Occupying 80% available width */}
+        <div className="w-[80vw] max-w-[80vw] flex flex-col items-center justify-center my-auto mx-auto">
           <motion.div
             initial={{
               scale: 0.2,
@@ -186,9 +186,9 @@ export const GestarianSplash: React.FC<GestarianSplashProps> = ({
             }}
             className="w-full flex flex-col items-center justify-center relative text-center"
           >
-            <div className="flex flex-col items-end mx-auto text-center w-fit">
+            <div className="flex flex-col items-end mx-auto text-center w-full">
               <h1
-                className="text-[clamp(1.5rem,8vw,7.5rem)] font-[100] tracking-[0.1em] sm:tracking-[0.25em] uppercase leading-none select-none text-[#FEFCE9] text-center"
+                className="w-full text-[clamp(2.2rem,11.8vw,11rem)] font-[100] tracking-[0.08em] sm:tracking-[0.15em] uppercase leading-none select-none text-[#FEFCE9] text-center"
                 style={{
                   fontFamily: "'Montserrat', sans-serif",
                   fontWeight: 100,
@@ -197,13 +197,11 @@ export const GestarianSplash: React.FC<GestarianSplashProps> = ({
                 GESTARIAN
               </h1>
               <span
-                className="text-[12px] sm:text-base md:text-lg font-[100] tracking-[0.15em] sm:tracking-[0.25em] text-[#808080]"
+                className="text-[clamp(1rem,3.2vw,3rem)] font-[100] tracking-[0.15em] sm:tracking-[0.25em] text-[#808080] text-right self-end mt-1 sm:mt-2"
                 style={{
                   fontFamily: "'Montserrat', 'Plus Jakarta Sans', system-ui, sans-serif",
                   fontWeight: 100,
                   color: '#808080',
-                  marginTop: '4px',
-                  fontSize: '1.2em',
                 }}
               >
                 Quick
