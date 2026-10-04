@@ -1,6 +1,5 @@
 {
   "hosting": {
-    "site": "quick-gestarian",
     "public": "dist",
     "ignore": [
       "firebase.json",
