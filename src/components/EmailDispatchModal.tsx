@@ -23,6 +23,7 @@ import {
   EmailNotificationRecord,
 } from '../services/notificationService';
 import { formatCurrency } from '../utils/formatters';
+import { generateInvoicePdfBlob } from '../utils/pdfGenerator';
 
 interface EmailDispatchModalProps {
   invoice: Invoice;
@@ -107,7 +108,18 @@ export const EmailDispatchModal: React.FC<EmailDispatchModalProps> = ({
         console.warn('Could not publish invoice to local backend, using fallback URL', e);
       }
 
-      // 2. Send email
+      // 2. Generate PDF Base64
+      let pdfBase64;
+      let pdfFilename;
+      try {
+        const pdfData = await generateInvoicePdfBlob(invoice);
+        pdfBase64 = pdfData.base64;
+        pdfFilename = pdfData.filename;
+      } catch (e) {
+        console.warn('Could not generate PDF attachment', e);
+      }
+
+      // 3. Send email
       const record = await sendGestarianEmailNotification({
         invoiceId: invoice.id,
         invoiceNumber: invoice.number,
@@ -120,6 +132,8 @@ export const EmailDispatchModal: React.FC<EmailDispatchModalProps> = ({
         veriFactuHash: invoice.veriFactu.chainHash,
         pdfHostedUrl,
         customNotes: customNotes.trim() || undefined,
+        pdfBase64,
+        pdfFilename,
       });
 
       setSentRecord(record);

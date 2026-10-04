@@ -328,6 +328,8 @@ export interface EmailNotificationPayload {
   veriFactuHash: string;
   pdfHostedUrl?: string;
   customNotes?: string;
+  pdfBase64?: string;
+  pdfFilename?: string;
 }
 
 export interface EmailNotificationRecord {
@@ -419,20 +421,27 @@ export async function sendGestarianEmailNotification(
   let apiStatus: 'sent' | 'delivered' | 'failed' = 'delivered';
 
   try {
-    const res = await fetch('/api/send-email', {
+    // URL directa del Worker para evitar problemas con las variables de entorno (.env)
+    const workerUrl = 'https://resend-cloudflareemails.juancampanillas.workers.dev';
+    const res = await fetch(workerUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         recipientEmail: payload.clientEmail,
         subject,
-        body,
+        htmlBody: body.replace(/\n/g, '<br>'), // Para compatibilidad con el Worker
+        body, // Mantenemos body por si el servidor Express/Vercel lo sigue usando
         pdfHostedUrl: payload.pdfHostedUrl || `https://notificaciones.gestarian.com/f/${encodeURIComponent(payload.invoiceNumber)}`,
-        invoiceNumber: payload.invoiceNumber
+        invoiceNumber: payload.invoiceNumber,
+        attachments: payload.pdfBase64 ? [{
+          filename: payload.pdfFilename || 'Factura.pdf',
+          content: payload.pdfBase64
+        }] : undefined
       })
     });
     const data = await res.json();
-    if (!res.ok || !data.success) {
-      throw new Error(data.error || 'Error en el servidor al enviar email');
+    if (!res.ok || (!data.success && !data.id)) { // Resend devuelve "id" cuando hay éxito
+      throw new Error(data.error || data.message || 'Error en el servidor al enviar email');
     }
   } catch (err: any) {
     console.warn('Error llamando a /api/send-email, guardando registro simulado:', err);
