@@ -1,4 +1,5 @@
-import { ClientData, ProviderData, Invoice, BillableProduct } from '../types';
+import { ClientData, ProviderData, Invoice, BillableProduct, DeletedInvoice } from '../types';
+import { sortProductsByName } from '../services/catalogImporterService';
 
 export const STORAGE_CLIENTS_KEY = 'gestarian_clients_db';
 export const STORAGE_PROVIDERS_KEY = 'gestarian_providers_db';
@@ -101,6 +102,166 @@ export const DEFAULT_PROVIDERS: ProviderData[] = [
 
 // Default initial clients (Clientes habituales)
 export const DEFAULT_CLIENTS: ClientData[] = [
+  {
+    id: 'cli-fit-flamc',
+    name: 'FIT FLAMC',
+    nif: 'B91028374',
+    address: 'Av. de la Industria 88, 28013 Madrid',
+    phone: '+34 912 345 678',
+    email: 'compras@fitflamc.com',
+    defaultSendWhatsApp: true,
+    defaultSendEmail: true,
+    preferredDispatchChannel: 'both',
+    enableProductsCatalog: true,
+    habitualProducts: [
+      { id: 'fit-001', code: 'FFC02', name: 'FFC02 - CAMISETA LOLA FLECOS' },
+      { id: 'fit-002', code: 'FFC02B', name: 'FFC02B - CAMISETA LOLA FLECOS TIRANTES' },
+      { id: 'fit-003', code: 'FFC03', name: 'FFC03 - CAMISETA ROCIO' },
+      { id: 'fit-004', code: 'FFC04', name: 'FFC04 - CAMISETA NAYMA' },
+      { id: 'fit-005', code: 'FFC05', name: 'FFC05 - CAMISETA EVA' },
+      { id: 'fit-006', code: 'FFC06', name: 'FFC06 - CAMISETA MANUELA' },
+      { id: 'fit-007', code: 'FFC07', name: 'FFC07 - CAMISETA PILAR' },
+      { id: 'fit-008', code: 'FFC08', name: 'FFC08 - CAMISETA BEATRIZ' },
+      { id: 'fit-009', code: 'FFC09', name: 'FFC09 - CAMISETA INDIA' },
+      { id: 'fit-010', code: 'FFC11', name: 'FFC11 - CAMISETA RAQUEL' },
+      { id: 'fit-011', code: 'FFC11B', name: 'FFC11B - CAMISETA RAQUELITA' },
+      { id: 'fit-012', code: 'FFC12', name: 'FFC12 - CAMISETA JULIA' },
+      { id: 'fit-013', code: 'FFC13', name: 'FFC13 - CAMISETA MARIPAZ' },
+      { id: 'fit-014', code: 'FFC13B', name: 'FFC13B - CAMISETA MARY' },
+      { id: 'fit-015', code: 'FFC15', name: 'FFC15 - CAMISETA RAFAELA' },
+      { id: 'fit-016', code: 'FFC17', name: 'FFC17 - CAMISETA PATRICIA' },
+      { id: 'fit-017', code: 'FFC18', name: 'FFC18 - CAMISETA LUCIA' },
+      { id: 'fit-018', code: 'FFC19', name: 'FFC19 - CAMISETA MARTA' },
+      { id: 'fit-019', code: 'FFC20', name: 'FFC20 - CAMISETA MARTINA' },
+      { id: 'fit-020', code: 'FFC24', name: 'FFC24 - CAMISETA ROSARIO' },
+      { id: 'fit-021', code: 'FFC26', name: 'FFC26 - CAMISETA ROSALIA' },
+      { id: 'fit-022', code: 'FFC27', name: 'FFC27 - CAMISETA ALICIA' },
+      { id: 'fit-023', code: 'FFC28', name: 'FFC28 - CAMISETA ANITA' },
+      { id: 'fit-024', code: 'FFC29', name: 'FFC29 - CAMISETA LARA' },
+      { id: 'fit-025', code: 'FFC30', name: 'FFC30 - CAMISETA ANGELA' },
+      { id: 'fit-026', code: 'FFC31', name: 'FFC31 - CAMISETA DANIELA' },
+      { id: 'fit-027', code: 'FFC32', name: 'FFC32 - CAMISETA NOE' },
+      { id: 'fit-028', code: 'FFC33', name: 'FFC33 - CAMISETA PAULA' },
+      { id: 'fit-029', code: 'FFC34', name: 'FFC34 - CAMISETA CHELI' },
+      { id: 'fit-030', code: 'FFC35', name: 'FFC35 - CAMISETA NAYIBE' },
+      { id: 'fit-031', code: 'FFC36', name: 'FFC36 - CAMISETA ALEGRE' },
+      { id: 'fit-032', code: 'FFC37', name: 'FFC37 - CAMISETA SORPRESA' },
+      { id: 'fit-033', code: 'FFC38', name: 'FFC38 - CAMISETA PASION' },
+      { id: 'fit-034', code: 'FFC39', name: 'FFC39 - CAMISETA FELICIDAD' },
+      { id: 'fit-035', code: 'FFC40', name: 'FFC40 - CAMISETA SONRISA' },
+      { id: 'fit-036', code: 'FFC41', name: 'FFC41 - CAMISETA FELIZ' },
+      { id: 'fit-037', code: 'FFC42', name: 'FFC42 - CAMISETA GRACIAS' },
+      { id: 'fit-038', code: 'FFC43', name: 'FFC43 - CAMISETA LINDA' },
+      { id: 'fit-039', code: 'FFC44', name: 'FFC44 - CAMISETA PRECIOSA' },
+      { id: 'fit-040', code: 'FFC45', name: 'FFC45 - CAMISETA BELLA' },
+      { id: 'fit-041', code: 'FFC47', name: 'FFC47 - CAMISETA LIBERTAD' },
+      { id: 'fit-042', code: 'FFC48', name: 'FFC48 - CAMISETA LIBRE' },
+      { id: 'fit-043', code: 'FFC49', name: 'FFC49 - CAMISETA LEAL' },
+      { id: 'fit-044', code: 'FFC50', name: 'FFC50 - CAMISETA POSITIVA' },
+      { id: 'fit-045', code: 'FFC52', name: 'FFC52 - CAMISETA CAPAZ' },
+      { id: 'fit-046', code: 'FFC53', name: 'FFC53 - LOLA FLORES' },
+      { id: 'fit-047', code: 'FFC54', name: 'FFC54 - CAMISETA LOLA FLORES' },
+      { id: 'fit-048', code: 'FFC56', name: 'FFC56 - ALEGRIA VIVIR FLECOS' },
+      { id: 'fit-049', code: 'FFC59', name: 'FFC59 - ALEGRIA VIVIR BOLSILLO' },
+      { id: 'fit-050', code: 'FFC62', name: 'FFC62 - CAMISETA INDIA' },
+      { id: 'fit-051', code: 'FFC65', name: 'FFC65 - INDIA COLOR' },
+      { id: 'fit-052', code: 'FFC68', name: 'FFC68 - CAMISETA FANDANGO' },
+      { id: 'fit-053', code: 'FFC71', name: 'FFC71 - ALEGRIA VIVIR VOLANTE' },
+      { id: 'fit-054', code: 'FFC80', name: 'FFC80 - CAMISETA LIPS' },
+      { id: 'fit-055', code: 'FFC84', name: 'FFC84 - CAMISETA MOÑO' },
+      { id: 'fit-056', code: 'FFC87', name: 'FFC87 - CAMISETA CUERDA' },
+      { id: 'fit-057', code: 'FFC88', name: 'FFC88 - CAMISETA DUENDE' },
+      { id: 'fit-058', code: 'FFC91', name: 'FFC91 - CAMISETA TORERA' },
+      { id: 'fit-059', code: 'FFC94', name: 'FFC94 - CAMISETA TORERILLA' },
+      { id: 'fit-060', code: 'FFC97', name: 'FFC97 - CAMISETA FARAONA' },
+      { id: 'fit-061', code: 'FFC100', name: 'FFC100 - CAMISETA BOCA' },
+      { id: 'fit-062', code: 'FFC101', name: 'FFC101 - CAMISETA CHARITO' },
+      { id: 'fit-063', code: 'FFC102', name: 'FFC102 - CAMISETA ESTRELLA' },
+      { id: 'fit-064', code: 'FFC103', name: 'FFC103 - CAMISETA ALEGRIAS' },
+      { id: 'fit-065', code: 'FFC104', name: 'FFC104 - CAMISETA ESTRELLA FLECOS' },
+      { id: 'fit-066', code: 'FFC106', name: 'FFC106 - CAMISETA ESTRELLITA' },
+      { id: 'fit-067', code: 'FFC107', name: 'FFC107 - CAMISETA GITANA' },
+      { id: 'fit-068', code: 'FFC108', name: 'FFC108 - CAMISETA GITANILLA' },
+      { id: 'fit-069', code: 'FFC109', name: 'FFC109 - BULERIA OPCION LARGA' },
+      { id: 'fit-070', code: 'FFC110', name: 'FFC110 - TANGUILLOS OPCION CORTA' },
+      { id: 'fit-071', code: 'FFC111', name: 'FFC111 - CAMISETA SEXY' },
+      { id: 'fit-072', code: 'FFC112', name: 'FFC112 - CAMISETA SEXYS' },
+      { id: 'fit-073', code: 'FFC113', name: 'FFC113 - CAMISETA FLAMENCO' },
+      { id: 'fit-074', code: 'FFC114', name: 'FFC114 - RUMBA' },
+      { id: 'fit-075', code: 'FFC115', name: 'FFC115 - CAMISETA TANGOS' },
+      { id: 'fit-076', code: 'FFC116', name: 'FFC116 - CAMISETA SOLEA' },
+      { id: 'fit-077', code: 'FFC117', name: 'FFC117 - CAMISETA RUMBITA' },
+      { id: 'fit-078', code: 'FFC118', name: 'FFC118 - CAMISETAS SEVILLANAS' },
+      { id: 'fit-079', code: 'FFC119', name: 'FFC119 - INDIA CORTA' },
+      { id: 'fit-080', code: 'FFC121', name: 'FFC121 - TOMA QUE TOMA' },
+      { id: 'fit-081', code: 'FFC122', name: 'FFC122 - CAMISETA MESTIZA' },
+      { id: 'fit-082', code: 'FFC123', name: 'FFC123 - OLE TU VOLANTE' },
+      { id: 'fit-083', code: 'FFC124', name: 'FFC124 - FLOR BONITA' },
+      { id: 'fit-084', code: 'FFC125', name: 'FFC125 - CAMISETA VOLANFLOR' },
+      { id: 'fit-085', code: 'FFC128', name: 'FFC128 - CORDOBESA' },
+      { id: 'fit-086', code: 'FFC129', name: 'FFC129 - CAMISETA HINDU' },
+      { id: 'fit-087', code: 'FFC131', name: 'FFC131 - CAMISETA CLAVEL' },
+      { id: 'fit-088', code: 'FFC132', name: 'FFC132 - CLAVELILLA' },
+      { id: 'fit-089', code: 'FFC133', name: 'FFC133 - CAMISETA AMAPOLA' },
+      { id: 'fit-090', code: 'FFC134', name: 'FFC134 - CLAVEL BOLSILLO' },
+      { id: 'fit-091', code: 'FFC135', name: 'FFC135 - CAMISETA MADROÑOS' },
+      { id: 'fit-092', code: 'FFC136', name: 'FFC136 - MANTONCILLO' },
+      { id: 'fit-093', code: 'FFC137', name: 'FFC137 - CAMISETA DALIA CORTA' },
+      { id: 'fit-094', code: 'FFC139', name: 'FFC139 - CAMISETA FLOR' },
+      { id: 'fit-095', code: 'FFC140', name: 'FFC140 - FLORECILLA' },
+      { id: 'fit-096', code: 'FFC141', name: 'FFC141 - ROSAE' },
+      { id: 'fit-097', code: 'FFC142', name: 'FFC142 - CAMISETA LIRIO' },
+      { id: 'fit-098', code: 'FFC144', name: 'FFC144 - FLOR BONITA' },
+      { id: 'fit-099', code: 'FFC145', name: 'FFC145 - CAMISETA FLORES' },
+      { id: 'fit-100', code: 'FFC147', name: 'FFC147 - CAMISETA OLE' },
+      { id: 'fit-101', code: 'FFC148', name: 'FFC148 - CAMISETA LUNAR' },
+      { id: 'fit-102', code: 'FFC149', name: 'FFC149 - CAMISETA MESTIZA' },
+      { id: 'fit-103', code: 'FFC152', name: 'FFC152 - CAMISETA CLAVELLINA' },
+      { id: 'fit-104', code: 'FFC153', name: 'FFC153 - CAMISETA FLOR GITANA' },
+      { id: 'fit-105', code: 'FFC154', name: 'FFC154 - VOLANTES' },
+      { id: 'fit-106', code: 'FFC156', name: 'FFC156 - CAMISETA LUNARITOS' },
+      { id: 'fit-107', code: 'FFC160', name: 'FFC160 - PETUNIA' },
+      { id: 'fit-108', code: 'FFC161', name: 'FFC161 - CAMISETA LIRIOS' },
+      { id: 'fit-109', code: 'FFC163', name: 'FFC163 - CAMISETA AZUCENA' },
+      { id: 'fit-110', code: 'FFC164', name: 'FFC164 - TOP CROP HINDU' },
+      { id: 'fit-111', code: 'FFC165', name: 'FFC165 - CAMISETA BANDOLERA' },
+      { id: 'fit-112', code: 'FFC166', name: 'FFC166 - CAMISETA PONCHOLE' },
+      { id: 'fit-113', code: 'FFC167', name: 'FFC167 - PONCHOLE MANILA BORD.' },
+      { id: 'fit-114', code: 'FFC168', name: 'FFC168 - CAMISETA CASANDRA' },
+      { id: 'fit-115', code: 'FFC169', name: 'FFC169 - CAMISETA LUNARITOS' },
+      { id: 'fit-116', code: 'FFC170', name: 'FFC170 - CHALECO MESTIZA' },
+      { id: 'fit-117', code: 'FFC171', name: 'FFC171 - CAMISETA OLE TU FLECOS' },
+      { id: 'fit-118', code: 'FFC172', name: 'FFC172 - FLORES MANGA LARGA' },
+      { id: 'fit-119', code: 'FFC173', name: 'FFC173 - TOP MESTIZO' },
+      { id: 'fit-120', code: 'FFC175', name: 'FFC175 - CAMISETA BARCELONA' },
+      { id: 'fit-121', code: 'FFC176', name: 'FFC176 - CAMISETA VALENCIA' },
+      { id: 'fit-122', code: 'FFC177', name: 'FFC177 - CAMISETA SEVILLA' },
+      { id: 'fit-123', code: 'FFC180', name: 'FFC180 - CAMISETA CORDOBA' },
+      { id: 'fit-124', code: 'FFC181', name: 'FFC181 - CAMISETA JAEN' },
+      { id: 'fit-125', code: 'FFC182', name: 'FFC182 - CAMISETA CAROLINA' },
+      { id: 'fit-126', code: 'FFC183', name: 'FFC183 - CAMISETA MARBELLA' },
+      { id: 'fit-127', code: 'FFC184', name: 'FFC184 - CAMISETA MALAGA' },
+      { id: 'fit-128', code: 'FFC185', name: 'FFC185 - CHALECO LUNARITOS' },
+      { id: 'fit-129', code: 'FFC186', name: 'FFC186 - CAMISETA GRANADA' },
+      { id: 'fit-130', code: 'FFC187', name: 'FFC187 - CAMISETA TOLEDO' },
+      { id: 'fit-131', code: 'FFC188', name: 'FFC188 - CAMISETA MALLORCA ESP.' },
+      { id: 'fit-132', code: 'FFC189', name: 'FFC189 - CAMISETA FLOR LUNARITOS' },
+      { id: 'fit-133', code: 'FFL02', name: 'FFL02 - LEGGINGS LORENA' },
+      { id: 'fit-134', code: 'FFL03', name: 'FFL03 - LEGGINGS ELISABETH' },
+      { id: 'fit-135', code: 'FFL04', name: 'FFL04 - NANY' },
+      { id: 'fit-136', code: 'FFL05', name: 'FFL05 - ISABEL' },
+      { id: 'fit-137', code: 'FFL06', name: 'FFL06 - LEGGINGS JUANA' },
+      { id: 'fit-138', code: 'FFL07', name: 'FFL07 - ALBA' },
+      { id: 'fit-139', code: 'FFS05', name: 'FFS05 - ROSARILLO' },
+      { id: 'fit-140', code: 'FFS06', name: 'FFS06 - ROSARIO' },
+      { id: 'fit-141', code: 'FFS07', name: 'FFS07 - ROSA' },
+      { id: 'fit-142', code: 'FFS16', name: 'FFS16 - SUDADERA INDIA' },
+      { id: 'fit-143', code: 'FFCONJF', name: 'FFCONJF - CONJUNTO FLOR' },
+      { id: 'fit-144', code: 'FFFL01', name: 'FFFL01 - FALDA DE LICRA' },
+    ],
+    lineasComplejas: [],
+    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 50,
+  },
   {
     id: 'cli-arkedecor',
     name: 'ARKEDECOR Interiorismo & Proyectos S.L.',
@@ -212,14 +373,55 @@ export function getStoredClients(): ClientData[] {
         return client;
       });
 
-      if (updated) {
-        localStorage.setItem(STORAGE_CLIENTS_KEY, JSON.stringify(cleaned));
+      // Ensure FIT FLAMC is present and updated with complete product catalog sorted by product name
+      const defaultFit = DEFAULT_CLIENTS.find((c) => c.id === 'cli-fit-flamc') || DEFAULT_CLIENTS[0];
+      const fitIdx = cleaned.findIndex(
+        (c: ClientData) => c.name.toLowerCase().includes('fit flamc') || c.id === 'cli-fit-flamc'
+      );
+      if (fitIdx >= 0) {
+        const currentFit = cleaned[fitIdx];
+        const sortedFitProds = sortProductsByName(
+          currentFit.habitualProducts && currentFit.habitualProducts.length >= (defaultFit.habitualProducts || []).length
+            ? currentFit.habitualProducts
+            : defaultFit.habitualProducts || []
+        );
+        cleaned[fitIdx] = {
+          ...currentFit,
+          habitualProducts: sortedFitProds,
+          enableProductsCatalog: true,
+        };
+        updated = true;
+      } else if (defaultFit) {
+        cleaned.push({
+          ...defaultFit,
+          habitualProducts: sortProductsByName(defaultFit.habitualProducts || []),
+        });
+        updated = true;
       }
 
-      return sortClientsAlphabetically(cleaned);
+      // Sort all clients' habitualProducts by product name
+      const finalClients = cleaned.map((c) => {
+        if (c.habitualProducts && c.habitualProducts.length > 0) {
+          return {
+            ...c,
+            habitualProducts: sortProductsByName(c.habitualProducts),
+          };
+        }
+        return c;
+      });
+
+      if (updated) {
+        localStorage.setItem(STORAGE_CLIENTS_KEY, JSON.stringify(finalClients));
+      }
+
+      return sortClientsAlphabetically(finalClients);
     }
-    localStorage.setItem(STORAGE_CLIENTS_KEY, JSON.stringify(DEFAULT_CLIENTS));
-    return sortClientsAlphabetically(DEFAULT_CLIENTS);
+    const seeded = DEFAULT_CLIENTS.map((c) => ({
+      ...c,
+      habitualProducts: c.habitualProducts ? sortProductsByName(c.habitualProducts) : [],
+    }));
+    localStorage.setItem(STORAGE_CLIENTS_KEY, JSON.stringify(seeded));
+    return sortClientsAlphabetically(seeded);
   } catch (e) {
     console.error('Error loading clients db:', e);
     return sortClientsAlphabetically(DEFAULT_CLIENTS);
@@ -384,8 +586,78 @@ export function saveInvoiceToDb(invoice: Invoice): Invoice[] {
   return updated;
 }
 
+export const STORAGE_TRASH_KEY = 'gestarian_trash_db';
+
+export function getStoredTrash(): DeletedInvoice[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_TRASH_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    
+    // Auto-empty items older than 1 year (365 days)
+    const oneYearAgo = Date.now() - (365 * 24 * 60 * 60 * 1000);
+    const valid = parsed.filter((item: any) => {
+      const deletedAt = item.deletedAt || Date.now();
+      return deletedAt >= oneYearAgo;
+    });
+    if (valid.length !== parsed.length) {
+      localStorage.setItem(STORAGE_TRASH_KEY, JSON.stringify(valid));
+    }
+    return valid;
+  } catch (e) {
+    console.error('Error loading trash db:', e);
+    return [];
+  }
+}
+
+export function addInvoiceToTrash(invoice: Invoice): DeletedInvoice[] {
+  const allTrash = getStoredTrash();
+  
+  // Prevent duplicates in trash
+  const exists = allTrash.some((item) => item.id === invoice.id);
+  if (exists) return allTrash;
+
+  const newItem: DeletedInvoice = {
+    id: invoice.id || `deleted-${Date.now()}`,
+    deletedAt: Date.now(),
+    invoice,
+  };
+
+  const updated = [newItem, ...allTrash];
+  localStorage.setItem(STORAGE_TRASH_KEY, JSON.stringify(updated));
+  return updated;
+}
+
+export function restoreInvoiceFromTrash(id: string): { trash: DeletedInvoice[], invoices: Invoice[] } {
+  const allTrash = getStoredTrash();
+  const found = allTrash.find((item) => item.id === id);
+  const remainingTrash = allTrash.filter((item) => item.id !== id);
+  localStorage.setItem(STORAGE_TRASH_KEY, JSON.stringify(remainingTrash));
+
+  let activeInvoices = getStoredInvoices();
+  if (found) {
+    if (!activeInvoices.some((inv) => inv.id === found.invoice.id)) {
+      activeInvoices = [found.invoice, ...activeInvoices];
+      localStorage.setItem(STORAGE_INVOICES_KEY, JSON.stringify(activeInvoices));
+    }
+  }
+  return { trash: remainingTrash, invoices: activeInvoices };
+}
+
+export function deleteInvoicePermanentlyFromTrash(id: string): DeletedInvoice[] {
+  const allTrash = getStoredTrash();
+  const filtered = allTrash.filter((item) => item.id !== id);
+  localStorage.setItem(STORAGE_TRASH_KEY, JSON.stringify(filtered));
+  return filtered;
+}
+
 export function deleteInvoiceFromDb(id: string): Invoice[] {
   const all = getStoredInvoices();
+  const invoiceToDelete = all.find((inv) => inv.id === id || inv.number === id);
+  if (invoiceToDelete) {
+    addInvoiceToTrash(invoiceToDelete);
+  }
   const filtered = all.filter((inv) => inv.id !== id && inv.number !== id);
   localStorage.setItem(STORAGE_INVOICES_KEY, JSON.stringify(filtered));
   return filtered;

@@ -7,10 +7,15 @@ import {
   Save,
   Check,
   Package,
+  Upload,
+  Globe,
+  FileText,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ClientData, BillableProduct } from '../types';
 import { saveClientToDb } from '../utils/database';
+import { sortProductsByName } from '../services/catalogImporterService';
+import { ImportarCatalogoModal } from './ImportarCatalogoModal';
 
 interface ProductosClienteModalProps {
   isOpen: boolean;
@@ -36,14 +41,16 @@ export const ProductosClienteModal: React.FC<ProductosClienteModalProps> = ({
 
   // Form fields — NO price
   const [formName, setFormName] = useState('');
+  const [formCode, setFormCode] = useState('');
   const [formDesc, setFormDesc] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [savedFeedback, setSavedFeedback] = useState(false);
   const [showCatalog, setShowCatalog] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
   useEffect(() => {
     if (client && isOpen) {
-      setProductos(client.habitualProducts || []);
+      setProductos(sortProductsByName(client.habitualProducts || []));
       resetForm();
     }
   }, [client, isOpen]);
@@ -51,6 +58,7 @@ export const ProductosClienteModal: React.FC<ProductosClienteModalProps> = ({
   const resetForm = () => {
     setEditingId(null);
     setFormName('');
+    setFormCode('');
     setFormDesc('');
     setShowForm(false);
     setShowCatalog(false);
@@ -59,6 +67,7 @@ export const ProductosClienteModal: React.FC<ProductosClienteModalProps> = ({
   const handleOpenNew = () => {
     setEditingId(null);
     setFormName('');
+    setFormCode('');
     setFormDesc('');
     setShowForm(true);
     setShowCatalog(false);
@@ -67,6 +76,7 @@ export const ProductosClienteModal: React.FC<ProductosClienteModalProps> = ({
   const handleEditProducto = (prod: BillableProduct) => {
     setEditingId(prod.id);
     setFormName(prod.name);
+    setFormCode(prod.code || '');
     setFormDesc(prod.description || '');
     setShowForm(true);
     setShowCatalog(false);
@@ -84,17 +94,28 @@ export const ProductosClienteModal: React.FC<ProductosClienteModalProps> = ({
   const handleSaveProducto = () => {
     if (!client || !formName.trim()) return;
 
+    const rawCode = formCode.trim();
+    let finalName = formName.trim();
+    if (rawCode) {
+      const lowerCode = rawCode.toLowerCase();
+      const lowerName = finalName.toLowerCase();
+      if (!lowerName.startsWith(lowerCode) && !lowerName.startsWith(`[${lowerCode}]`)) {
+        finalName = `${rawCode} - ${finalName}`;
+      }
+    }
+
     let nuevos: BillableProduct[];
     if (editingId) {
       nuevos = productos.map((p) =>
         p.id === editingId
-          ? { ...p, name: formName.trim(), description: formDesc.trim() || undefined }
+          ? { ...p, code: rawCode || undefined, name: finalName, description: formDesc.trim() || undefined }
           : p
       );
     } else {
       const nuevo: BillableProduct = {
         id: generateId(),
-        name: formName.trim(),
+        code: rawCode || undefined,
+        name: finalName,
         description: formDesc.trim() || undefined,
         createdAt: Date.now(),
       };
@@ -127,6 +148,24 @@ export const ProductosClienteModal: React.FC<ProductosClienteModalProps> = ({
     onSaveClient(updatedClient);
   };
 
+  const handleBatchImportCatalog = (newProds: BillableProduct[], replaceMode: boolean) => {
+    if (!client) return;
+    let finalProds: BillableProduct[];
+    if (replaceMode) {
+      finalProds = newProds;
+    } else {
+      // Filter duplicates by name
+      const existingNames = new Set(productos.map((p) => p.name.toLowerCase()));
+      const filtered = newProds.filter((np) => !existingNames.has(np.name.toLowerCase()));
+      finalProds = [...productos, ...filtered];
+    }
+
+    const updatedClient = { ...client, habitualProducts: finalProds };
+    setProductos(finalProds);
+    saveClientToDb(updatedClient);
+    onSaveClient(updatedClient);
+  };
+
   if (!isOpen || !client) return null;
 
   const availableCatalog = catalogProducts.filter(
@@ -140,7 +179,7 @@ export const ProductosClienteModal: React.FC<ProductosClienteModalProps> = ({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 40 }}
         transition={{ duration: 0.25, ease: 'easeOut' }}
-        className="w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[85vh] flex flex-col bg-neutral-950 border border-neutral-800 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden"
+        className="w-full sm:max-w-xl max-h-[92dvh] sm:max-h-[85vh] flex flex-col bg-neutral-950 border border-neutral-800 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-800 shrink-0">
@@ -148,10 +187,10 @@ export const ProductosClienteModal: React.FC<ProductosClienteModalProps> = ({
             <Package className="w-5 h-5 text-amber-400" strokeWidth={1.8} />
             <div>
               <h2 className="text-sm font-bold text-neutral-100 leading-tight">
-                Configurar Productos
+                Configurar Productos del Cliente
               </h2>
-              <p className="text-[11px] text-neutral-500 leading-tight mt-0.5">
-                {client.name}
+              <p className="text-[11px] text-neutral-400 leading-tight mt-0.5">
+                <strong className="text-amber-400">{client.name}</strong>
               </p>
             </div>
           </div>
@@ -166,13 +205,35 @@ export const ProductosClienteModal: React.FC<ProductosClienteModalProps> = ({
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
+          {/* Banner de Subida de Catálogo (.txt, .html, Web) */}
+          <div className="p-3.5 rounded-xl bg-amber-400/10 border border-amber-400/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                <Upload className="w-4 h-4 text-amber-400" />
+                <span>Cargar Catálogo Completo</span>
+              </p>
+              <p className="text-[11px] text-neutral-400 mt-0.5">
+                Sube un catálogo en <strong>.txt, .html</strong> o introduce una <strong>dirección web</strong> para extraer productos automáticamente.
+              </p>
+            </div>
+            <button
+              type="button"
+              id="btn-open-catalog-upload-modal"
+              onClick={() => setIsUploadModalOpen(true)}
+              className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs flex items-center justify-center gap-1.5 shrink-0 transition-all shadow-md active:scale-95 cursor-pointer"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Subir Catálogo (.txt/.html/Web)</span>
+            </button>
+          </div>
+
           {/* Lista de productos del cliente */}
           {productos.length > 0 && (
             <div className="space-y-2">
               <p className="text-[11px] font-bold uppercase tracking-wider text-neutral-500">
                 Productos de {client.name} ({productos.length})
               </p>
-              {productos.map((prod) => (
+              {sortProductsByName(productos).map((prod) => (
                 <div
                   key={prod.id}
                   className="bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 flex items-center justify-between gap-3"
@@ -214,23 +275,33 @@ export const ProductosClienteModal: React.FC<ProductosClienteModalProps> = ({
 
           {/* Botones de acción (cuando no hay formulario abierto) */}
           {!showForm && (
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <button
                 type="button"
                 onClick={handleOpenNew}
-                className="flex-1 py-2.5 rounded-xl border-2 border-dashed border-neutral-700 hover:border-amber-400/60 text-neutral-500 hover:text-amber-400 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl border-2 border-dashed border-neutral-700 hover:border-amber-400/60 text-neutral-400 hover:text-amber-400 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
-                Nuevo producto
+                Añadir uno a uno
               </button>
+
+              <button
+                type="button"
+                onClick={() => setIsUploadModalOpen(true)}
+                className="flex-1 py-2.5 rounded-xl bg-neutral-900 border border-amber-400/40 hover:border-amber-400 text-amber-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+              >
+                <Upload className="w-3.5 h-3.5 text-amber-400" />
+                Subir Catálogo (.txt, .html, Web)
+              </button>
+
               {availableCatalog.length > 0 && (
                 <button
                   type="button"
                   onClick={() => setShowCatalog(!showCatalog)}
-                  className="flex-1 py-2.5 rounded-xl border border-neutral-700 hover:border-neutral-500 text-neutral-500 hover:text-neutral-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                  className="flex-1 py-2.5 rounded-xl border border-neutral-700 hover:border-neutral-500 text-neutral-400 hover:text-neutral-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                 >
                   <Package className="w-3.5 h-3.5" />
-                  Importar del catálogo
+                  Importar global
                 </button>
               )}
             </div>
@@ -283,17 +354,31 @@ export const ProductosClienteModal: React.FC<ProductosClienteModalProps> = ({
                     {editingId ? 'Editar producto' : 'Nuevo producto'}
                   </p>
 
-                  <div>
-                    <label className="block text-[11px] font-bold text-neutral-500 uppercase tracking-wider mb-1">
-                      Nombre del producto *
-                    </label>
-                    <input
-                      type="text"
-                      value={formName}
-                      onChange={(e) => setFormName(e.target.value)}
-                      placeholder="Ej: Alfombra roja, Cojín de plumas…"
-                      className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none focus:border-amber-400/70 transition-colors"
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-bold text-neutral-500 uppercase tracking-wider mb-1">
+                        Código / Ref. (opcional)
+                      </label>
+                      <input
+                        type="text"
+                        value={formCode}
+                        onChange={(e) => setFormCode(e.target.value)}
+                        placeholder="Ej: REF-101, COD20…"
+                        className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none focus:border-amber-400/70 transition-colors uppercase font-mono"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-[11px] font-bold text-neutral-500 uppercase tracking-wider mb-1">
+                        Nombre del producto *
+                      </label>
+                      <input
+                        type="text"
+                        value={formName}
+                        onChange={(e) => setFormName(e.target.value)}
+                        placeholder="Ej: Alfombra roja, Cojín de plumas…"
+                        className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none focus:border-amber-400/70 transition-colors"
+                      />
+                    </div>
                   </div>
 
                   <div>
@@ -351,16 +436,37 @@ export const ProductosClienteModal: React.FC<ProductosClienteModalProps> = ({
 
           {/* Estado vacío */}
           {productos.length === 0 && !showForm && !showCatalog && (
-            <div className="text-center py-8 text-neutral-600">
-              <Package className="w-8 h-8 mx-auto mb-2 opacity-40" />
-              <p className="text-sm font-medium">Sin productos configurados</p>
-              <p className="text-xs mt-1">
-                Añade productos para poder seleccionarlos rápidamente en la factura.
-              </p>
+            <div className="text-center py-8 text-neutral-600 space-y-3">
+              <Package className="w-8 h-8 mx-auto opacity-40 text-amber-400" />
+              <div>
+                <p className="text-sm font-medium text-neutral-300">Sin productos configurados</p>
+                <p className="text-xs text-neutral-500 mt-1 max-w-sm mx-auto">
+                  Añade productos individualmente o sube el catálogo completo en <strong>.txt, .html</strong> o desde la <strong>dirección web</strong> de {client.name}.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsUploadModalOpen(true)}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs transition-all shadow-md active:scale-95 cursor-pointer"
+              >
+                <Upload className="w-4 h-4" />
+                <span>Subir Catálogo Completo</span>
+              </button>
             </div>
           )}
         </div>
+
+        {/* Modal de importación avanzada de catálogo */}
+        {isUploadModalOpen && (
+          <ImportarCatalogoModal
+            isOpen={isUploadModalOpen}
+            onClose={() => setIsUploadModalOpen(false)}
+            client={client}
+            onImportProducts={handleBatchImportCatalog}
+          />
+        )}
       </motion.div>
     </div>
   );
 };
+

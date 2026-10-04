@@ -36,6 +36,7 @@ import { ProductosClienteModal } from './ProductosClienteModal';
 interface ClientsScreenProps {
   clients: ClientData[];
   onSelectClientForInvoice: (client: ClientData) => void;
+  onNewInvoiceForClient?: (client: ClientData) => void;
   onEditClient: (client: ClientData) => void;
   onOpenNewClientForm: () => void;
   onDeleteClient: (id: string) => void;
@@ -114,6 +115,7 @@ const SheetPlusGIcon: React.FC<{ className?: string }> = ({ className = 'w-9 h-9
 export const ClientsScreen: React.FC<ClientsScreenProps> = ({
   clients,
   onSelectClientForInvoice,
+  onNewInvoiceForClient,
   onEditClient,
   onOpenNewClientForm,
   onDeleteClient,
@@ -474,15 +476,19 @@ export const ClientsScreen: React.FC<ClientsScreenProps> = ({
                     <WhatsAppIcon className="w-10 h-10 sm:w-11 sm:h-11 drop-shadow-sm" />
                   </button>
 
-                  {/* Icono 3: +F dentro de una hoja Flotante (Facturar a este cliente) */}
+                  {/* Icono 3: +F dentro de una hoja Flotante (Nueva factura a este cliente) */}
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onSelectClientForInvoice(client);
+                      if (onNewInvoiceForClient) {
+                        onNewInvoiceForClient(client);
+                      } else {
+                        onSelectClientForInvoice(client);
+                      }
                     }}
                     className="p-1 text-amber-400 hover:text-amber-300 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
-                    title="Emitir factura a este cliente (+F)"
+                    title="Nueva factura para este cliente (+F)"
                   >
                     <SheetPlusFIcon className="w-10 h-10 sm:w-11 sm:h-11 drop-shadow-sm" />
                   </button>

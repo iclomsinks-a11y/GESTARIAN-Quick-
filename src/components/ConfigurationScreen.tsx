@@ -45,6 +45,7 @@ import {
   ReceivedInvoice,
 } from '../types';
 import { WhatsAppIcon } from './WhatsAppIcon';
+import { TrashModal } from './TrashModal';
 import {
   getStoredWhatsAppDispatches,
   WhatsAppNotificationRecord,
@@ -97,6 +98,7 @@ interface ConfigurationScreenProps {
   onOpenEmailModal?: () => void;
   receivedInvoices?: ReceivedInvoice[];
   onOpenGmailScanner?: () => void;
+  onInvoicesUpdated?: () => void;
 }
 
 export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
@@ -132,10 +134,12 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
   onOpenEmailModal,
   receivedInvoices = [],
   onOpenGmailScanner,
+  onInvoicesUpdated,
 }) => {
   // Local state for full company editing
   const [formData, setFormData] = useState<CompanyData>({ ...company });
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [isTrashOpen, setIsTrashOpen] = useState(false);
   const [dispatches, setDispatches] = useState<WhatsAppNotificationRecord[]>(() => getStoredWhatsAppDispatches());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -1417,7 +1421,7 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
             <span>Ajustes del Sistema y Fiscales</span>
           </h2>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             {/* Veri*Factu AEAT */}
             {onOpenVeriFactuModal && (
               <button
@@ -1469,9 +1473,27 @@ export const ConfigurationScreen: React.FC<ConfigurationScreenProps> = ({
                 <span>Guardar en Dispositivo</span>
               </button>
             )}
+
+            {/* Ver papelera */}
+            <button
+              type="button"
+              id="config-btn-view-trash"
+              onClick={() => setIsTrashOpen(true)}
+              className="p-3.5 rounded-xl bg-neutral-900 hover:bg-neutral-850 border border-neutral-750 hover:border-red-500/60 text-red-400 font-semibold text-xs flex items-center gap-2.5 transition-all active:scale-95 cursor-pointer shadow-md"
+            >
+              <Trash2 className="w-4 h-4 text-red-400" />
+              <span>Ver Papelera</span>
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Trash Modal */}
+      <TrashModal
+        isOpen={isTrashOpen}
+        onClose={() => setIsTrashOpen(false)}
+        onInvoicesUpdated={onInvoicesUpdated}
+      />
     </div>
   );
 };

@@ -107,6 +107,7 @@ export type ComplexInvoiceConfig = ComplexBudgetConfig;
 
 export interface BillableProduct {
   id: string;
+  code?: string; // Código de producto / Referencia / SKU
   name: string; // Concepto del producto facturable
   description?: string;
   imageUrl?: string; // Imagen adjunta al concepto
@@ -124,6 +125,7 @@ export interface InvoiceItem {
   complexBudgetConfig?: ComplexBudgetConfig;
   complexInvoiceConfig?: ComplexBudgetConfig;
   productId?: string;
+  productCode?: string;
   productImageUrl?: string;
 }
 
@@ -202,4 +204,11 @@ export interface ReceivedInvoice {
 }
 
 export type AppTheme = 'dark' | 'light' | 'pastel' | 'blue';
+
+export interface DeletedInvoice {
+  id: string;
+  deletedAt: number;
+  invoice: Invoice;
+}
+
 

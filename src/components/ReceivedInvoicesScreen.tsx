@@ -667,7 +667,7 @@ export const ReceivedInvoicesScreen: React.FC<ReceivedInvoicesScreenProps> = ({
                             </div>
                           )}
                           <div className="flex items-center justify-between text-base sm:text-lg font-black text-neutral-950 pt-2 border-t border-neutral-300">
-                            <span>TOTAL FACTURA:</span>
+                            <span>Total:</span>
                             <span className="font-mono text-xl sm:text-2xl font-black text-neutral-950">
                               {formatCurrency(inv.totalAmount || 0)}
                             </span>

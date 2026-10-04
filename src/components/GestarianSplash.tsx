@@ -192,6 +192,8 @@ export const GestarianSplash: React.FC<GestarianSplashProps> = ({
                 style={{
                   fontFamily: "'Montserrat', sans-serif",
                   fontWeight: 100,
+                  WebkitTextStroke: '2px #FEFCE9',
+                  paintOrder: 'stroke fill',
                 }}
               >
                 GESTARIAN

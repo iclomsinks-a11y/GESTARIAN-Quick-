@@ -98,7 +98,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </button>
           </motion.div>
 
-          {/* Button 2: Cliente */}
+          {/* Button 2: Clientes */}
           <motion.div
             initial={{ opacity: 0, y: 100 }}
             animate={{ opacity: 1, y: 0 }}
@@ -119,8 +119,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 fontWeight: 200,
               }}
             >
-              <Plus className="w-5 h-5 sm:w-6 sm:h-6 stroke-[1.25] text-[#FAF6EE]/80 shrink-0" />
-              <span>CLIENTE</span>
+              <span>CLIENTES</span>
             </button>
           </motion.div>
         </div>

@@ -18,6 +18,7 @@ interface ControlPanelScreenProps {
   // Actions for Issued Invoices
   onNewInvoice: () => void;
   onViewInvoice: (invoice: Invoice) => void;
+  onEditInvoice?: (invoice: Invoice) => void;
   onRectifyInvoice: (invoice: Invoice) => void;
   onDeleteInvoice: (id: string) => void;
   onOpenWhatsApp: (invoice: Invoice) => void;
@@ -59,6 +60,7 @@ export const ControlPanelScreen: React.FC<ControlPanelScreenProps> = ({
   onPeriodTypeChange,
   onNewInvoice,
   onViewInvoice,
+  onEditInvoice,
   onRectifyInvoice,
   onDeleteInvoice,
   onOpenWhatsApp,
@@ -363,7 +365,7 @@ export const ControlPanelScreen: React.FC<ControlPanelScreenProps> = ({
             invoices={invoices}
             onNewInvoice={onNewInvoice}
             onViewInvoice={onViewInvoice}
-            onEditInvoice={onViewInvoice}
+            onEditInvoice={onEditInvoice || onViewInvoice}
             onRectifyInvoice={onRectifyInvoice}
             onDeleteInvoice={onDeleteInvoice}
             onOpenWhatsApp={onOpenWhatsApp}

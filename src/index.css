@@ -4,16 +4,65 @@
   @media print {
     @page {
       size: A4 portrait;
-      margin: 10mm 12mm;
+      margin: 8mm 10mm;
     }
-    body {
-      background-color: #ffffff !important;
-      color: #000000 !important;
+    *, *::before, *::after {
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
     }
-    .no-print {
+    html, body {
+      background: #ffffff !important;
+      background-color: #ffffff !important;
+      color: #000000 !important;
+      height: auto !important;
+      min-height: auto !important;
+      overflow: visible !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    .no-print,
+    #header-app-bar,
+    #page-screen-home,
+    #page-screen-clients,
+    #page-screen-control-panel,
+    #page-screen-providers,
+    #page-screen-config,
+    #lateral-scroll-wrapper,
+    .lateral-scroll-container,
+    #btn-preview-prev-page,
+    #btn-preview-next-page,
+    #a4-action-buttons-group,
+    #a4-bottom-back-btn,
+    #btn-asignar-cliente-clean,
+    #toast-container,
+    button,
+    .print\:hidden {
       display: none !important;
+    }
+    /* When print preview modal is open, completely hide the background editor overlay during printing */
+    body:has(#print-preview-modal) #fullscreen-invoice-view-overlay {
+      display: none !important;
+    }
+    #fullscreen-invoice-view-overlay,
+    #print-preview-modal {
+      position: static !important;
+      background: #ffffff !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      overflow: visible !important;
+      width: 100% !important;
+      height: auto !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+    #root,
+    #root > div,
+    .h-screen,
+    .overflow-hidden {
+      height: auto !important;
+      min-height: auto !important;
+      overflow: visible !important;
+      background: #ffffff !important;
     }
     .a4-sheet {
       box-shadow: none !important;
@@ -23,16 +72,43 @@
       min-height: auto !important;
       margin: 0 !important;
       padding: 0 !important;
+      display: flex !important;
+      background: #ffffff !important;
+      color: #000000 !important;
+      transform: none !important;
     }
-    input, textarea {
+    input, textarea, select {
       border: none !important;
       background: transparent !important;
       padding: 0 !important;
+      box-shadow: none !important;
+      outline: none !important;
+      color: inherit !important;
     }
   }
 }
 
 /* Hide number input arrows for clean typography */
+@keyframes recuadroFlash {
+  0%, 100% {
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.95), 0 0 14px rgba(245, 158, 11, 0.6);
+    border-color: #f59e0b !important;
+    background-color: #fef3c7 !important;
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.95), 0 0 14px rgba(2, 132, 199, 0.6);
+    border-color: #0284c7 !important;
+    background-color: #e0f2fe !important;
+  }
+}
+
+.recuadro-intermitente {
+  animation: recuadroFlash 0.75s infinite ease-in-out !important;
+  border-width: 2px !important;
+  border-style: solid !important;
+  border-radius: 8px !important;
+}
+
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -99,7 +175,8 @@ input[type="number"] {
 /* ------------------------------------------------------------------------- */
 
 #home-screen-minimalist h1,
-#home-screen-minimalist .home-title-gestarian {
+#home-screen-minimalist .home-title-gestarian,
+#gestarian-splash-screen h1 {
   color: #FEFCE9 !important;
   font-weight: 100 !important;
   -webkit-text-stroke: 2px #FEFCE9 !important;
@@ -443,91 +520,87 @@ svg.lucide-pencil,
 
 /* ========================================================================= */
 /* ========================================================================= */
-/* ESPECÍFICO DE PANTALLA DE CONFIGURACIÓN (#page-screen-config)              */
-/* Tarjetas y botones en subtarjetas: celeste muy clarito                     */
-/* Botones fuera de subtarjetas: celeste un poquitín más oscuro               */
+/* ESPECÍFICO DE PANTALLA DE CONFIGURACIÓN EN TEMA CLARO                      */
 /* ========================================================================= */
 
-#page-screen-config {
-  background-color: #f3f9fd;
-  color: #0c2b47;
+[data-theme="light"] #page-screen-config,
+[data-theme="light"] #page-screen-config-content {
+  background-color: #faf7f2 !important;
+  color: #0f172a !important;
 }
 
-/* 1. TARJETAS PRINCIPALES: Relleno celeste muy clarito */
-#page-screen-config .bg-neutral-900\/80,
-#page-screen-config .bg-neutral-900\/40,
-#page-screen-config .bg-neutral-900 {
-  background-color: #ebf6fd !important;
-  border-color: #c7e5fa !important;
-  color: #0a2d4d !important;
+/* 1. TARJETAS PRINCIPALES: Relleno blanco limpio */
+[data-theme="light"] #page-screen-config .bg-neutral-900\/80,
+[data-theme="light"] #page-screen-config .bg-neutral-900\/40,
+[data-theme="light"] #page-screen-config .bg-neutral-900 {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
 }
 
-/* 2. SUBTARJETAS DENTRO DE CONFIGURACIÓN: Relleno celeste muy clarito */
-#page-screen-config .bg-neutral-950,
-#page-screen-config .bg-neutral-950\/90,
-#page-screen-config .bg-neutral-950\/80,
-#page-screen-config .bg-neutral-950\/70,
-#page-screen-config .bg-neutral-950\/60,
-#page-screen-config #gmail-scanner-config-card {
-  background-color: #ddf0fb !important;
-  border-color: #b9e0f7 !important;
-  color: #0a2d4d !important;
+/* 2. SUBTARJETAS DENTRO DE CONFIGURACIÓN: Relleno suave */
+[data-theme="light"] #page-screen-config .bg-neutral-950,
+[data-theme="light"] #page-screen-config .bg-neutral-950\/90,
+[data-theme="light"] #page-screen-config .bg-neutral-950\/80,
+[data-theme="light"] #page-screen-config .bg-neutral-950\/70,
+[data-theme="light"] #page-screen-config .bg-neutral-950\/60 {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
 }
 
 /* Textos legibles en configuración */
-#page-screen-config h1,
-#page-screen-config h2,
-#page-screen-config h3,
-#page-screen-config h4 {
-  color: #082845 !important;
+[data-theme="light"] #page-screen-config h1,
+[data-theme="light"] #page-screen-config h2,
+[data-theme="light"] #page-screen-config h3,
+[data-theme="light"] #page-screen-config h4 {
+  color: #0f172a !important;
 }
 
-#page-screen-config p,
-#page-screen-config label,
-#page-screen-config span:not(.no-override-text),
-#page-screen-config strong {
-  color: #11385c;
+[data-theme="light"] #page-screen-config p,
+[data-theme="light"] #page-screen-config label,
+[data-theme="light"] #page-screen-config span:not(.no-override-text),
+[data-theme="light"] #page-screen-config strong {
+  color: #334155;
 }
 
-#page-screen-config .text-neutral-400,
-#page-screen-config .text-neutral-500,
-#page-screen-config .text-stone-400,
-#page-screen-config .text-stone-500 {
-  color: #2b577e !important;
+[data-theme="light"] #page-screen-config .text-neutral-400,
+[data-theme="light"] #page-screen-config .text-neutral-500,
+[data-theme="light"] #page-screen-config .text-stone-400,
+[data-theme="light"] #page-screen-config .text-stone-500 {
+  color: #64748b !important;
 }
 
-#page-screen-config .text-amber-400,
-#page-screen-config .text-amber-300 {
-  color: #0369a1 !important;
+[data-theme="light"] #page-screen-config .text-amber-400,
+[data-theme="light"] #page-screen-config .text-amber-300 {
+  color: #0284c7 !important;
 }
 
 /* Inputs de configuración */
-#page-screen-config input,
-#page-screen-config textarea {
+[data-theme="light"] #page-screen-config input,
+[data-theme="light"] #page-screen-config textarea {
   background-color: #ffffff !important;
-  color: #09233a !important;
-  border-color: #bedef7 !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
 }
 
-#page-screen-config input::placeholder,
-#page-screen-config textarea::placeholder {
-  color: #7ba2c2 !important;
+[data-theme="light"] #page-screen-config input::placeholder,
+[data-theme="light"] #page-screen-config textarea::placeholder {
+  color: #94a3b8 !important;
 }
 
-/* 3. BOTONES DENTRO DE SUBTARJETAS: Relleno celeste muy clarito */
-#page-screen-config .bg-neutral-950 button,
-#page-screen-config .bg-neutral-950\/90 button,
-#page-screen-config .bg-neutral-950\/80 button,
-#page-screen-config .bg-neutral-950\/70 button,
-#page-screen-config #gmail-scanner-config-card button,
-#page-screen-config #submit-ai-logo-btn,
-#page-screen-config #btn-open-ai-logo-generator,
-#page-screen-config #btn-open-ai-logo-generator-replace,
-#page-screen-config #btn-enable-browser-notifications,
-#page-screen-config #btn-test-verifactu-notification,
-#page-screen-config #btn-test-payment-due-notification,
-#page-screen-config #btn-scan-upcoming-payments,
-#page-screen-config #btn-config-gmail-scanner {
+/* 3. BOTONES DENTRO DE SUBTARJETAS */
+[data-theme="light"] #page-screen-config .bg-neutral-950 button,
+[data-theme="light"] #page-screen-config .bg-neutral-950\/90 button,
+[data-theme="light"] #page-screen-config .bg-neutral-950\/80 button,
+[data-theme="light"] #page-screen-config .bg-neutral-950\/70 button,
+[data-theme="light"] #page-screen-config #submit-ai-logo-btn,
+[data-theme="light"] #page-screen-config #btn-open-ai-logo-generator,
+[data-theme="light"] #page-screen-config #btn-open-ai-logo-generator-replace,
+[data-theme="light"] #page-screen-config #btn-enable-browser-notifications,
+[data-theme="light"] #page-screen-config #btn-test-verifactu-notification,
+[data-theme="light"] #page-screen-config #btn-test-payment-due-notification,
+[data-theme="light"] #page-screen-config #btn-scan-upcoming-payments {
   background-color: #eaf5fc !important;
   background-image: none !important;
   border: 1.5px solid #a4daf8 !important;
@@ -536,71 +609,82 @@ svg.lucide-pencil,
   box-shadow: 0 2px 4px rgba(7, 89, 133, 0.08) !important;
 }
 
-#page-screen-config .bg-neutral-950 button *,
-#page-screen-config .bg-neutral-950\/90 button *,
-#page-screen-config .bg-neutral-950\/80 button *,
-#page-screen-config .bg-neutral-950\/70 button *,
-#page-screen-config #gmail-scanner-config-card button *,
-#page-screen-config #submit-ai-logo-btn *,
-#page-screen-config #btn-open-ai-logo-generator *,
-#page-screen-config #btn-open-ai-logo-generator-replace *,
-#page-screen-config #btn-enable-browser-notifications *,
-#page-screen-config #btn-test-verifactu-notification *,
-#page-screen-config #btn-test-payment-due-notification *,
-#page-screen-config #btn-scan-upcoming-payments *,
-#page-screen-config #btn-config-gmail-scanner * {
+[data-theme="light"] #page-screen-config .bg-neutral-950 button *,
+[data-theme="light"] #page-screen-config .bg-neutral-950\/90 button *,
+[data-theme="light"] #page-screen-config .bg-neutral-950\/80 button *,
+[data-theme="light"] #page-screen-config .bg-neutral-950\/70 button *,
+[data-theme="light"] #page-screen-config #submit-ai-logo-btn *,
+[data-theme="light"] #page-screen-config #btn-open-ai-logo-generator *,
+[data-theme="light"] #page-screen-config #btn-open-ai-logo-generator-replace *,
+[data-theme="light"] #page-screen-config #btn-enable-browser-notifications *,
+[data-theme="light"] #page-screen-config #btn-test-verifactu-notification *,
+[data-theme="light"] #page-screen-config #btn-test-payment-due-notification *,
+[data-theme="light"] #page-screen-config #btn-scan-upcoming-payments * {
   color: #063962 !important;
 }
 
-#page-screen-config .bg-neutral-950 button:hover,
-#page-screen-config .bg-neutral-950\/90 button:hover,
-#page-screen-config .bg-neutral-950\/80 button:hover,
-#page-screen-config .bg-neutral-950\/70 button:hover,
-#page-screen-config #gmail-scanner-config-card button:hover,
-#page-screen-config #submit-ai-logo-btn:hover,
-#page-screen-config #btn-open-ai-logo-generator:hover,
-#page-screen-config #btn-open-ai-logo-generator-replace:hover,
-#page-screen-config #btn-enable-browser-notifications:hover,
-#page-screen-config #btn-test-verifactu-notification:hover,
-#page-screen-config #btn-test-payment-due-notification:hover,
-#page-screen-config #btn-scan-upcoming-payments:hover,
-#page-screen-config #btn-config-gmail-scanner:hover {
+[data-theme="light"] #page-screen-config .bg-neutral-950 button:hover,
+[data-theme="light"] #page-screen-config .bg-neutral-950\/90 button:hover,
+[data-theme="light"] #page-screen-config .bg-neutral-950\/80 button:hover,
+[data-theme="light"] #page-screen-config .bg-neutral-950\/70 button:hover,
+[data-theme="light"] #page-screen-config #submit-ai-logo-btn:hover,
+[data-theme="light"] #page-screen-config #btn-open-ai-logo-generator:hover,
+[data-theme="light"] #page-screen-config #btn-open-ai-logo-generator-replace:hover,
+[data-theme="light"] #page-screen-config #btn-enable-browser-notifications:hover,
+[data-theme="light"] #page-screen-config #btn-test-verifactu-notification:hover,
+[data-theme="light"] #page-screen-config #btn-test-payment-due-notification:hover,
+[data-theme="light"] #page-screen-config #btn-scan-upcoming-payments:hover {
   background-color: #d7eefb !important;
   border-color: #7bc5f3 !important;
 }
 
-/* 4. BOTONES FUERA DE SUBTARJETAS: Celeste con un tono un poquitín más oscuro para diferenciarlos */
-#page-screen-config #save-company-full-btn,
-#page-screen-config #btn-replay-splash-screen,
-#page-screen-config #config-btn-verifactu,
-#page-screen-config #config-btn-sequence,
-#page-screen-config #config-btn-user-session,
-#page-screen-config #config-btn-save-device {
-  background-color: #bce4fa !important;
+/* 4. BOTONES FUERA DE SUBTARJETAS */
+[data-theme="light"] #page-screen-config #save-company-full-btn {
+  background-color: #f6dfba !important;
   background-image: none !important;
-  border: 1.5px solid #72bde9 !important;
-  color: #022542 !important;
+  border: 1.5px solid #dfbe8c !important;
+  color: #382005 !important;
   font-weight: 700 !important;
   box-shadow: 0 3px 6px rgba(7, 89, 133, 0.12) !important;
 }
 
-#page-screen-config #save-company-full-btn *,
-#page-screen-config #btn-replay-splash-screen *,
-#page-screen-config #config-btn-verifactu *,
-#page-screen-config #config-btn-sequence *,
-#page-screen-config #config-btn-user-session *,
-#page-screen-config #config-btn-save-device * {
-  color: #022542 !important;
+[data-theme="light"] #page-screen-config #save-company-full-btn * {
+  color: #382005 !important;
 }
 
-#page-screen-config #save-company-full-btn:hover,
-#page-screen-config #btn-replay-splash-screen:hover,
-#page-screen-config #config-btn-verifactu:hover,
-#page-screen-config #config-btn-sequence:hover,
-#page-screen-config #config-btn-user-session:hover,
-#page-screen-config #config-btn-save-device:hover {
-  background-color: #a7dbf7 !important;
-  border-color: #4bb0ea !important;
+[data-theme="light"] #page-screen-config #save-company-full-btn:hover {
+  background-color: #edd1a4 !important;
+  border-color: #c99b5b !important;
+}
+
+[data-theme="light"] #page-screen-config #config-btn-verifactu,
+[data-theme="light"] #page-screen-config #config-btn-sequence,
+[data-theme="light"] #page-screen-config #config-btn-user-session,
+[data-theme="light"] #page-screen-config #config-btn-save-device,
+[data-theme="light"] #page-screen-config #btn-replay-splash-screen {
+  background-color: #f1f5f9 !important;
+  background-image: none !important;
+  border: 1.5px solid #cbd5e1 !important;
+  color: #1e3a8a !important;
+  font-weight: 700 !important;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-theme="light"] #page-screen-config #config-btn-verifactu *,
+[data-theme="light"] #page-screen-config #config-btn-sequence *,
+[data-theme="light"] #page-screen-config #config-btn-user-session *,
+[data-theme="light"] #page-screen-config #config-btn-save-device *,
+[data-theme="light"] #page-screen-config #btn-replay-splash-screen * {
+  color: #1e3a8a !important;
+}
+
+[data-theme="light"] #page-screen-config #config-btn-verifactu:hover,
+[data-theme="light"] #page-screen-config #config-btn-sequence:hover,
+[data-theme="light"] #page-screen-config #config-btn-user-session:hover,
+[data-theme="light"] #page-screen-config #config-btn-save-device:hover,
+[data-theme="light"] #page-screen-config #btn-replay-splash-screen:hover {
+  background-color: #e2e8f0 !important;
+  border-color: #94a3b8 !important;
 }
 
 /* Scrollbar e indicadores de scroll lateral e inferior en tema claro */
@@ -1395,6 +1479,352 @@ svg.lucide-pencil,
 [data-theme="blue"] .lateral-scroll-container,
 [data-theme="blue"] * {
   scrollbar-color: #7dd3fc #f0f7fc !important;
+}
+
+/* ========================================================================= */
+/* PANTALLA DE CONFIGURACIÓN EN TEMA BLUE                                    */
+/* ========================================================================= */
+
+[data-theme="blue"] #page-screen-config,
+[data-theme="blue"] #page-screen-config-content {
+  background-color: #f4f8fb !important;
+  color: #0c2b47 !important;
+}
+
+[data-theme="blue"] #page-screen-config .bg-neutral-900\/80,
+[data-theme="blue"] #page-screen-config .bg-neutral-900\/40,
+[data-theme="blue"] #page-screen-config .bg-neutral-900 {
+  background-color: #ebf6fd !important;
+  border-color: #c7e5fa !important;
+  color: #0a2d4d !important;
+}
+
+[data-theme="blue"] #page-screen-config .bg-neutral-950,
+[data-theme="blue"] #page-screen-config .bg-neutral-950\/90,
+[data-theme="blue"] #page-screen-config .bg-neutral-950\/80,
+[data-theme="blue"] #page-screen-config .bg-neutral-950\/70,
+[data-theme="blue"] #page-screen-config .bg-neutral-950\/60 {
+  background-color: #ddf0fb !important;
+  border-color: #b9e0f7 !important;
+  color: #0a2d4d !important;
+}
+
+[data-theme="blue"] #page-screen-config .bg-neutral-950 button,
+[data-theme="blue"] #page-screen-config .bg-neutral-950\/90 button,
+[data-theme="blue"] #page-screen-config .bg-neutral-950\/80 button,
+[data-theme="blue"] #page-screen-config .bg-neutral-950\/70 button,
+[data-theme="blue"] #page-screen-config #submit-ai-logo-btn,
+[data-theme="blue"] #page-screen-config #btn-open-ai-logo-generator,
+[data-theme="blue"] #page-screen-config #btn-open-ai-logo-generator-replace,
+[data-theme="blue"] #page-screen-config #btn-enable-browser-notifications,
+[data-theme="blue"] #page-screen-config #btn-test-verifactu-notification,
+[data-theme="blue"] #page-screen-config #btn-test-payment-due-notification,
+[data-theme="blue"] #page-screen-config #btn-scan-upcoming-payments {
+  background-color: #eaf5fc !important;
+  background-image: none !important;
+  border: 1.5px solid #a4daf8 !important;
+  color: #063962 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 4px rgba(7, 89, 133, 0.08) !important;
+}
+
+[data-theme="blue"] #page-screen-config .bg-neutral-950 button *,
+[data-theme="blue"] #page-screen-config .bg-neutral-950\/90 button *,
+[data-theme="blue"] #page-screen-config .bg-neutral-950\/80 button *,
+[data-theme="blue"] #page-screen-config .bg-neutral-950\/70 button *,
+[data-theme="blue"] #page-screen-config #submit-ai-logo-btn *,
+[data-theme="blue"] #page-screen-config #btn-open-ai-logo-generator *,
+[data-theme="blue"] #page-screen-config #btn-open-ai-logo-generator-replace *,
+[data-theme="blue"] #page-screen-config #btn-enable-browser-notifications *,
+[data-theme="blue"] #page-screen-config #btn-test-verifactu-notification *,
+[data-theme="blue"] #page-screen-config #btn-test-payment-due-notification *,
+[data-theme="blue"] #page-screen-config #btn-scan-upcoming-payments * {
+  color: #063962 !important;
+}
+
+[data-theme="blue"] #page-screen-config #save-company-full-btn {
+  background-color: #bce4fa !important;
+  background-image: none !important;
+  border: 1.5px solid #72bde9 !important;
+  color: #022542 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 3px 6px rgba(7, 89, 133, 0.12) !important;
+}
+
+[data-theme="blue"] #page-screen-config #save-company-full-btn * {
+  color: #022542 !important;
+}
+
+[data-theme="blue"] #page-screen-config #save-company-full-btn:hover {
+  background-color: #a7dbf7 !important;
+  border-color: #4bb0ea !important;
+}
+
+/* ========================================================================= */
+/* PANTALLA DE CONFIGURACIÓN EN TEMA TONOS PASTEL                            */
+/* ========================================================================= */
+
+[data-theme="pastel"] #page-screen-config,
+[data-theme="pastel"] #page-screen-config-content {
+  background-color: #f8f5ee !important;
+  color: #1c1917 !important;
+}
+
+[data-theme="pastel"] #page-screen-config .bg-neutral-900\/80,
+[data-theme="pastel"] #page-screen-config .bg-neutral-900\/40,
+[data-theme="pastel"] #page-screen-config .bg-neutral-900 {
+  background-color: #fbf9f4 !important;
+  border-color: #dfd6c7 !important;
+  color: #1c1917 !important;
+}
+
+[data-theme="pastel"] #page-screen-config .bg-neutral-950,
+[data-theme="pastel"] #page-screen-config .bg-neutral-950\/90,
+[data-theme="pastel"] #page-screen-config .bg-neutral-950\/80,
+[data-theme="pastel"] #page-screen-config .bg-neutral-950\/70,
+[data-theme="pastel"] #page-screen-config .bg-neutral-950\/60 {
+  background-color: #f3ede2 !important;
+  border-color: #dfd6c7 !important;
+  color: #1c1917 !important;
+}
+
+[data-theme="pastel"] #page-screen-config .bg-neutral-950 button,
+[data-theme="pastel"] #page-screen-config .bg-neutral-950\/90 button,
+[data-theme="pastel"] #page-screen-config .bg-neutral-950\/80 button,
+[data-theme="pastel"] #page-screen-config .bg-neutral-950\/70 button,
+[data-theme="pastel"] #page-screen-config #submit-ai-logo-btn,
+[data-theme="pastel"] #page-screen-config #btn-open-ai-logo-generator,
+[data-theme="pastel"] #page-screen-config #btn-open-ai-logo-generator-replace,
+[data-theme="pastel"] #page-screen-config #btn-enable-browser-notifications,
+[data-theme="pastel"] #page-screen-config #btn-test-verifactu-notification,
+[data-theme="pastel"] #page-screen-config #btn-test-payment-due-notification,
+[data-theme="pastel"] #page-screen-config #btn-scan-upcoming-payments {
+  background-color: #faefe0 !important;
+  background-image: none !important;
+  border: 1.5px solid #dfcdb5 !important;
+  color: #382005 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 4px rgba(180, 140, 70, 0.06) !important;
+}
+
+[data-theme="pastel"] #page-screen-config .bg-neutral-950 button *,
+[data-theme="pastel"] #page-screen-config .bg-neutral-950\/90 button *,
+[data-theme="pastel"] #page-screen-config .bg-neutral-950\/80 button *,
+[data-theme="pastel"] #page-screen-config .bg-neutral-950\/70 button *,
+[data-theme="pastel"] #page-screen-config #submit-ai-logo-btn *,
+[data-theme="pastel"] #page-screen-config #btn-open-ai-logo-generator *,
+[data-theme="pastel"] #page-screen-config #btn-open-ai-logo-generator-replace *,
+[data-theme="pastel"] #page-screen-config #btn-enable-browser-notifications *,
+[data-theme="pastel"] #page-screen-config #btn-test-verifactu-notification *,
+[data-theme="pastel"] #page-screen-config #btn-test-payment-due-notification *,
+[data-theme="pastel"] #page-screen-config #btn-scan-upcoming-payments * {
+  color: #382005 !important;
+}
+
+[data-theme="pastel"] #page-screen-config #save-company-full-btn {
+  background-color: #f6dfba !important;
+  background-image: none !important;
+  border: 1.5px solid #dfbe8c !important;
+  color: #382005 !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="pastel"] #page-screen-config #save-company-full-btn * {
+  color: #382005 !important;
+}
+
+/* ========================================================================= */
+/* PANTALLA DE CONFIGURACIÓN EN TEMA OSCURO                                  */
+/* Tarjetas: Relleno negro 90% | Sub-tarjetas: Relleno negro 80%            */
+/* Botones: Relleno negro 90% con textos e iconos blanco / gris máx 10%      */
+/* ========================================================================= */
+
+[data-theme="dark"] #page-screen-config,
+[data-theme="dark"] #page-screen-config-content {
+  background-color: #000000 !important;
+  color: #f5f5f5 !important;
+}
+
+/* 1. TARJETAS PRINCIPALES: Relleno de color negro 90% */
+[data-theme="dark"] #page-screen-config .bg-neutral-900\/80,
+[data-theme="dark"] #page-screen-config .bg-neutral-900\/40,
+[data-theme="dark"] #page-screen-config .bg-neutral-900 {
+  background-color: rgba(0, 0, 0, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #f5f5f5 !important;
+}
+
+/* 2. SUB-TARJETAS: Relleno de color negro 80% */
+[data-theme="dark"] #page-screen-config .bg-neutral-950,
+[data-theme="dark"] #page-screen-config .bg-neutral-950\/90,
+[data-theme="dark"] #page-screen-config .bg-neutral-950\/80,
+[data-theme="dark"] #page-screen-config .bg-neutral-950\/70,
+[data-theme="dark"] #page-screen-config .bg-neutral-950\/60,
+[data-theme="dark"] #page-screen-config #gmail-scanner-config-card {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+  background-image: none !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #f5f5f5 !important;
+}
+
+[data-theme="dark"] #page-screen-config h1,
+[data-theme="dark"] #page-screen-config h2,
+[data-theme="dark"] #page-screen-config h3,
+[data-theme="dark"] #page-screen-config h4 {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] #page-screen-config p,
+[data-theme="dark"] #page-screen-config label,
+[data-theme="dark"] #page-screen-config span:not(.no-override-text),
+[data-theme="dark"] #page-screen-config strong {
+  color: #e5e5e5;
+}
+
+[data-theme="dark"] #page-screen-config .text-neutral-400,
+[data-theme="dark"] #page-screen-config .text-neutral-500,
+[data-theme="dark"] #page-screen-config .text-stone-400,
+[data-theme="dark"] #page-screen-config .text-stone-500 {
+  color: #a3a3a3 !important;
+}
+
+[data-theme="dark"] #page-screen-config .text-amber-400,
+[data-theme="dark"] #page-screen-config .text-amber-300 {
+  color: #fbbf24 !important;
+}
+
+/* Inputs de configuración con relleno negro 90% */
+[data-theme="dark"] #page-screen-config input,
+[data-theme="dark"] #page-screen-config textarea {
+  background-color: rgba(0, 0, 0, 0.9) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+[data-theme="dark"] #page-screen-config input::placeholder,
+[data-theme="dark"] #page-screen-config textarea::placeholder {
+  color: #808080 !important;
+}
+
+/* 3. BOTONES DENTRO DE SUB-TARJETAS: Relleno negro 90% y textos/dibujitos blanco o gris máx 10% */
+[data-theme="dark"] #page-screen-config .bg-neutral-950 button,
+[data-theme="dark"] #page-screen-config .bg-neutral-950\/90 button,
+[data-theme="dark"] #page-screen-config .bg-neutral-950\/80 button,
+[data-theme="dark"] #page-screen-config .bg-neutral-950\/70 button,
+[data-theme="dark"] #page-screen-config .bg-neutral-950\/60 button,
+[data-theme="dark"] #page-screen-config #gmail-scanner-config-card button,
+[data-theme="dark"] #page-screen-config #submit-ai-logo-btn,
+[data-theme="dark"] #page-screen-config #btn-open-ai-logo-generator,
+[data-theme="dark"] #page-screen-config #btn-open-ai-logo-generator-replace,
+[data-theme="dark"] #page-screen-config #btn-enable-browser-notifications,
+[data-theme="dark"] #page-screen-config #btn-test-verifactu-notification,
+[data-theme="dark"] #page-screen-config #btn-test-payment-due-notification,
+[data-theme="dark"] #page-screen-config #btn-scan-upcoming-payments,
+[data-theme="dark"] #page-screen-config #btn-config-gmail-scanner {
+  background-color: rgba(0, 0, 0, 0.9) !important;
+  background-image: none !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="dark"] #page-screen-config .bg-neutral-950 button *,
+[data-theme="dark"] #page-screen-config .bg-neutral-950\/90 button *,
+[data-theme="dark"] #page-screen-config .bg-neutral-950\/80 button *,
+[data-theme="dark"] #page-screen-config .bg-neutral-950\/70 button *,
+[data-theme="dark"] #page-screen-config .bg-neutral-950\/60 button *,
+[data-theme="dark"] #page-screen-config #gmail-scanner-config-card button *,
+[data-theme="dark"] #page-screen-config #submit-ai-logo-btn *,
+[data-theme="dark"] #page-screen-config #btn-open-ai-logo-generator *,
+[data-theme="dark"] #page-screen-config #btn-open-ai-logo-generator-replace *,
+[data-theme="dark"] #page-screen-config #btn-enable-browser-notifications *,
+[data-theme="dark"] #page-screen-config #btn-test-verifactu-notification *,
+[data-theme="dark"] #page-screen-config #btn-test-payment-due-notification *,
+[data-theme="dark"] #page-screen-config #btn-scan-upcoming-payments *,
+[data-theme="dark"] #page-screen-config #btn-config-gmail-scanner * {
+  color: #ffffff !important;
+  fill: none;
+}
+
+[data-theme="dark"] #page-screen-config .bg-neutral-950 button svg,
+[data-theme="dark"] #page-screen-config .bg-neutral-950\/90 button svg,
+[data-theme="dark"] #page-screen-config .bg-neutral-950\/80 button svg,
+[data-theme="dark"] #page-screen-config .bg-neutral-950\/70 button svg,
+[data-theme="dark"] #page-screen-config .bg-neutral-950\/60 button svg,
+[data-theme="dark"] #page-screen-config #gmail-scanner-config-card button svg,
+[data-theme="dark"] #page-screen-config #submit-ai-logo-btn svg,
+[data-theme="dark"] #page-screen-config #btn-open-ai-logo-generator svg,
+[data-theme="dark"] #page-screen-config #btn-open-ai-logo-generator-replace svg,
+[data-theme="dark"] #page-screen-config #btn-enable-browser-notifications svg,
+[data-theme="dark"] #page-screen-config #btn-test-verifactu-notification svg,
+[data-theme="dark"] #page-screen-config #btn-test-payment-due-notification svg,
+[data-theme="dark"] #page-screen-config #btn-scan-upcoming-payments svg,
+[data-theme="dark"] #page-screen-config #btn-config-gmail-scanner svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+[data-theme="dark"] #page-screen-config .bg-neutral-950 button:hover,
+[data-theme="dark"] #page-screen-config .bg-neutral-950\/90 button:hover,
+[data-theme="dark"] #page-screen-config .bg-neutral-950\/80 button:hover,
+[data-theme="dark"] #page-screen-config .bg-neutral-950\/70 button:hover,
+[data-theme="dark"] #page-screen-config .bg-neutral-950\/60 button:hover,
+[data-theme="dark"] #page-screen-config #gmail-scanner-config-card button:hover,
+[data-theme="dark"] #page-screen-config #submit-ai-logo-btn:hover,
+[data-theme="dark"] #page-screen-config #btn-open-ai-logo-generator:hover,
+[data-theme="dark"] #page-screen-config #btn-open-ai-logo-generator-replace:hover,
+[data-theme="dark"] #page-screen-config #btn-enable-browser-notifications:hover,
+[data-theme="dark"] #page-screen-config #btn-test-verifactu-notification:hover,
+[data-theme="dark"] #page-screen-config #btn-test-payment-due-notification:hover,
+[data-theme="dark"] #page-screen-config #btn-scan-upcoming-payments:hover,
+[data-theme="dark"] #page-screen-config #btn-config-gmail-scanner:hover {
+  background-color: rgba(30, 30, 30, 0.95) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* 4. BOTONES FUERA DE SUB-TARJETAS Y AJUSTES FISCALES: Relleno negro 90% con textos e iconos blanco */
+[data-theme="dark"] #page-screen-config #save-company-full-btn,
+[data-theme="dark"] #page-screen-config #config-btn-verifactu,
+[data-theme="dark"] #page-screen-config #config-btn-sequence,
+[data-theme="dark"] #page-screen-config #config-btn-user-session,
+[data-theme="dark"] #page-screen-config #config-btn-save-device,
+[data-theme="dark"] #page-screen-config #btn-replay-splash-screen {
+  background-color: rgba(0, 0, 0, 0.9) !important;
+  background-image: none !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="dark"] #page-screen-config #save-company-full-btn *,
+[data-theme="dark"] #page-screen-config #config-btn-verifactu *,
+[data-theme="dark"] #page-screen-config #config-btn-sequence *,
+[data-theme="dark"] #page-screen-config #config-btn-user-session *,
+[data-theme="dark"] #page-screen-config #config-btn-save-device *,
+[data-theme="dark"] #page-screen-config #btn-replay-splash-screen * {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] #page-screen-config #save-company-full-btn svg,
+[data-theme="dark"] #page-screen-config #config-btn-verifactu svg,
+[data-theme="dark"] #page-screen-config #config-btn-sequence svg,
+[data-theme="dark"] #page-screen-config #config-btn-user-session svg,
+[data-theme="dark"] #page-screen-config #config-btn-save-device svg,
+[data-theme="dark"] #page-screen-config #btn-replay-splash-screen svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+[data-theme="dark"] #page-screen-config #save-company-full-btn:hover,
+[data-theme="dark"] #page-screen-config #config-btn-verifactu:hover,
+[data-theme="dark"] #page-screen-config #config-btn-sequence:hover,
+[data-theme="dark"] #page-screen-config #config-btn-user-session:hover,
+[data-theme="dark"] #page-screen-config #config-btn-save-device:hover,
+[data-theme="dark"] #page-screen-config #btn-replay-splash-screen:hover {
+  background-color: rgba(30, 30, 30, 0.95) !important;
+  border-color: rgba(255, 255, 255, 0.45) !important;
 }
 
 

@@ -75,7 +75,16 @@ export const IssuedInvoicesScreen: React.FC<IssuedInvoicesScreenProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedInvoiceId, setExpandedInvoiceId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const handleConfirmDelete = () => {
+    if (invoiceToDelete) {
+      const idToDelete = invoiceToDelete.id || invoiceToDelete.number;
+      onDeleteInvoice(idToDelete);
+      setInvoiceToDelete(null);
+    }
+  };
 
   const filteredInvoices = invoices.filter((inv) => {
     const term = searchTerm.toLowerCase().trim();
@@ -257,7 +266,7 @@ export const IssuedInvoicesScreen: React.FC<IssuedInvoicesScreenProps> = ({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onPrintInvoice(inv);
+                      onViewInvoice(inv);
                     }}
                     className="p-1 text-amber-400 hover:text-amber-300 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
                     title={`Ver factura ${inv.number} en PDF`}
@@ -333,9 +342,7 @@ export const IssuedInvoicesScreen: React.FC<IssuedInvoicesScreenProps> = ({
                     id={`btn-delete-issued-invoice-${invoiceId}`}
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (window.confirm(`¿Estás seguro de que deseas eliminar la factura ${inv.number}?`)) {
-                        onDeleteInvoice(invoiceId);
-                      }
+                      setInvoiceToDelete(inv);
                     }}
                     className="p-1 text-[#EF4444] hover:text-red-400 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
                     style={{ color: '#EF4444' }}
@@ -485,7 +492,7 @@ export const IssuedInvoicesScreen: React.FC<IssuedInvoicesScreenProps> = ({
                             </div>
                           )}
                           <div className="flex items-center justify-between text-base sm:text-lg font-black text-neutral-950 pt-2 border-t border-neutral-300">
-                            <span>TOTAL FACTURA:</span>
+                            <span>Total:</span>
                             <span className="font-mono text-xl sm:text-2xl font-black text-amber-700">{formatCurrency(totals.total)}</span>
                           </div>
                         </div>
@@ -513,9 +520,7 @@ export const IssuedInvoicesScreen: React.FC<IssuedInvoicesScreenProps> = ({
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (window.confirm(`¿Estás seguro de que deseas eliminar la factura ${inv.number}?`)) {
-                                onDeleteInvoice(inv.id || inv.number);
-                              }
+                              setInvoiceToDelete(inv);
                             }}
                             className="inline-flex items-center gap-2 text-sm sm:text-base text-[#EF4444] hover:text-red-300 transition-colors py-1.5 px-3 rounded-lg hover:bg-red-950/50 cursor-pointer font-bold"
                             title="Eliminar factura"
@@ -531,6 +536,41 @@ export const IssuedInvoicesScreen: React.FC<IssuedInvoicesScreenProps> = ({
               </motion.div>
             );
           })}
+        </div>
+      )}
+
+      {/* Modal de Confirmación para Eliminar Factura Emitida */}
+      {invoiceToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl text-center">
+            <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 mx-auto flex items-center justify-center">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-white">¿Eliminar Factura Emitida?</h3>
+            <p className="text-sm text-neutral-300">
+              ¿Estás seguro de que deseas eliminar la factura <span className="font-bold text-amber-300">{invoiceToDelete.number}</span> ({invoiceToDelete.client?.name || 'Cliente'})?
+            </p>
+            <p className="text-xs text-neutral-400">
+              Se moverá a la Papelera durante un año antes de eliminarse por completo.
+            </p>
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setInvoiceToDelete(null)}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-sm font-semibold transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                id="btn-confirm-delete-issued-invoice"
+                onClick={handleConfirmDelete}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-bold shadow-lg hover:shadow-red-600/30 transition-all cursor-pointer"
+              >
+                Sí, eliminar
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

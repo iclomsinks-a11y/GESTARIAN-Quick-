@@ -29,7 +29,7 @@ export const InvoiceEditorModal: React.FC<InvoiceEditorModalProps> = ({
   const [formData, setFormData] = useState<Invoice>({
     ...invoice,
     client: { ...invoice.client },
-    items: invoice.items?.length ? [...invoice.items] : [{ id: 'item-1', concept: '', units: 1, unitPrice: 0, total: 0 }],
+    items: invoice.items?.length ? [...invoice.items] : [{ id: 'item-1', concept: '', units: 0, unitPrice: 0, total: 0 }],
   });
 
   const [activeField, setActiveField] = useState<InvoiceInputField>(initialField);
@@ -46,7 +46,7 @@ export const InvoiceEditorModal: React.FC<InvoiceEditorModalProps> = ({
       setFormData({
         ...invoice,
         client: { ...invoice.client },
-        items: invoice.items?.length ? [...invoice.items] : [{ id: 'item-1', concept: '', units: 1, unitPrice: 0, total: 0 }],
+        items: invoice.items?.length ? [...invoice.items] : [{ id: 'item-1', concept: '', units: 0, unitPrice: 0, total: 0 }],
       });
       setActiveField(initialField || 'clientName');
     }
