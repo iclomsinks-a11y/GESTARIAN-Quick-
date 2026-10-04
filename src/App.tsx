@@ -1119,9 +1119,10 @@ export default function App() {
     showToast('Producto eliminado del catálogo.', 'info');
   };
 
-  // Trigger Print dialog
+  // Abre la vista de impresión; ésta imprime SOLO la hoja A4 mediante el diálogo nativo
+  // del sistema (antes se llamaba a window.print() sobre toda la app y salía recortada/en blanco).
   const handlePrint = () => {
-    window.print();
+    setIsPrintPreviewOpen(true);
   };
 
   return (
@@ -1457,8 +1458,8 @@ export default function App() {
               currentInvoice={currentInvoice}
               onNewInvoice={handleNewInvoice}
               onPrintInvoice={() => {
-                scrollToPage(2);
-                setTimeout(() => handlePrint(), 200);
+                setIsInvoiceSaved(true);
+                handlePrint();
               }}
               onReplaySplash={() => setShowSplash(true)}
               onOpenWhatsAppModal={() => setIsWhatsAppModalOpen(true)}
@@ -1646,7 +1647,6 @@ export default function App() {
         <PrintPreviewModal
           invoice={currentInvoice}
           onClose={() => setIsPrintPreviewOpen(false)}
-          onPrint={handlePrint}
         />
       )}
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Printer,
   X,
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Invoice } from '../types';
 import { formatCurrency, formatDate } from '../utils/formatters';
+import { printInvoiceSheet } from '../utils/printInvoice';
 
 interface PrintPreviewModalProps {
   invoice: Invoice;
@@ -54,11 +55,15 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
     }
   };
 
-  // Auto-abrir el diálogo de la impresora preconfigurada en el dispositivo al abrir la vista de impresión
+  // Auto-abrir el diálogo de impresión del sistema (impresora predeterminada + nº de copias)
+  // al abrir la vista de impresión. El ref evita dobles disparos (React StrictMode / re-montajes).
+  const autoPrintedRef = useRef(false);
   useEffect(() => {
+    if (autoPrintedRef.current) return;
     const printTimer = setTimeout(() => {
+      autoPrintedRef.current = true;
       handleTriggerPrint();
-    }, 280);
+    }, 450);
     return () => clearTimeout(printTimer);
   }, []);
 
@@ -86,11 +91,11 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
   }, [onClose]);
 
   const handleTriggerPrint = () => {
-    if (onPrint) {
-      onPrint();
-    } else {
-      window.print();
-    }
+    // Se imprime SOLO la hoja A4 en un marco aislado: abre el diálogo nativo del sistema
+    // (selección de impresora, número de copias, guardar como PDF...).
+    printInvoiceSheet(invoice.number).finally(() => {
+      if (onPrint) onPrint();
+    });
   };
 
   // Calculations
@@ -102,7 +107,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
   return (
     <div
       id="print-preview-modal"
-      className="fixed inset-0 z-50 flex flex-col bg-neutral-950/90 backdrop-blur-md overflow-hidden text-neutral-100 print:bg-white print:text-neutral-900 print:static print:inset-auto print:overflow-visible"
+      className="fixed inset-0 z-[80] flex flex-col bg-neutral-950/90 backdrop-blur-md overflow-hidden text-neutral-100 print:bg-white print:text-neutral-900 print:static print:inset-auto print:overflow-visible"
     >
       {/* Top Action Toolbar (Hidden during print) */}
       <header className="no-print shrink-0 h-14 bg-neutral-900 border-b border-neutral-800 px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-3 select-none">

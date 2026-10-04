@@ -193,12 +193,10 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
     }
   };
 
+  // Pulsar "Imprimir" abre la vista de impresión; ésta lanza automáticamente el diálogo
+  // nativo del sistema (impresora predeterminada, nº de copias, PDF) imprimiendo solo la hoja A4.
   const handlePrint = () => {
-    if (onPrint) {
-      onPrint();
-    } else {
-      window.print();
-    }
+    handleOpenPrintPreview();
   };
 
   const handleWhatsApp = () => {
@@ -1025,14 +1023,12 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
         </div>
       </div>
 
-      {/* Modal de Vista de Impresión */}
-      {isPrintPreviewOpen && (
+      {/* Modal de Vista de Impresión (solo si no lo controla el componente padre) */}
+      {propIsPrintPreviewOpen === undefined && isPrintPreviewOpen && (
         <PrintPreviewModal
           invoice={invoice}
           onClose={handleClosePrintPreview}
-          onPrint={onPrint || (() => {
-            window.print();
-          })}
+          onPrint={onPrint}
         />
       )}
 

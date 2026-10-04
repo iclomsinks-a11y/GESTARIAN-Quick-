@@ -416,6 +416,29 @@ export async function sendGestarianEmailNotification(
   const body = generateEmailInvoiceBody(payload);
   const mailtoUrl = getEmailDirectUrl(payload.clientEmail, subject, body);
 
+  let apiStatus: 'sent' | 'delivered' | 'failed' = 'delivered';
+
+  try {
+    const res = await fetch('/api/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        recipientEmail: payload.clientEmail,
+        subject,
+        body,
+        pdfHostedUrl: payload.pdfHostedUrl || `https://notificaciones.gestarian.com/f/${encodeURIComponent(payload.invoiceNumber)}`,
+        invoiceNumber: payload.invoiceNumber
+      })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Error en el servidor al enviar email');
+    }
+  } catch (err: any) {
+    console.warn('Error llamando a /api/send-email, guardando registro simulado:', err);
+    throw new Error(`Fallo en el servicio de correo: ${err?.message || 'Error desconocido'}`);
+  }
+
   // Registro en mirror de Resend / Cloud
   try {
     const resendHistory = JSON.parse(localStorage.getItem('resend_dispatches_mirror') || '[]');

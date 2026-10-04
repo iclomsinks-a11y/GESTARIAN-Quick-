@@ -91,6 +91,23 @@ export const EmailDispatchModal: React.FC<EmailDispatchModalProps> = ({
     setIsSending(true);
 
     try {
+      // 1. Publish invoice to get actual hosted URL
+      let pdfHostedUrl = `https://notificaciones.gestarian.com/f/${encodeURIComponent(invoice.number)}`;
+      try {
+        const publishRes = await fetch('/api/publish-invoice', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ invoice })
+        });
+        const publishData = await publishRes.json();
+        if (publishData.success && publishData.token) {
+          pdfHostedUrl = `${window.location.origin}/f/${publishData.token}`;
+        }
+      } catch (e) {
+        console.warn('Could not publish invoice to local backend, using fallback URL', e);
+      }
+
+      // 2. Send email
       const record = await sendGestarianEmailNotification({
         invoiceId: invoice.id,
         invoiceNumber: invoice.number,
@@ -101,7 +118,7 @@ export const EmailDispatchModal: React.FC<EmailDispatchModalProps> = ({
         totalAmount,
         issueDate: invoice.date,
         veriFactuHash: invoice.veriFactu.chainHash,
-        pdfHostedUrl: `https://notificaciones.gestarian.com/f/${encodeURIComponent(invoice.number)}`,
+        pdfHostedUrl,
         customNotes: customNotes.trim() || undefined,
       });
 

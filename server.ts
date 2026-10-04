@@ -5,6 +5,8 @@ import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type } from '@google/genai';
 import { ImapFlow } from 'imapflow';
 import { simpleParser } from 'mailparser';
+import { Resend } from 'resend';
+import { createClient } from '@supabase/supabase-js';
 
 dotenv.config();
 
@@ -20,8 +22,47 @@ async function startServer() {
     res.json({
       status: 'ok',
       hasGeminiKey: Boolean(process.env.GEMINI_API_KEY),
+      hasResendKey: Boolean(process.env.RESEND_API_KEY),
       timestamp: new Date().toISOString(),
     });
+  });
+
+  // Resend Email Endpoint
+  app.post('/api/send-email', async (req, res) => {
+    try {
+      const { recipientEmail, subject, body, pdfHostedUrl, invoiceNumber } = req.body;
+      
+      const apiKey = process.env.RESEND_API_KEY;
+      if (!apiKey) {
+        return res.status(500).json({ error: 'Falta configurar RESEND_API_KEY en el servidor.' });
+      }
+
+      const resend = new Resend(apiKey);
+      
+      const htmlBody = (body || '').replace(/\n/g, '<br/>');
+
+      const { data, error } = await resend.emails.send({
+        // Asegúrate de que el dominio esté verificado en Resend (ej: notificaciones@gestarian.com)
+        // Si no está verificado, usa la dirección por defecto onboarding@resend.dev para pruebas
+        from: 'Gestarian Notificaciones <onboarding@resend.dev>',
+        to: [recipientEmail],
+        subject: subject || `Factura ${invoiceNumber || ''}`,
+        html: `<div style="font-family: system-ui, -apple-system, sans-serif; color: #1f2937; line-height: 1.5; padding: 20px;">
+          ${htmlBody}
+          ${pdfHostedUrl ? `<br/><br/><a href="${pdfHostedUrl}" style="display: inline-block; background-color: #0284c7; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px;">Descargar Factura Oficial</a>` : ''}
+        </div>`,
+      });
+
+      if (error) {
+        console.error('Resend error:', error);
+        return res.status(400).json({ success: false, error: error.message });
+      }
+
+      return res.json({ success: true, data });
+    } catch (err: any) {
+      console.error('Error sending email:', err);
+      return res.status(500).json({ success: false, error: err?.message || 'Error al enviar el email' });
+    }
   });
 
   // Helper to execute Gemini with multi-model fallback and fast cascading
@@ -154,6 +195,195 @@ async function startServer() {
 
     return Buffer.from(svg, 'utf-8').toString('base64');
   }
+
+  // Supabase Initialization
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_KEY;
+  const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+
+  // In-memory invoice store for /f/:token serving (fallback)
+  const invoiceStore = new Map<string, any>();
+
+  // Invoice Publisher Endpoint
+  app.post('/api/publish-invoice', async (req, res) => {
+    try {
+      const { invoice } = req.body;
+      if (!invoice || !invoice.number) {
+        return res.status(400).json({ error: 'Datos de factura inválidos' });
+      }
+      
+      const token = encodeURIComponent(invoice.number);
+      
+      if (supabase) {
+        const { error } = await supabase
+          .from('published_invoices')
+          .upsert({ token, invoice_data: invoice }, { onConflict: 'token' });
+          
+        if (error) {
+          console.error('Error guardando en Supabase:', error);
+          invoiceStore.set(token, invoice); // fallback
+        }
+      } else {
+        invoiceStore.set(token, invoice);
+      }
+      
+      return res.json({ success: true, token, url: `https://notificaciones.gestarian.com/f/${token}` });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Invoice HTML Viewer Endpoint
+  app.get('/f/:token', async (req, res) => {
+    const token = req.params.token;
+    let invoice = invoiceStore.get(token);
+    
+    if (!invoice && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('published_invoices')
+          .select('invoice_data')
+          .eq('token', token)
+          .single();
+          
+        if (data && !error) {
+          invoice = data.invoice_data;
+        }
+      } catch (err) {
+        console.error('Error consultando Supabase:', err);
+      }
+    }
+    
+    if (!invoice) {
+      return res.status(404).send(`
+        <html>
+        <body style="font-family: sans-serif; text-align: center; padding: 50px;">
+          <h2>Documento no encontrado o expirado</h2>
+          <p>El enlace a esta factura ya no es válido.</p>
+        </body>
+        </html>
+      `);
+    }
+
+    const base = invoice.items.reduce((sum: number, item: any) => sum + (item.total || 0), 0);
+    const ivaAmt = base * ((invoice.ivaRate || 21) / 100);
+    const irpfAmt = base * ((invoice.irpfRate || 0) / 100);
+    const totalAmount = base + ivaAmt - irpfAmt;
+
+    const formattedTotal = Number(totalAmount).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+
+    const html = `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Factura Oficial ${invoice.number}</title>
+      <style>
+        body { font-family: system-ui, -apple-system, sans-serif; background: #f8fafc; color: #0f172a; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 30px; }
+        h1 { margin: 0; color: #0f172a; font-size: 24px; }
+        .badge { display: inline-block; background: #e0f2fe; color: #0369a1; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: bold; margin-top: 10px; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; }
+        .section-title { font-size: 12px; text-transform: uppercase; color: #64748b; font-weight: bold; letter-spacing: 0.05em; margin-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        th { background: #f8fafc; padding: 12px; text-align: left; font-size: 13px; color: #64748b; border-bottom: 2px solid #e2e8f0; }
+        td { padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+        .totals { width: 300px; margin-left: auto; border-top: 2px solid #0f172a; padding-top: 20px; }
+        .totals-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
+        .totals-row.final { font-size: 18px; font-weight: bold; }
+        .btn-print { display: block; width: 100%; text-align: center; background: #0284c7; color: white; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 40px; border: none; cursor: pointer; }
+        .btn-print:hover { background: #0369a1; }
+        @media print {
+          body { background: white; padding: 0; }
+          .container { box-shadow: none; padding: 0; }
+          .no-print { display: none !important; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <div>
+            <h1>FACTURA OFICIAL</h1>
+            <div style="font-size: 18px; color: #64748b; margin-top: 5px;">${invoice.number}</div>
+            ${invoice.veriFactu?.chainHash ? `<div class="badge">Veri*Factu AEAT</div>` : ''}
+          </div>
+          <div style="text-align: right; color: #64748b;">
+            <div>Fecha de Emisión: <strong>${invoice.date}</strong></div>
+            ${invoice.dueDate ? `<div>Fecha de Vencimiento: <strong>${invoice.dueDate}</strong></div>` : ''}
+          </div>
+        </div>
+
+        <div class="info-grid">
+          <div>
+            <div class="section-title">Emisor</div>
+            <div style="font-weight: bold; font-size: 16px;">${invoice.company.name}</div>
+            <div>CIF: ${invoice.company.cif}</div>
+            <div style="color: #64748b;">${invoice.company.address}</div>
+            <div style="color: #64748b;">${invoice.company.email}</div>
+          </div>
+          <div style="text-align: right;">
+            <div class="section-title">Cliente</div>
+            <div style="font-weight: bold; font-size: 16px;">${invoice.client.name}</div>
+            <div>NIF: ${invoice.client.nif}</div>
+            <div style="color: #64748b;">${invoice.client.address}</div>
+            <div style="color: #64748b;">${invoice.client.email}</div>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Concepto</th>
+              <th style="text-align: center;">Uds.</th>
+              <th style="text-align: right;">Precio</th>
+              <th style="text-align: right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${invoice.items.map((it: any) => `
+              <tr>
+                <td>${it.concept}</td>
+                <td style="text-align: center;">${it.units}</td>
+                <td style="text-align: right;">${Number(it.unitPrice).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</td>
+                <td style="text-align: right; font-weight: bold;">${Number(it.total).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+
+        <div class="totals">
+          <div class="totals-row">
+            <span>Base Imponible</span>
+            <span>${Number(base).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+          </div>
+          <div class="totals-row">
+            <span>IVA (${invoice.ivaRate}%)</span>
+            <span>${Number(ivaAmt).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+          </div>
+          ${invoice.irpfRate ? `
+            <div class="totals-row">
+              <span>IRPF (-${invoice.irpfRate}%)</span>
+              <span>-${Number(irpfAmt).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+            </div>
+          ` : ''}
+          <div class="totals-row final" style="margin-top: 15px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+            <span>TOTAL FACTURA</span>
+            <span style="color: #0284c7;">${formattedTotal}</span>
+          </div>
+        </div>
+
+        <button class="btn-print no-print" onclick="window.print()">
+          Descargar PDF / Imprimir Factura
+        </button>
+      </div>
+    </body>
+    </html>
+    `;
+    res.send(html);
+  });
 
   // AI Logo Generation endpoint with Multi-Model Fallback and Guaranteed Vector Synthesis
   app.post('/api/generate-logo', async (req, res) => {

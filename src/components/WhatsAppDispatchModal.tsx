@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Send,
@@ -41,6 +41,16 @@ export const WhatsAppDispatchModal: React.FC<WhatsAppDispatchModalProps> = ({
   onClose,
   onDispatchComplete,
 }) => {
+  useEffect(() => {
+    if (isOpen) {
+      fetch('/api/publish-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invoice })
+      }).catch(err => console.warn('Failed to publish invoice', err));
+    }
+  }, [isOpen, invoice]);
+
   // Pre-fill phone with client phone if available
   const [recipientPhone, setRecipientPhone] = useState(invoice.client.phone || '');
   const [countryCode, setCountryCode] = useState('+34');
