@@ -63,7 +63,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
     const printTimer = setTimeout(() => {
       autoPrintedRef.current = true;
       handleTriggerPrint();
-    }, 450);
+    }, 200);
     return () => clearTimeout(printTimer);
   }, []);
 
@@ -91,11 +91,15 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
   }, [onClose]);
 
   const handleTriggerPrint = () => {
-    // Se imprime SOLO la hoja A4 en un marco aislado: abre el diálogo nativo del sistema
-    // (selección de impresora, número de copias, guardar como PDF...).
-    printInvoiceSheet(invoice.number).finally(() => {
-      if (onPrint) onPrint();
-    });
+    printInvoiceSheet(invoice.number)
+      .then(() => {
+        if (onPrint) onPrint();
+      })
+      .catch((err) => {
+        console.error('Error durante la impresión aislada, fallback a window.print:', err);
+        window.print();
+        if (onPrint) onPrint();
+      });
   };
 
   // Calculations
@@ -109,9 +113,38 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
       id="print-preview-modal"
       className="fixed inset-0 z-[80] flex flex-col bg-neutral-950/90 backdrop-blur-md overflow-hidden text-neutral-100 print:bg-white print:text-neutral-900 print:static print:inset-auto print:overflow-visible"
     >
+      {/* Inline styles to guarantee that only the #a4-print-sheet-preview is printed when calling window.print() */}
+      <style>{`
+        @media print {
+          /* Hide absolutely everything else */
+          body * {
+            visibility: hidden !important;
+          }
+          /* Show only our desired pristine A4 preview element and all its children */
+          #a4-print-sheet-preview,
+          #a4-print-sheet-preview * {
+            visibility: visible !important;
+          }
+          /* Ensure that the A4 preview fits perfectly on the A4 page printout with no margins/borders */
+          #a4-print-sheet-preview {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 210mm !important;
+            height: 297mm !important;
+            margin: 0 !important;
+            padding: 10mm 12mm !important;
+            border: none !important;
+            box-shadow: none !important;
+            background: white !important;
+            color: black !important;
+          }
+        }
+      `}</style>
+
       {/* Top Action Toolbar (Hidden during print) */}
       <header className="no-print shrink-0 h-14 bg-neutral-900 border-b border-neutral-800 px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-3 select-none">
-        {/* Left: Close/Back + Title */}
+        {/* Left: Close/Back */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             type="button"
@@ -122,46 +155,6 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">Volver</span>
-          </button>
-
-          <div className="h-4 w-px bg-neutral-700 hidden sm:block shrink-0" />
-
-          <div className="flex items-center gap-2 min-w-0">
-            <FileText className="w-4 h-4 text-amber-400 shrink-0" />
-            <h2 className="text-xs sm:text-sm font-bold text-neutral-100 truncate">
-              Factura {invoice.number}
-            </h2>
-            <span className="hidden md:inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-amber-400/10 text-amber-300 border border-amber-400/30 shrink-0">
-              A4
-            </span>
-          </div>
-        </div>
-
-        {/* Center: Zoom Controls in Header */}
-        <div className="flex items-center gap-1 bg-neutral-950 px-2 py-1 rounded-xl border border-neutral-800 text-xs shadow-inner">
-          <button
-            type="button"
-            onClick={handleZoomOut}
-            className="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer"
-            title="Reducir zoom (-)"
-          >
-            <ZoomOut className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={handleResetZoom}
-            className="font-mono text-neutral-200 hover:text-amber-400 px-1 text-center text-xs font-bold transition-colors cursor-pointer"
-            title="Pulsar para restablecer al 100%"
-          >
-            {zoom}%
-          </button>
-          <button
-            type="button"
-            onClick={handleZoomIn}
-            className="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer"
-            title="Aumentar zoom (+)"
-          >
-            <ZoomIn className="w-3.5 h-3.5" />
           </button>
         </div>
 
@@ -294,141 +287,136 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
           >
             {/* Top Section */}
             <div className="space-y-6">
-              {/* Header: Logo on left + Company Data to its right, and on the right of document: FACTURA Title & Number & Dates */}
-              <div className="flex justify-between items-start gap-6 pb-6 border-b border-neutral-300">
-                {/* Left: Logo on the left, and to the right of the logo the company data */}
-                <div className="flex items-start gap-4 sm:gap-5 flex-1 max-w-lg">
-                  {invoice.company.logoUrl && (
-                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg border border-neutral-200 bg-white p-1.5 flex items-center justify-center shrink-0">
-                      <img
-                        src={invoice.company.logoUrl}
-                        alt="Logotipo de la empresa"
-                        className="max-w-full max-h-full object-contain"
-                      />
-                    </div>
-                  )}
-
-                  <div className="space-y-0.5 text-xs text-neutral-700 min-w-[180px] text-left">
-                    <div className="font-bold text-base text-neutral-950">
-                      {invoice.company.name || 'Empresa Emisora'}
-                    </div>
-                    {invoice.company.cif && (
-                      <div className="font-mono font-semibold text-neutral-800">
-                        <span className="text-neutral-400 font-normal">CIF/NIF: </span>
-                        {invoice.company.cif}
-                      </div>
-                    )}
-                    {invoice.company.address && (
-                      <div className="text-neutral-600 max-w-[220px]">
-                        {invoice.company.address}
-                      </div>
-                    )}
-                    {invoice.company.phone && (
-                      <div className="text-neutral-600">
-                        <span className="text-neutral-400">Tel: </span>
-                        {invoice.company.phone}
-                      </div>
-                    )}
-                    {invoice.company.email && (
-                      <div className="text-neutral-600">
-                        <span className="text-neutral-400">Email: </span>
-                        {invoice.company.email}
-                      </div>
-                    )}
-                  </div>
+              {/* Top Row: FACTURA on the left (50%), Número y Fecha on the right (50%) in two lines, left-aligned, aligning perfectly with top/bottom of FACTURA */}
+              <div className="grid grid-cols-2 gap-4 pb-4 h-[72px]" style={{ fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" }}>
+                {/* Left 50% - FACTURA in 30% gray (#b3b3b3), left-aligned, height-matching container */}
+                <div className="flex items-center justify-start h-full">
+                  <h1 className="text-[72px] font-black tracking-tight uppercase leading-none" style={{ color: '#b3b3b3' }}>
+                    FACTURA
+                  </h1>
                 </div>
-
-                {/* Right: FACTURA title, correlative number & dates (Right of document) */}
-                <div className="space-y-2 text-right shrink-0 flex flex-col items-end">
-                  <div className="flex items-center gap-2 justify-end">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                    <h1
-                      className="text-3xl sm:text-4xl font-extrabold tracking-tight text-neutral-900 uppercase"
-                      style={{ fontFamily: "'Montserrat', sans-serif" }}
-                    >
-                      FACTURA
-                    </h1>
+                {/* Right 50% - Número & Fecha left-aligned, size x0.8 (text-[19.68px]), shifted 20px right, Fecha fixed at bottom, Número lowered with half gap */}
+                <div className="flex flex-col justify-end gap-1 text-left h-full py-0">
+                  <div className="text-[19.68px] font-bold text-neutral-400 leading-[1.2] translate-x-[20px]" style={{ lineHeight: '1.2', transform: 'translateX(20px)' }}>
+                    Número: <span className="text-neutral-800 font-bold">{invoice.number || 'F260000'}</span>
                   </div>
-
-                  <div className="space-y-1 text-xs flex flex-col items-end">
-                    <div className="flex items-center justify-end gap-2">
-                      <span className="font-semibold text-neutral-500 uppercase tracking-wider text-[11px]">
-                        Nº de Factura:
-                      </span>
-                      <span className="font-mono text-base font-bold text-neutral-900">
-                        {invoice.number || 'F260000'}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-end gap-2 text-neutral-700">
-                      <span className="font-medium text-neutral-500">Fecha de emisión:</span>
-                      <span className="font-medium text-neutral-900">
-                        {formatDate(invoice.date) || invoice.date}
-                      </span>
-                    </div>
-
-                    {invoice.dueDate && (
-                      <div className="flex items-center justify-end gap-2 text-neutral-700">
-                        <span className="font-medium text-neutral-500">Vencimiento:</span>
-                        <span className="font-medium text-neutral-900">
-                          {formatDate(invoice.dueDate)}
-                        </span>
-                      </div>
-                    )}
+                  <div className="text-[19.68px] font-bold text-neutral-400 leading-[1.2] translate-x-[20px]" style={{ lineHeight: '1.2', transform: 'translateX(20px)' }}>
+                    Fecha: <span className="text-neutral-800 font-bold">{formatDate(invoice.date) || invoice.date}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Client Section (Receptor) - Phone and Email omitted in print by specification */}
-              <div className="p-4 rounded-xl bg-neutral-50 border border-neutral-200 text-xs">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 mb-2">
-                  DATOS DEL CLIENTE (RECEPTOR)
+              {/* Two columns with Datos del Emisor on the left and Datos del Cliente on the right, both in 8px borders with rounded corners - All texts scaled x1.2 */}
+              <div className="grid grid-cols-2 gap-6 w-full items-stretch">
+                
+                {/* Left: Emisor wrapped in a 8px rounded gray border (gris 40%) */}
+                <div className="border-[8px] border-neutral-400 rounded-2xl p-4 sm:p-5 w-full text-left flex flex-col gap-2">
+                  <div className="text-[15px] font-extrabold uppercase tracking-wider text-neutral-400 mb-0.5">
+                    EMISOR
+                  </div>
+                  <div className="flex items-start gap-4">
+                    {invoice.company.logoUrl && (
+                      <div className="w-16 h-16 rounded-lg border border-neutral-200 bg-white p-1.5 flex items-center justify-center shrink-0">
+                        <img
+                          src={invoice.company.logoUrl}
+                          alt="Logo Empresa"
+                          className="max-w-full max-h-full object-contain"
+                        />
+                      </div>
+                    )}
+                    <div className="space-y-1 text-[13.5px] text-neutral-700 min-w-0 flex-1 leading-normal">
+                      <div className="font-extrabold text-[23px] text-neutral-950 leading-tight">
+                        {invoice.company.name || 'Empresa Emisora'}
+                      </div>
+                      {invoice.company.cif && (
+                        <div className="font-mono font-semibold text-neutral-800">
+                          <span className="text-neutral-500 font-normal">CIF/NIF: </span>
+                          {invoice.company.cif}
+                        </div>
+                      )}
+                      {invoice.company.address && (
+                        <div className="text-neutral-600">
+                          {invoice.company.address}
+                        </div>
+                      )}
+                      {invoice.company.phone && (
+                        <div className="text-neutral-600">
+                          <span className="text-neutral-500">Tel: </span>
+                          {invoice.company.phone}
+                        </div>
+                      )}
+                      {invoice.company.email && (
+                        <div className="text-neutral-600">
+                          <span className="text-neutral-500">Email: </span>
+                          {invoice.company.email}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-1.5 gap-x-4">
-                  <div className="sm:col-span-2">
-                    <span className="font-bold text-sm text-neutral-900">
+
+                {/* Right: Datos del Cliente (Receptor) wrapped in a 8px rounded gray border (gris 40%) */}
+                <div className="border-[8px] border-neutral-400 rounded-2xl p-4 sm:p-5 w-full text-left flex flex-col gap-2">
+                  <div className="text-[15px] font-extrabold uppercase tracking-wider text-neutral-400 mb-0.5">
+                    CLIENTE
+                  </div>
+                  <div className="space-y-1 text-[13.5px] text-neutral-700 leading-normal">
+                    <div className="font-extrabold text-[23px] text-neutral-950 leading-tight">
                       {invoice.client.name || '(Sin nombre de cliente)'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-neutral-500 font-medium">NIF / CIF / DNI: </span>
-                    <span className="font-mono font-semibold text-neutral-800">
-                      {invoice.client.nif || 'No especificado'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-neutral-500 font-medium">Domicilio: </span>
-                    <span className="text-neutral-700">
-                      {invoice.client.address || 'No especificado'}
-                    </span>
+                    </div>
+                    {invoice.client.nif && (
+                      <div className="font-mono font-semibold text-neutral-850">
+                        <span className="text-neutral-500 font-normal">CIF/NIF: </span>
+                        {invoice.client.nif}
+                      </div>
+                    )}
+                    {invoice.client.address && (
+                      <div className="text-neutral-600">
+                        <span className="text-neutral-500 font-normal">Domicilio: </span>
+                        {invoice.client.address}
+                      </div>
+                    )}
+                    {invoice.client.phone && (
+                      <div className="text-neutral-600">
+                        <span className="text-neutral-500 font-normal">Tel: </span>
+                        {invoice.client.phone}
+                      </div>
+                    )}
+                    {invoice.client.email && (
+                      <div className="text-neutral-600">
+                        <span className="text-neutral-500 font-normal">Email: </span>
+                        {invoice.client.email}
+                      </div>
+                    )}
                   </div>
                 </div>
+
               </div>
 
-              {/* Items Table */}
-              <div className="pt-2">
+              {/* Items Table with custom headers and 1.5x larger font sizes (padding/leading cut by half x0.5) */}
+              <div className="pt-1">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b-2 border-neutral-900 text-[11px] font-bold uppercase tracking-wider text-neutral-900">
-                      <th className="py-2.5 px-2 w-[55%]">Concepto / Descripción</th>
-                      <th className="py-2.5 px-2 text-center w-[15%]">Unidades</th>
-                      <th className="py-2.5 px-2 text-right w-[15%]">Precio Ud.</th>
-                      <th className="py-2.5 px-2 text-right w-[15%]">Total</th>
+                    <tr className="border-b-2 border-neutral-900 text-[16px] font-bold uppercase tracking-wider text-neutral-900 text-center">
+                      <th className="py-1 px-2 text-center w-[55%]">Concepto</th>
+                      <th className="py-1 px-2 text-center w-[15%]">Unidades</th>
+                      <th className="py-1 px-2 text-center w-[15%]">Precio</th>
+                      <th className="py-1 px-2 text-center w-[15%]">Importe</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-neutral-200 text-xs">
+                  <tbody className="divide-y divide-neutral-200 text-[18px]">
                     {invoice.items.map((item, idx) => (
                       <tr key={item.id || idx}>
-                        <td className="py-2.5 px-2 text-neutral-900 font-medium">
+                        <td className="py-1 px-2 text-neutral-900 font-semibold leading-tight">
                           {item.concept || '(Línea sin concepto)'}
                         </td>
-                        <td className="py-2.5 px-2 text-center font-mono text-neutral-700">
+                        <td className="py-1 px-2 text-center font-mono text-neutral-700">
                           {item.units || 1}
                         </td>
-                        <td className="py-2.5 px-2 text-right font-mono text-neutral-700">
+                        <td className="py-1 px-2 text-center font-mono text-neutral-700">
                           {formatCurrency(item.unitPrice || 0)}
                         </td>
-                        <td className="py-2.5 px-2 text-right font-mono font-semibold text-neutral-900">
+                        <td className="py-1 px-2 text-right font-mono font-bold text-neutral-900">
                           {formatCurrency(item.total || 0)}
                         </td>
                       </tr>
@@ -439,49 +427,21 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
             </div>
 
             {/* Bottom Section */}
-            <div className="mt-8 space-y-6">
-              {/* Payment & Totals */}
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 pt-4 border-t border-neutral-200">
-                {/* Bank / Payment info */}
-                <div className="space-y-1.5 text-xs text-neutral-600 max-w-xs">
-                  <div className="flex items-center gap-1.5 font-semibold text-neutral-800">
-                    <CreditCard className="w-4 h-4 text-neutral-500" />
-                    <span>Forma de pago y datos bancarios</span>
-                  </div>
-                  <div className="p-3 rounded-lg bg-neutral-50 border border-neutral-200 space-y-1">
-                    {invoice.company.bankName && (
-                      <div className="text-neutral-700 font-medium text-[11px]">
-                        {invoice.company.bankName}
-                      </div>
-                    )}
-                    {invoice.company.iban ? (
-                      <div className="font-mono text-neutral-900 font-semibold text-xs tracking-wider">
-                        IBAN: {invoice.company.iban}
-                      </div>
-                    ) : (
-                      <div className="text-neutral-400 italic text-[11px]">
-                        Transferencia bancaria o ingreso en cuenta.
-                      </div>
-                    )}
-                    <div className="text-[10px] text-neutral-500 pt-0.5">
-                      Indicar número de factura {invoice.number} como concepto.
-                    </div>
-                  </div>
-                </div>
-
-                {/* Calculations Breakdown */}
-                <div className="w-full sm:w-64 space-y-2 text-xs">
-                  <div className="flex justify-between items-center py-1 border-b border-neutral-100">
+            <div className="mt-4 space-y-3">
+              {/* Calculations Breakdown (Base Imponible, IVA, Retención, TOTAL FACTURA) - Spacing/padding cut by half x0.5 */}
+              <div className="flex justify-end w-full">
+                <div className="w-full sm:w-80 space-y-1 text-[18px]">
+                  <div className="flex justify-between items-center py-0.5 border-b border-neutral-100">
                     <span className="text-neutral-600 font-medium">Base Imponible:</span>
                     <span className="font-mono font-semibold text-neutral-900">
                       {formatCurrency(baseImponible)}
                     </span>
                   </div>
 
-                  <div className="flex justify-between items-center py-1 border-b border-neutral-100">
+                  <div className="flex justify-between items-center py-0.5 border-b border-neutral-100">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-neutral-700 font-semibold">IVA</span>
-                      <span className="px-1.5 py-0.2 bg-amber-100 text-amber-900 font-bold rounded text-[10px]">
+                      <span className="text-neutral-700 font-bold">IVA</span>
+                      <span className="text-neutral-900 font-bold">
                         {invoice.ivaRate || 21}%
                       </span>
                     </div>
@@ -491,7 +451,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                   </div>
 
                   {invoice.irpfRate > 0 && (
-                    <div className="flex justify-between items-center py-1 border-b border-neutral-100 text-neutral-700">
+                    <div className="flex justify-between items-center py-0.5 border-b border-neutral-100 text-neutral-700">
                       <span className="font-medium">Retención IRPF (-{invoice.irpfRate}%):</span>
                       <span className="font-mono font-semibold text-red-600">
                         -{formatCurrency(cuotaIrpf)}
@@ -499,21 +459,50 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                     </div>
                   )}
 
-                  <div className="flex justify-between items-baseline pt-2 pb-1 border-t-2 border-neutral-900">
-                    <span className="text-sm font-extrabold uppercase tracking-wide text-neutral-900">
+                  <div className="flex justify-between items-baseline pt-1 pb-0.5 border-t-2 border-neutral-900">
+                    <span className="text-lg font-black uppercase tracking-wide text-neutral-900">
                       TOTAL FACTURA
                     </span>
-                    <span className="text-xl font-black font-mono text-neutral-950">
+                    <span className="text-2xl font-black font-mono text-neutral-950">
                       {formatCurrency(totalFactura)}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Official Veri*Factu Validation Block */}
-              <div className="p-3.5 rounded-xl border border-neutral-300 bg-neutral-50/80 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-white p-1 rounded-lg border border-neutral-300 shrink-0 shadow-xs flex items-center justify-center">
+              {/* Added AFTER TOTAL FACTURA: Bank details and VeriFactu block side-by-side, scaled up x1.25 */}
+              <div className="grid grid-cols-2 gap-4 pt-3 border-t border-neutral-200">
+                
+                {/* Left: Forma de pago y datos bancarios (Scaled up by 1.25 to text-[15px]) */}
+                <div className="space-y-1.5 text-[15px] text-neutral-600">
+                  <div className="flex items-center gap-1.5 font-bold text-neutral-800 text-[15px]">
+                    <CreditCard className="w-5 h-5 text-neutral-500" />
+                    <span>Forma de pago y datos bancarios</span>
+                  </div>
+                  <div className="p-3.5 rounded-lg bg-neutral-50 border border-neutral-200 space-y-1 text-left">
+                    {invoice.company.bankName && (
+                      <div className="text-neutral-700 font-bold text-[14px]">
+                        {invoice.company.bankName}
+                      </div>
+                    )}
+                    {invoice.company.iban ? (
+                      <div className="font-mono text-neutral-900 font-bold text-[15px] tracking-wider">
+                        IBAN: {invoice.company.iban}
+                      </div>
+                    ) : (
+                      <div className="text-neutral-400 italic text-[14px]">
+                        Transferencia bancaria o ingreso en cuenta.
+                      </div>
+                    )}
+                    <div className="text-[13px] text-neutral-500 pt-0.5">
+                      Indicar número de factura {invoice.number} como concepto.
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right: Official Veri*Factu Validation Block (Scaled up by 1.25) */}
+                <div className="p-3.5 rounded-xl border border-neutral-300 bg-neutral-50/80 flex items-center gap-4 text-left">
+                  <div className="w-16 h-16 bg-white p-1 rounded-lg border border-neutral-350 shrink-0 flex items-center justify-center">
                     {invoice.veriFactu?.qrDataUrl ? (
                       <img
                         src={invoice.veriFactu.qrDataUrl}
@@ -525,33 +514,25 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                     )}
                   </div>
 
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 font-bold text-[10px] tracking-wide uppercase">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                  <div className="space-y-0.5 min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 font-bold text-[11px] sm:text-[11px] tracking-wide uppercase">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                         VERI*FACTU VALIDADA
                       </span>
-                      <span className="text-[10px] text-neutral-500 font-mono">
+                      <span className="text-[11px] text-neutral-500 font-mono truncate max-w-[90px]">
                         {invoice.veriFactu?.systemId || 'SISTEMA-VERIFACTU'}
                       </span>
                     </div>
-                    <p className="text-[11px] font-semibold text-neutral-900 leading-tight">
-                      Factura verificable en la sede electrónica de la AEAT
+                    <p className="text-[13px] font-bold text-neutral-900 leading-tight">
+                      Factura verificable en sede AEAT
                     </p>
-                    <p className="text-[10px] text-neutral-500 leading-snug">
-                      Sistema Informático de Facturación adaptado al Real Decreto 1007/2023. Huella:{' '}
-                      <span className="font-mono text-neutral-700">
-                        {invoice.veriFactu?.chainHash
-                          ? `${invoice.veriFactu.chainHash.slice(0, 20)}...`
-                          : 'Validada criptográficamente'}
-                      </span>
+                    <p className="text-[11px] text-neutral-500 leading-tight truncate">
+                      Huella: <span className="font-mono text-neutral-700">{invoice.veriFactu?.chainHash ? `${invoice.veriFactu.chainHash.slice(0, 15)}...` : 'Validada criptográficamente'}</span>
                     </p>
                   </div>
                 </div>
 
-                <div className="text-right text-[10px] text-neutral-400 hidden sm:block">
-                  Documento tributario oficial
-                </div>
               </div>
 
               {/* Document Footnote */}

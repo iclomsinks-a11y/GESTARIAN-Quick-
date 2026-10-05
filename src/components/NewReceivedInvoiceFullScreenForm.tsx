@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Check, Camera, Trash2, Building2, UserCheck } from 'lucide-react';
+import { X, Check, Camera, Trash2, Building2 } from 'lucide-react';
 import { ReceivedInvoice, ProviderData, CompanyData } from '../types';
 
 interface NewReceivedInvoiceFullScreenFormProps {
@@ -175,29 +175,6 @@ export const NewReceivedInvoiceFullScreenForm: React.FC<NewReceivedInvoiceFullSc
 
       {/* Main Content: Minimalist Form, No Wrappers, Double Font Sizes */}
       <div className="flex-1 max-w-4xl w-full mx-auto p-6 sm:p-12 space-y-8">
-        {/* Banner informativo de Receptores / Emisores */}
-        <div className="p-4 rounded-2xl border border-neutral-800 bg-neutral-900/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0">
-              <UserCheck className="w-5 h-5 stroke-[2]" />
-            </div>
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">
-                CLIENTE / DESTINATARIO DE LA FACTURA (NOSOTROS)
-              </span>
-              <h4 className="text-sm sm:text-base font-extrabold text-white">
-                {company?.name || 'Nuestra Empresa (Gestarian)'}
-              </h4>
-              <p className="text-xs text-neutral-400 font-mono">
-                CIF: {company?.cif || 'CIF Propio'} | {company?.address || 'Domicilio Fiscal'}
-              </p>
-            </div>
-          </div>
-          <span className="px-3 py-1 rounded-xl bg-amber-400/10 border border-amber-400/30 text-amber-300 text-xs font-bold uppercase tracking-wider shrink-0">
-            Cliente Fijo
-          </span>
-        </div>
-
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Nombre / Emisor */}
           <div className="relative flex items-center justify-between w-full rounded-2xl border border-neutral-800 bg-neutral-900 focus-within:border-sky-400 focus-within:bg-sky-950/20 p-4 transition-all">

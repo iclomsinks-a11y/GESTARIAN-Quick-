@@ -25,7 +25,6 @@ import {
   Sparkles,
   Check,
   Save,
-  Package,
   ArrowLeft,
   Printer,
 } from 'lucide-react';
@@ -49,6 +48,7 @@ import { PrintPreviewModal } from './PrintPreviewModal';
 import { ClientEditorModal, ClientInputField } from './ClientEditorModal';
 import { LineasComplejasDropdown } from './LineasComplejasDropdown';
 import { ProductosClienteDropdown } from './ProductosClienteDropdown';
+import { CustomCalendarModal } from './CustomCalendarModal';
 
 interface A4InvoiceDocumentProps {
   invoice: Invoice;
@@ -99,6 +99,11 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
   onBack,
 }) => {
   const [isClientDropdownOpen, setIsClientDropdownOpen] = useState(false);
+  const isRectificative =
+    invoice.number?.toUpperCase().startsWith('FR') ||
+    invoice.number?.toUpperCase().startsWith('R') ||
+    invoice.notes?.toLowerCase().includes('rectificativ') ||
+    invoice.items?.some((it) => it.concept?.toLowerCase().includes('rectificaci'));
   const [isSavedLocal, setIsSavedLocal] = useState<boolean>(Boolean(isSaved));
   const [internalPrintPreviewOpen, setInternalPrintPreviewOpen] = useState<boolean>(false);
 
@@ -108,6 +113,33 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
 
   const [isClientEditorOpen, setIsClientEditorOpen] = useState<boolean>(false);
   const [clientEditorField, setClientEditorField] = useState<ClientInputField>('name');
+
+  const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
+  const [editingField, setEditingField] = useState<'units' | 'unitPrice'>('units');
+  const [editCantidad, setEditCantidad] = useState('0');
+  const [editPrecio, setEditPrecio] = useState('0');
+  const [showCalendarModal, setShowCalendarModal] = useState(false);
+
+  const handleItemInputClick = (index: number, field: 'units' | 'unitPrice') => {
+    setEditingItemIndex(index);
+    setEditingField(field);
+    const item = invoice.items[index];
+    setEditCantidad((item.units !== undefined && item.units !== null ? item.units : 0).toString());
+    setEditPrecio((item.unitPrice !== undefined && item.unitPrice !== null ? item.unitPrice : 0).toString());
+  };
+
+  const handleConfirmEditInline = () => {
+    if (editingItemIndex === null) return;
+    const parsedQty = parseFloat(editCantidad.replace(',', '.'));
+    const parsedPrice = parseFloat(editPrecio.replace(',', '.'));
+    if (!isNaN(parsedQty)) {
+      handleItemChange(editingItemIndex, 'units', parsedQty);
+    }
+    if (!isNaN(parsedPrice)) {
+      handleItemChange(editingItemIndex, 'unitPrice', parsedPrice);
+    }
+    setEditingItemIndex(null);
+  };
 
   const [activeInputLabel, setActiveInputLabel] = useState<string>('');
   const a4SheetRef = useRef<HTMLDivElement>(null);
@@ -286,12 +318,23 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
   // Update item handlers
   const handleItemChange = (index: number, field: keyof InvoiceItem, value: any) => {
     const updatedItems = [...invoice.items];
-    const currentItem = { ...updatedItems[index], [field]: value };
+    const currentItem = { ...updatedItems[index] };
 
     if (field === 'units' || field === 'unitPrice') {
-      const units = field === 'units' ? parseFloat(value) || 0 : currentItem.units;
-      const price = field === 'unitPrice' ? parseFloat(value) || 0 : currentItem.unitPrice;
-      currentItem.total = Math.round(units * price * 100) / 100;
+      const stringVal = value !== undefined && value !== null ? value.toString() : '';
+      if (stringVal === '-' || stringVal === '-.' || stringVal === '.' || stringVal.endsWith('.')) {
+        (currentItem as any)[field] = stringVal;
+        currentItem.total = 0;
+      } else {
+        const parsedVal = parseFloat(value);
+        (currentItem as any)[field] = isNaN(parsedVal) ? 0 : parsedVal;
+
+        const units = field === 'units' ? (isNaN(parsedVal) ? 0 : parsedVal) : (typeof currentItem.units === 'string' ? parseFloat(currentItem.units) || 0 : currentItem.units);
+        const price = field === 'unitPrice' ? (isNaN(parsedVal) ? 0 : parsedVal) : (typeof currentItem.unitPrice === 'string' ? parseFloat(currentItem.unitPrice) || 0 : currentItem.unitPrice);
+        currentItem.total = Math.round(units * price * 100) / 100;
+      }
+    } else {
+      (currentItem as any)[field] = value;
     }
 
     updatedItems[index] = currentItem;
@@ -329,13 +372,13 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
     onChangeInvoice({ ...invoice, items: updatedItems });
   };
 
-  const handleAddItemWithConcept = (conceptText: string) => {
+  const handleAddItemWithConcept = (conceptText: string, price: number = 0, units: number = 1) => {
     const newItem: InvoiceItem = {
       id: `item-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
       concept: conceptText,
-      units: 1,
-      unitPrice: 0,
-      total: 0,
+      units: units,
+      unitPrice: price,
+      total: Math.round(units * price * 100) / 100,
     };
     
     // If there is only one item and it is completely empty, replace it
@@ -347,71 +390,13 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
     onConceptCommitted(conceptText);
   };
 
-  // Direct logo upload from A4 sheet
   return (
-    <div className="w-full flex flex-col items-center py-2 sm:py-4 px-2 sm:px-4 pb-4 transition-all">
-      {/* Barra Superior con Botón Volver, Número de Factura y Botón Imprimir */}
-      <div className="w-full max-w-[840px] mb-3 sm:mb-4 flex items-center justify-between gap-3 bg-neutral-950/80 border border-neutral-800 rounded-2xl p-2.5 sm:p-3 backdrop-blur-md shadow-lg print:hidden">
-        {onBack ? (
-          <button
-            type="button"
-            onClick={onBack}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-stone-100 hover:text-white border border-neutral-700 font-bold text-xs sm:text-sm transition-all active:scale-95 cursor-pointer"
-            title="Volver a la lista de Facturas Emitidas"
-          >
-            <ArrowLeft className="w-4 h-4 text-amber-400" />
-            <span>Volver a Facturas Emitidas</span>
-          </button>
-        ) : (
-          <div />
-        )}
-
-        <div className="flex items-center gap-2 sm:gap-2.5">
-          <span className="font-mono text-xs font-bold text-amber-300 bg-amber-400/10 px-2.5 py-1.5 rounded-xl border border-amber-400/30">
-            {invoice.number || 'Factura'}
-          </span>
-
-          {/* Botón Imprimir Superior: Identifica estado guardado (color predeterminado) o no guardado (icono gris 50%) */}
-          <button
-            type="button"
-            id="a4-top-print-btn"
-            disabled={!isSavedLocal}
-            onClick={() => {
-              if (!isSavedLocal) return;
-              handlePrint();
-            }}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all active:scale-95 ${
-              isSavedLocal
-                ? 'bg-neutral-900 hover:bg-neutral-850 text-stone-100 hover:text-white border border-neutral-700 hover:border-amber-400/80 cursor-pointer shadow-md ring-1 ring-amber-400/30'
-                : 'bg-neutral-950/80 border border-neutral-850 cursor-not-allowed select-none'
-            }`}
-            style={{
-              color: isSavedLocal ? undefined : '#808080',
-            }}
-            title={
-              isSavedLocal
-                ? 'Abrir vista de impresión y enviar a la impresora preconfigurada'
-                : 'Debes pulsar "Guardar Factura" para activar la impresión'
-            }
-          >
-            <Printer
-              className="w-4 h-4 shrink-0 transition-colors"
-              style={{
-                color: isSavedLocal ? '#F59E0B' : '#808080',
-              }}
-            />
-            <span style={{ color: isSavedLocal ? undefined : '#808080' }}>
-              Imprimir
-            </span>
-          </button>
-        </div>
-      </div>
-
+    <div className="w-full flex flex-col items-center py-2 sm:py-4 px-2 sm:px-4 pb-4 transition-all portrait:p-0">
       {/* A4 Sheet Container: standardized 210mm x 297mm aspect ratio container */}
       <div
         ref={a4SheetRef}
         id="a4-invoice-sheet"
-        className={`a4-sheet w-full max-w-[840px] min-h-[1180px] bg-white text-neutral-800 rounded-sm shadow-[0_15px_50px_-12px_rgba(0,0,0,0.18)] p-6 sm:p-12 md:p-14 flex flex-col justify-between border border-neutral-200/90 relative transition-all duration-300 ease-out origin-center print:shadow-none print:border-none print:p-0 print:m-0 print:w-full print:min-h-0 ${
+        className={`a4-sheet w-full max-w-[840px] portrait:w-full portrait:max-w-none min-h-[1180px] bg-white text-neutral-800 rounded-sm shadow-[0_15px_50px_-12px_rgba(0,0,0,0.18)] p-6 sm:p-12 md:p-14 flex flex-col justify-between border border-neutral-200/90 relative transition-all duration-300 ease-out origin-center print:shadow-none print:border-none print:p-0 print:m-0 print:w-full print:min-h-0 portrait:shadow-none portrait:border-0 portrait:rounded-none portrait:p-0 portrait:py-2 portrait:px-0 ${
           isPrintPreviewOpen ? 'print:hidden' : ''
         }`}
         style={{
@@ -419,460 +404,431 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
           fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif",
         }}
       >
+        {/* Top Row: FACTURA on the left (50%), Número y Fecha on the right (50%) in two lines, left-aligned, aligning perfectly with top/bottom of FACTURA */}
+        <div className="grid grid-cols-2 gap-2 sm:gap-4 pb-3 sm:pb-4 h-[72px] portrait:h-[32.4px] w-full items-stretch portrait:px-[10px]" style={{ fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" }}>
+          {/* Left 50% - FACTURA in 30% gray (text-neutral-400), left-aligned, height-matching container, reduced to x0.9 (32.4px) on mobile portrait, x0.70 (50.4px) on mobile landscape */}
+          <div className="flex items-center justify-start h-full">
+            <h1 className="text-[72px] portrait:text-[32.4px] landscape:max-sm:text-[50.4px] landscape:max-md:text-[50.4px] font-black tracking-tight text-neutral-400 uppercase leading-none text-left">
+              FACTURA
+            </h1>
+          </div>
+          {/* Right 50% - Número & Fecha left-aligned, size x0.8 (text-[19.68px] on desktop, 9.44px on mobile portrait), Fecha fixed at bottom, Número lowered with half gap */}
+          <div className="flex flex-col justify-end gap-1 portrait:gap-0.5 text-left h-full py-0 landscape:max-sm:translate-y-[10px] landscape:max-md:translate-y-[10px] transform transition-transform">
+            <div className="text-[19.68px] portrait:text-[9.44px] font-bold text-neutral-400 leading-[1.2] flex items-center min-w-0 translate-y-[5px]" style={{ lineHeight: '1.2', transform: 'translateY(5px)' }}>
+              <span className="shrink-0 text-[19.68px] portrait:text-[9.44px] font-bold">Número:&nbsp;</span>
+              <input
+                type="text"
+                value={invoice.number}
+                onChange={(e) => onChangeInvoice({ ...invoice, number: e.target.value.toUpperCase() })}
+                onFocus={(e) => handleInputFocus(e, 'Nº de Factura')}
+                onBlur={handleInputBlur}
+                className="font-bold text-neutral-800 bg-transparent p-0 border-none outline-none focus:outline-none focus:ring-0 focus:bg-transparent shadow-none w-full text-left transition-all text-[19.68px] portrait:text-[9.44px]"
+                style={{ lineHeight: '1.2' }}
+                title="Número correlativo"
+              />
+            </div>
+            <div className="text-[19.68px] portrait:text-[9.44px] font-bold text-neutral-400 leading-[1.2] flex items-center gap-1 min-w-0" style={{ lineHeight: '1.2' }}>
+              <span className="shrink-0 text-[19.68px] portrait:text-[9.44px] font-bold">Fecha:&nbsp;</span>
+              <input
+                type="text"
+                readOnly
+                value={formatDate(invoice.date) || invoice.date}
+                onClick={() => setShowCalendarModal(true)}
+                className="font-bold text-neutral-800 bg-transparent p-0 border-none outline-none focus:outline-none focus:ring-0 focus:bg-transparent shadow-none w-full text-left transition-all cursor-pointer text-[19.68px] portrait:text-[9.44px]"
+                style={{ lineHeight: '1.2' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowCalendarModal(true)}
+                className="p-1.5 portrait:p-1 mr-[10px] -translate-y-[5px] border border-emerald-500 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg transition-colors cursor-pointer shrink-0 shadow-xs print:hidden flex items-center justify-center"
+                title="Abrir calendario"
+              >
+                <Calendar className="w-[45px] h-[45px] portrait:w-[27px] portrait:h-[27px] text-emerald-600 stroke-[2.5]" />
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* TOP SECTION: Header / Membrete */}
-        <div className="space-y-6">
-          {/* Row 1: Left = Logo on the left + Company Data to the right of logo. Right = FACTURA Title & Number & Dates */}
-          <div className="flex flex-col md:flex-row justify-between items-start gap-6 pb-6 border-b border-neutral-200">
-            {/* Top Left: Logo on the left, and to the right of the logo the company data */}
-            <div className="flex items-start gap-4 sm:gap-5 flex-1 max-w-xl">
-              {/* Logo: Located to the left, left-aligned (Only displayed if user configured a custom logo) */}
-              {Boolean(invoice.company.logoUrl && invoice.company.logoUrl.trim() && !invoice.company.logoUrl.startsWith('data:image/svg+xml')) && (
-                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl border border-neutral-200 bg-white p-2 flex items-center justify-center shrink-0 shadow-xs overflow-hidden">
-                  <img
-                    src={invoice.company.logoUrl}
-                    alt="Logo Empresa"
-                    className="max-w-full max-h-full object-contain"
-                  />
+        <div className="space-y-4 sm:space-y-6 mt-4 sm:mt-6 portrait:px-[10px]">
+          
+          {/* Emisor y cliente en dos párrafos independientes en portrait (primero emisor y debajo cliente), y en dos columnas en desktop/landscape */}
+          <div className="grid grid-cols-2 portrait:grid-cols-1 gap-4 sm:gap-6 w-full items-stretch">
+            
+            {/* Primero: Emisor wrapped in a 8px rounded gray border (gris 40%) */}
+            <div className="border-[8px] border-neutral-400 rounded-2xl p-4 sm:p-5 w-full text-left flex flex-col justify-between">
+              <div className="space-y-1.5 text-[18px] text-neutral-700">
+                <div className="text-[15px] font-extrabold uppercase tracking-wider text-neutral-400 mb-1">
+                  EMISOR
                 </div>
-              )}
-
-              {/* Company Fiscal & Contact Data (strictly left-aligned, outside inputs like printable version) */}
-              <div className="text-left space-y-1 text-xs text-neutral-700 flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h2 className="font-extrabold text-base sm:text-lg text-neutral-900 tracking-tight">
-                    {invoice.company.name || 'Empresa Emisora (Emisor Fiscal)'}
-                  </h2>
-                </div>
-
-                {invoice.company.cif && (
-                  <div className="font-mono text-xs font-semibold text-neutral-800">
-                    <span className="text-neutral-500 font-normal">CIF/NIF: </span>
-                    <span>{invoice.company.cif}</span>
-                  </div>
-                )}
-
-                {invoice.company.address && (
-                  <div className="text-neutral-600 text-xs leading-relaxed max-w-sm">
-                    {invoice.company.address}
-                  </div>
-                )}
-
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-neutral-600 text-xs">
-                  {invoice.company.phone && (
-                    <div>
-                      <span className="text-neutral-500 font-medium">Tel: </span>
-                      <span className="font-mono">{invoice.company.phone}</span>
+                {/* Logo and info */}
+                <div className="flex items-start gap-4">
+                  {Boolean(invoice.company.logoUrl && invoice.company.logoUrl.trim() && !invoice.company.logoUrl.startsWith('data:image/svg+xml')) && (
+                    <div className="w-16 h-16 rounded-lg border border-neutral-200 bg-white p-1 flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
+                      <img
+                        src={invoice.company.logoUrl}
+                        alt="Logo Empresa"
+                        className="max-w-full max-h-full object-contain"
+                      />
                     </div>
                   )}
-                  {invoice.company.email && (
-                    <div>
-                      <span className="text-neutral-500 font-medium">Email: </span>
-                      <span>{invoice.company.email}</span>
+                  <div className="space-y-1 text-sm text-neutral-700 min-w-0 flex-1 leading-normal">
+                    <h2 className="font-extrabold text-[23px] text-neutral-950 leading-tight">
+                      {invoice.company.name || 'Empresa Emisora'}
+                    </h2>
+                    {invoice.company.cif && (
+                      <div className="font-mono text-xs font-semibold text-neutral-800">
+                        <span className="text-neutral-500 font-normal">CIF/NIF: </span>
+                        <span>{invoice.company.cif}</span>
+                      </div>
+                    )}
+                    {invoice.company.address && (
+                      <div className="text-neutral-600 text-xs leading-relaxed max-w-sm">
+                        {invoice.company.address}
+                      </div>
+                    )}
+                    <div className="flex flex-wrap items-center gap-x-2 text-neutral-600 text-xs">
+                      {invoice.company.phone && (
+                        <div>
+                          <span className="text-neutral-500 font-medium">Tel: </span>
+                          <span className="font-mono">{invoice.company.phone}</span>
+                        </div>
+                      )}
+                      {invoice.company.email && (
+                        <div>
+                          <span className="text-neutral-500 font-medium">Email: </span>
+                          <span>{invoice.company.email}</span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-
-                {invoice.company.iban && (
-                  <div className="text-[11px] font-mono text-neutral-600">
-                    <span className="text-neutral-500 font-sans">IBAN: </span>
-                    <span>{invoice.company.iban}</span>
-                    {invoice.company.bankName && (
-                      <span className="text-neutral-500 font-sans ml-1">({invoice.company.bankName})</span>
+                    {invoice.company.iban && (
+                      <div className="text-[11px] font-mono text-neutral-600">
+                        <span className="text-neutral-500 font-sans">IBAN: </span>
+                        <span>{invoice.company.iban}</span>
+                      </div>
                     )}
                   </div>
-                )}
+                </div>
               </div>
             </div>
 
-            {/* Top Right: FACTURA Title, Invoice Number & Dates */}
-            <div className="space-y-2 self-start md:self-auto flex flex-col items-start md:items-end text-left md:text-right shrink-0">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 print:hidden" />
-                <h1
-                  className="text-3xl sm:text-4xl font-extrabold tracking-tight text-neutral-900 uppercase"
-                  style={{ fontFamily: "'Montserrat', sans-serif" }}
-                >
-                  FACTURA
-                </h1>
-              </div>
-
-              {/* Correlative invoice number & Dates (Right side of document) */}
-              <div className="space-y-1.5 flex flex-col items-start md:items-end text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                    Nº de Factura:
-                  </span>
-                  <input
-                    type="text"
-                    value={invoice.number}
-                    onChange={(e) => onChangeInvoice({ ...invoice, number: e.target.value.toUpperCase() })}
-                    onFocus={(e) => handleInputFocus(e, 'Nº de Factura')}
-                    onBlur={handleInputBlur}
-                    className="font-mono text-base sm:text-lg font-bold text-neutral-900 bg-amber-50/50 hover:bg-amber-50 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:border-amber-500 px-2 py-0.5 rounded border border-amber-200/70 focus:outline-none w-36 text-left md:text-right transition-all print:border-none print:p-0 print:bg-transparent"
-                    title="Número correlativo (F + año en curso + 4 dígitos)"
-                  />
+            {/* Debajo: Datos del Cliente (Receptor) wrapped in a 8px rounded gray border (gris 40%) */}
+            <div className="border-[8px] border-neutral-400 rounded-2xl p-4 sm:p-5 w-full text-left flex flex-col justify-between">
+              <div className="space-y-1.5 text-[18px] text-neutral-700">
+                {/* Header / Actions: Etiqueta */}
+                <div className="flex items-center justify-between gap-3 mb-1">
+                  <button
+                    type="button"
+                    onClick={onOpenClientsSearch}
+                    className="text-[15px] font-extrabold text-neutral-400 hover:text-amber-600 transition-colors uppercase tracking-wider text-left print:pointer-events-none cursor-pointer flex items-center gap-1"
+                    title="Buscar o cambiar cliente"
+                  >
+                    <span>CLIENTE</span>
+                    <span className="text-neutral-400 text-sm print:hidden">▼</span>
+                  </button>
                 </div>
 
-                {/* Date */}
-                <div className="flex items-center gap-2 text-neutral-600">
-                  <span className="font-medium text-neutral-500">Fecha de emisión:</span>
-                  <input
-                    type="date"
-                    value={invoice.date}
-                    onChange={(e) => onChangeInvoice({ ...invoice, date: e.target.value })}
-                    onFocus={(e) => handleInputFocus(e, 'Fecha de Emisión')}
-                    onBlur={handleInputBlur}
-                    className="px-1.5 py-0.5 text-xs text-neutral-800 bg-transparent hover:bg-neutral-100 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:border-amber-500 rounded border border-transparent hover:border-neutral-200 focus:outline-none text-left md:text-right transition-all print:border-none print:p-0"
-                  />
-                </div>
-
-                {invoice.dueDate && (
-                  <div className="flex items-center gap-2 text-neutral-600">
-                    <span className="font-medium text-neutral-500">Vencimiento:</span>
-                    <input
-                      type="date"
-                      value={invoice.dueDate}
-                      onChange={(e) => onChangeInvoice({ ...invoice, dueDate: e.target.value })}
-                      onFocus={(e) => handleInputFocus(e, 'Fecha de Vencimiento')}
-                      onBlur={handleInputBlur}
-                      className="px-1.5 py-0.5 text-xs text-neutral-800 bg-transparent hover:bg-neutral-100 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:border-amber-500 rounded border border-transparent hover:border-neutral-200 focus:outline-none text-left md:text-right transition-all print:border-none print:p-0"
-                    />
+                {invoice.client.name ? (
+                  <div className="space-y-1 text-sm text-neutral-700 leading-normal">
+                    <h3 
+                      onClick={onOpenClientsSearch}
+                      className="font-extrabold text-[23px] text-neutral-950 leading-tight hover:text-amber-600 transition-colors cursor-pointer print:pointer-events-none"
+                      title="Pulsar para buscar o cambiar cliente"
+                    >
+                      {invoice.client.name}
+                    </h3>
+                    {invoice.client.nif && (
+                      <div className="font-mono text-xs font-semibold text-neutral-850">
+                        <span className="text-neutral-500 font-normal">CIF/NIF: </span>
+                        <span>{invoice.client.nif}</span>
+                      </div>
+                    )}
+                    {invoice.client.address && (
+                      <div className="text-neutral-600 text-xs leading-relaxed max-w-sm">
+                        <span>{invoice.client.address}</span>
+                      </div>
+                    )}
+                    <div className="flex flex-wrap items-center gap-x-2 text-neutral-600 text-xs">
+                      {invoice.client.phone && (
+                        <div>
+                          <span className="text-neutral-500 font-medium">Tel: </span>
+                          <span className="font-mono">{invoice.client.phone}</span>
+                        </div>
+                      )}
+                      {invoice.client.email && (
+                        <div>
+                          <span className="text-neutral-500 font-medium">Email: </span>
+                          <span>{invoice.client.email}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="w-full flex justify-center py-2 print:hidden">
+                    <button
+                      type="button"
+                      onClick={onOpenClientsSearch}
+                      className="w-full py-2.5 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-950 border border-sky-300 font-extrabold text-xs transition-all active:scale-95 cursor-pointer text-center shadow-xs flex items-center justify-center gap-1.5"
+                    >
+                      <UserPlus className="w-4 h-4 text-sky-700 stroke-[2.5]" />
+                      <span>Añadir Cliente</span>
+                    </button>
                   </div>
                 )}
               </div>
             </div>
+
           </div>
 
-          {/* Row 2: CLIENT SECTION (Formato imprimible sin recuadros, igual que los datos del emisor) */}
-          <div className="text-left space-y-1 text-xs text-neutral-700">
-            {/* Header / Actions: Etiqueta y botón Cargar de BD */}
-            <div className="flex items-center justify-between gap-3 pb-0.5">
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
-                  Cliente (Receptor)
-                </span>
-                {invoice.client.name && (
-                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full print:hidden">
-                    Cliente Asignado
-                  </span>
-                )}
-              </div>
-
-              {/* Botón Cargar de BD para ir a la página de clientes */}
-              <div className="flex items-center gap-2 print:hidden">
-                <button
-                  type="button"
-                  id="btn-cargar-cliente-bd-a4"
-                  onClick={onOpenClientsSearch}
-                  className="px-3 py-1 rounded-lg bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer border border-amber-500/30"
-                  title="Cargar datos del cliente desde la base de datos de clientes"
-                >
-                  <Search className="w-3.5 h-3.5 stroke-[2.2] text-neutral-950" />
-                  <span className="text-neutral-950 font-bold">Cargar de BD</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Nombre del Cliente en formato imprimible */}
-            <div className="flex items-center gap-2">
-              <h3 className="font-extrabold text-base sm:text-lg text-neutral-900 tracking-tight">
-                {invoice.client.name || (
-                  <span className="text-neutral-400 font-normal italic">
-                    Sin cliente asignado (pulsa «Cargar de BD» para seleccionar)
-                  </span>
-                )}
-              </h3>
-            </div>
-
-            {/* CIF / NIF del Cliente en formato imprimible */}
-            {invoice.client.nif && (
-              <div className="font-mono text-xs font-semibold text-neutral-800">
-                <span className="text-neutral-500 font-normal">CIF/NIF: </span>
-                <span>{invoice.client.nif}</span>
-              </div>
-            )}
-
-            {/* Domicilio del Cliente en formato imprimible */}
-            {invoice.client.address && (
-              <div className="text-neutral-600 text-xs leading-relaxed max-w-sm">
-                <span>{invoice.client.address}</span>
-              </div>
-            )}
-
-            {/* Teléfono y Correo del Cliente */}
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-neutral-600 text-xs">
-              {invoice.client.phone && (
-                <div>
-                  <span className="text-neutral-500 font-medium">Tel: </span>
-                  <span className="font-mono">{invoice.client.phone}</span>
-                </div>
-              )}
-              {invoice.client.email && (
-                <div>
-                  <span className="text-neutral-500 font-medium">Email: </span>
-                  <span>{invoice.client.email}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Row 3: Items / Concept lines Table */}
-          <div className="pt-2">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+          {/* Row 3: Items / Concept lines Table - 3px margins on mobile portrait */}
+          <div className="pt-2 w-full portrait:w-full portrait:px-[3px]">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-left border-collapse table-fixed">
                 <thead>
-                  <tr className="border-b-2 border-neutral-900 text-[11px] font-bold uppercase tracking-wider text-neutral-900">
-                    <th className="py-2.5 px-2 w-[50%]">Concepto / Descripción</th>
-                    <th className="py-2.5 px-2 text-center w-[15%]">Unidades</th>
-                    <th className="py-2.5 px-2 text-right w-[17%]">Precio Ud.</th>
-                    <th className="py-2.5 px-2 text-right w-[18%]">Total</th>
-                    <th className="py-2.5 px-1 w-[40px] print:hidden"></th>
+                  <tr className="border-b-2 border-neutral-900 text-[11px] portrait:text-[11.5px] sm:portrait:text-[13px] font-bold uppercase tracking-wider text-neutral-900 text-center">
+                    <th className={`${invoice.items.length > 4 ? 'py-1.5' : 'py-2.5'} px-1 sm:px-2 text-center w-[60%] portrait:w-[60%]`}>Concepto</th>
+                    <th className={`${invoice.items.length > 4 ? 'py-1.5' : 'py-2.5'} px-0.5 sm:px-1 text-center w-[10%] portrait:w-[10%]`}>Ud.</th>
+                    <th className={`${invoice.items.length > 4 ? 'py-1.5' : 'py-2.5'} px-0.5 sm:px-1 text-center w-[14%] portrait:w-[14%]`}>€</th>
+                    <th className={`${invoice.items.length > 4 ? 'py-1.5' : 'py-2.5'} px-0.5 sm:px-1 text-center w-[16%] portrait:w-[16%]`}>Importe</th>
+                    <th className={`${invoice.items.length > 4 ? 'py-1.5' : 'py-2.5'} px-0.5 w-[24px] portrait:w-[20px] print:hidden`}></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-200 text-xs">
                   {invoice.items.map((item, index) => (
-                    <tr key={item.id} className="group hover:bg-amber-50/30 transition-colors">
-                      {/* Concept column with intelligent autocomplete memory */}
-                      <td className="py-2 px-1">
-                        <div className="flex items-center gap-1.5">
-                          <div className="flex-1 min-w-0">
-                            <ConceptAutocompleteInput
-                              id={`concept-input-${index}`}
-                              value={item.concept}
-                              onChange={(val) => handleItemChange(index, 'concept', val)}
-                              onConceptCommitted={onConceptCommitted}
-                              allConcepts={concepts}
-                              placeholder="Escriba concepto (con memoria inteligente)..."
-                              onFocusInput={(e) => handleInputFocus(e, `Concepto (Línea ${index + 1})`)}
-                              onBlurInput={handleInputBlur}
+                    <React.Fragment key={item.id}>
+                      <tr className="group hover:bg-amber-50/30 transition-colors">
+                        {/* Concept column with intelligent autocomplete memory - 60% width with ellipsis */}
+                        <td className={`${invoice.items.length > 4 ? 'py-1 px-1' : 'py-2 px-1'} w-[60%] portrait:w-[60%] min-w-0 overflow-hidden`}>
+                          <div className="flex items-center gap-1 w-full min-w-0 overflow-hidden">
+                            <div className="flex-1 min-w-0 overflow-hidden">
+                              <ConceptAutocompleteInput
+                                id={`concept-input-${index}`}
+                                value={item.concept}
+                                onChange={(val) => handleItemChange(index, 'concept', val)}
+                                onConceptCommitted={onConceptCommitted}
+                                allConcepts={concepts}
+                                placeholder="Escriba concepto..."
+                                onFocusInput={(e) => handleInputFocus(e, `Concepto (Línea ${index + 1})`)}
+                                onBlurInput={handleInputBlur}
+                              />
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Units column */}
+                        <td className={`${invoice.items.length > 4 ? 'py-1 px-0.5' : 'py-2 px-0.5'} text-center w-[10%] portrait:w-[10%] min-w-0`}>
+                          <input
+                            type="text"
+                            readOnly
+                            inputMode="none"
+                            value={item.units === undefined || item.units === null || (item.units as any) === '' ? '0' : String(item.units)}
+                            onClick={() => handleItemInputClick(index, 'units')}
+                            placeholder="1"
+                            className={`w-full text-center font-mono tabular-nums py-1 px-0.5 rounded border transition-all cursor-pointer text-xs sm:text-sm portrait:text-[11.5px] portrait:sm:text-[13px] portrait:font-bold portrait:border-0 portrait:p-0 portrait:bg-transparent portrait:shadow-none whitespace-nowrap ${
+                              editingItemIndex === index && editingField === 'units'
+                                ? 'border-amber-500 bg-amber-50 ring-2 ring-amber-400 font-bold'
+                                : 'border-transparent hover:border-neutral-300'
+                            }`}
+                          />
+                        </td>
+
+                        {/* Unit Price column - centered */}
+                        <td className={`${invoice.items.length > 4 ? 'py-1 px-0.5' : 'py-2 px-0.5'} text-center w-[14%] portrait:w-[14%] min-w-0`}>
+                          <div className="inline-flex items-center justify-center w-full">
+                            <input
+                              type="text"
+                              readOnly
+                              inputMode="none"
+                              value={item.unitPrice === undefined || item.unitPrice === null || (item.unitPrice as any) === '' ? '0' : String(item.unitPrice)}
+                              onClick={() => handleItemInputClick(index, 'unitPrice')}
+                              placeholder="0.00"
+                              className={`w-full text-center font-mono tabular-nums py-1 px-0.5 rounded border transition-all cursor-pointer text-xs sm:text-sm portrait:text-[11.5px] portrait:sm:text-[13px] portrait:font-bold portrait:border-0 portrait:p-0 portrait:bg-transparent portrait:shadow-none whitespace-nowrap ${
+                                editingItemIndex === index && editingField === 'unitPrice'
+                                  ? 'border-amber-500 bg-amber-50 ring-2 ring-amber-400 font-bold'
+                                  : 'border-transparent hover:border-neutral-300'
+                              }`}
                             />
                           </div>
-                          {onOpenAttachProduct && (
-                            <button
-                              type="button"
-                              id={`line-attach-product-${index}`}
-                              onClick={() => onOpenAttachProduct(index)}
-                              className="shrink-0 p-1.5 rounded-md text-neutral-400 hover:text-amber-700 hover:bg-amber-100/70 transition-colors print:hidden cursor-pointer"
-                              title="Adjuntar producto del catálogo a esta línea"
-                            >
-                              <Package className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      </td>
+                        </td>
 
-                      {/* Units column */}
-                      <td className="py-2 px-1 text-center">
-                        <input
-                          type="number"
-                          step="any"
-                          min="0"
-                          value={item.units === 0 ? '' : item.units}
-                          onChange={(e) => handleItemChange(index, 'units', e.target.value)}
-                          onFocus={(e) => handleInputFocus(e, `Unidades (Línea ${index + 1})`)}
-                          onBlur={handleInputBlur}
-                          placeholder="1"
-                          className="w-20 text-center font-mono py-1 px-1.5 rounded border border-transparent hover:border-neutral-300 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:outline-none transition-all print:border-none print:p-0"
-                        />
-                      </td>
+                        {/* Line total column - always shown completely without wrapping */}
+                        <td className={`${invoice.items.length > 4 ? 'py-1 px-0.5 sm:px-2' : 'py-2 px-0.5 sm:px-2'} text-right font-mono font-bold tabular-nums text-neutral-900 text-xs sm:text-sm portrait:text-[11.5px] portrait:sm:text-[13px] w-[16%] portrait:w-[16%] whitespace-nowrap`}>
+                          {formatCurrency(item.total)}
+                        </td>
 
-                      {/* Unit Price column */}
-                      <td className="py-2 px-1 text-right">
-                        <div className="inline-flex items-center justify-end">
-                          <input
-                            type="number"
-                            step="any"
-                            min="0"
-                            value={item.unitPrice === 0 ? '' : item.unitPrice}
-                            onChange={(e) => handleItemChange(index, 'unitPrice', e.target.value)}
-                            onFocus={(e) => handleInputFocus(e, `Precio Ud. (Línea ${index + 1})`)}
-                            onBlur={handleInputBlur}
-                            placeholder="0.00"
-                            className="w-24 text-right font-mono py-1 px-1.5 rounded border border-transparent hover:border-neutral-300 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:outline-none transition-all print:border-none print:p-0"
-                          />
-                          <span className="text-neutral-400 text-xs ml-1 font-mono">€</span>
-                        </div>
-                      </td>
-
-                      {/* Line total column */}
-                      <td className="py-2 px-2 text-right font-mono font-semibold text-neutral-900 text-xs sm:text-sm">
-                        {formatCurrency(item.total)}
-                      </td>
-
-                      {/* Delete item button */}
-                      <td className="py-2 px-1 text-center print:hidden">
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveItem(index)}
-                          className="p-1 rounded text-[#EF4444] hover:text-red-600 hover:bg-red-50 transition-colors"
-                          style={{ color: '#EF4444' }}
-                          title="Eliminar línea"
-                        >
-                          <Trash2 className="w-3.5 h-3.5 text-[#EF4444]" style={{ color: '#EF4444' }} />
-                        </button>
-                      </td>
-                    </tr>
+                        {/* Delete item button */}
+                        <td className={`${invoice.items.length > 4 ? 'py-1 px-0.5' : 'py-2 px-0.5'} text-center w-[24px] portrait:w-[20px] print:hidden`}>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveItem(index)}
+                            className="p-1 portrait:p-0.5 rounded text-[#EF4444] hover:text-red-600 hover:bg-red-50 transition-colors"
+                            style={{ color: '#EF4444' }}
+                            title="Eliminar línea"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 text-[#EF4444]" style={{ color: '#EF4444' }} />
+                          </button>
+                        </td>
+                      </tr>
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>
             </div>
 
-            {/* ACTION BUTTON FOR CONCEPT LINES: Clean standard add line */}
-            <div className="mt-3 flex items-center gap-2 print:hidden flex-wrap">
+            {/* ACTION BUTTON FOR CONCEPT LINES: Clean standard add line and add product buttons, 80% width in mobile portrait */}
+            <div className="mt-4 flex items-center justify-center gap-3 sm:gap-4 print:hidden flex-wrap w-full portrait:w-[80%] portrait:mx-auto portrait:flex-col">
               <button
                 type="button"
                 id="add-concept-line-btn"
                 onClick={handleAddItem}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-dashed border-amber-300 hover:border-amber-500 bg-amber-50/50 hover:bg-amber-100/50 text-amber-900 text-xs font-semibold transition-all shadow-xs cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl border-2 border-teal-600 bg-[#E6FFFA] hover:bg-[#CCFFF5] text-teal-950 text-sm sm:text-base font-extrabold shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer portrait:w-[80%] portrait:mx-auto"
                 title="Añadir una nueva línea libre de concepto a la factura"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-4 h-4 stroke-[3]" />
                 <span>Añadir línea libre</span>
               </button>
 
               {invoice.client.enableComplexInvoice && (
-                <LineasComplejasDropdown
-                  estructuras={invoice.client.lineasComplejas || []}
-                  onSelect={handleAddItemWithConcept}
-                />
+                <div className="w-full sm:w-auto portrait:w-[80%] portrait:mx-auto flex justify-center">
+                  <LineasComplejasDropdown
+                    estructuras={invoice.client.lineasComplejas || []}
+                    onSelect={handleAddItemWithConcept}
+                  />
+                </div>
               )}
 
-              {invoice.client.enableProductsCatalog && (
+              <div className="w-full sm:w-auto portrait:w-[80%] portrait:mx-auto flex justify-center">
                 <ProductosClienteDropdown
                   productos={invoice.client.habitualProducts || []}
                   onSelect={handleAddItemWithConcept}
+                  buttonClassName="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl border-2 border-teal-600 bg-[#E6FFFA] hover:bg-[#CCFFF5] text-teal-950 text-sm sm:text-base font-extrabold shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer"
+                  className="w-full sm:w-auto"
                 />
-              )}
+              </div>
             </div>
           </div>
         </div>
 
         {/* BOTTOM SECTION: Calculations + Veri*Factu AEAT + Payment details */}
-        <div className="mt-8 space-y-6">
-          {/* Totals Section */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 pt-4 border-t border-neutral-200">
-            {/* Payment & Bank Details (Left side) */}
-            <div className="space-y-2 text-xs text-neutral-600 max-w-sm">
-              <div className="flex items-center gap-1.5 text-neutral-800 font-semibold">
-                <CreditCard className="w-4 h-4 text-neutral-500" />
-                <span>Forma de pago y datos bancarios</span>
-              </div>
-              <div className="p-3 rounded-lg bg-neutral-50 border border-neutral-200/70 space-y-1">
-                {invoice.company.iban ? (
-                  <>
-                    {invoice.company.bankName && (
-                      <div className="text-neutral-700 font-medium">{invoice.company.bankName}</div>
-                    )}
-                    <div className="font-mono text-neutral-900 font-semibold text-xs tracking-wider">
-                      IBAN: {invoice.company.iban}
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-neutral-400 italic text-[11px] print:hidden">
-                    (Configura tu IBAN en la pestaña de configuración para que aparezca aquí)
-                  </div>
-                )}
-                <div className="text-[11px] text-neutral-500 pt-0.5">
-                  Transferencia bancaria o emisión directa. Indicar nº factura como concepto.
-                </div>
-              </div>
-            </div>
-
-            {/* Calculations Breakdown (Right side) */}
-            <div className="w-full sm:w-72 space-y-2 text-xs">
+        <div className="mt-8 space-y-6 portrait:px-[10px]">
+          {/* Calculations Breakdown (Base Imponible, IVA, Total) */}
+          <div className="flex flex-col items-end w-full space-y-3 pt-4 border-t border-neutral-200">
+            <div className="w-full sm:w-96 space-y-3">
               {/* Base Imponible */}
-              <div className="flex justify-between items-center py-1 border-b border-neutral-100">
-                <span className="text-neutral-600 font-medium">Base Imponible:</span>
-                <span className="font-mono font-semibold text-neutral-900">
+              <div className="flex justify-between items-center py-1.5 border-b border-neutral-100 text-[18px]">
+                <span className="text-neutral-600 font-bold">Base Imponible:</span>
+                <span className="font-mono font-black text-neutral-950">
                   {formatCurrency(baseImponible)}
                 </span>
               </div>
 
               {/* IVA 21% */}
-              <div className="flex justify-between items-center py-1 border-b border-neutral-100">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-neutral-700 font-semibold">IVA</span>
-                  <span className="px-1.5 py-0.2 bg-amber-100 text-amber-900 font-bold rounded text-[10px]">
-                    21%
-                  </span>
+              <div className="flex justify-between items-center py-1.5 border-b border-neutral-100 text-[18px]">
+                <div className="flex items-center gap-1.5 text-neutral-600 font-bold">
+                  <span>IVA</span>
+                  <span>{invoice.ivaRate}%</span>
                 </div>
-                <span className="font-mono font-semibold text-neutral-900">
+                <span className="font-mono font-black text-neutral-950">
                   {formatCurrency(cuotaIva)}
                 </span>
               </div>
 
               {/* Optional IRPF toggle */}
               {invoice.irpfRate > 0 && (
-                <div className="flex justify-between items-center py-1 border-b border-neutral-100 text-neutral-700">
-                  <span className="font-medium">Retención IRPF (-{invoice.irpfRate}%):</span>
-                  <span className="font-mono font-semibold text-red-600">
+                <div className="flex justify-between items-center py-1.5 border-b border-neutral-100 text-[18px] text-neutral-700">
+                  <span className="font-bold">Retención IRPF (-{invoice.irpfRate}%):</span>
+                  <span className="font-mono font-black text-red-600">
                     -{formatCurrency(cuotaIrpf)}
                   </span>
                 </div>
               )}
 
-              {/* Grand Total */}
-              <div className="flex justify-between items-baseline pt-2 pb-1 border-t-2 border-neutral-900">
-                <span className="text-sm font-extrabold uppercase tracking-wide text-neutral-900">
-                  TOTAL FACTURA
+              {/* Grand Total - Changed to "TOTAL" */}
+              <div className="flex justify-between items-baseline pt-3 pb-1.5 border-t-2 border-neutral-900">
+                <span className="text-lg font-black uppercase tracking-wide text-neutral-900">
+                  TOTAL
                 </span>
-                <span className="text-xl sm:text-2xl font-black font-mono text-neutral-950">
+                <span className="text-2xl sm:text-3xl font-black font-mono text-neutral-950">
                   {formatCurrency(totalFactura)}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* VERI*FACTU OFFICIAL VALIDATION BLOCK (AEAT Compliant) */}
-          <div
-            id="verifactu-validation-box"
-            onClick={onOpenVeriFactuModal}
-            className="p-3.5 sm:p-4 rounded-xl border border-neutral-300 bg-neutral-50/80 flex flex-col sm:flex-row items-center justify-between gap-4 cursor-pointer hover:border-amber-400 hover:bg-neutral-50 transition-all print:bg-white print:border-neutral-300"
-            title="Factura validada por Veri*Factu. Clic para examinar huella digital y datos tributarios"
-          >
-            <div className="flex items-center gap-4">
-              {/* Veri*Factu QR Code */}
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white p-1 rounded-lg border border-neutral-300 shrink-0 shadow-sm flex items-center justify-center">
-                {invoice.veriFactu.qrDataUrl ? (
-                  <img
-                    src={invoice.veriFactu.qrDataUrl}
-                    alt="Código QR Veri*Factu AEAT"
-                    className="w-full h-full object-contain"
-                  />
-                ) : (
-                  <QrCode className="w-8 h-8 text-neutral-400" />
-                )}
+          {/* Payment & Veri*Factu (Side-by-side 2-column layout always, in all devices) */}
+          <div className="pt-4 border-t border-neutral-200/60 grid grid-cols-2 gap-4 text-xs text-neutral-600">
+            {/* Column 1: Payment & Bank Details */}
+            <div className="space-y-1.5 flex flex-col">
+              <div className="flex items-center gap-1.5 text-neutral-800 font-semibold">
+                <CreditCard className="w-4 h-4 text-neutral-500" />
+                <span>Forma de pago y datos bancarios</span>
               </div>
-
-              {/* Text Badge and Legal Info */}
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 font-bold text-[10px] tracking-wide uppercase">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                    VERI*FACTU VALIDADA
-                  </span>
-                  <span className="text-[10px] text-neutral-500 font-mono hidden sm:inline">
-                    {invoice.veriFactu.systemId}
-                  </span>
-                </div>
-                <p className="text-[11px] font-semibold text-neutral-900 leading-tight">
-                  Factura verificable en la sede electrónica de la AEAT
-                </p>
-                <p className="text-[10px] text-neutral-500 leading-snug">
-                  Sistema Informático de Facturación adaptado al Real Decreto 1007/2023. Huella digital encadenada:{' '}
-                  <span className="font-mono text-neutral-700">
-                    {invoice.veriFactu.chainHash ? `${invoice.veriFactu.chainHash.slice(0, 16)}...` : 'En proceso'}
-                  </span>
-                </p>
+              <div className="p-3.5 rounded-xl bg-neutral-50 border border-neutral-200/70 space-y-1 w-full h-full min-h-[90px] flex flex-col justify-center">
+                {invoice.company.iban ? (
+                  <div className="text-xs">
+                    {invoice.company.bankName && (
+                      <div className="text-neutral-700 font-bold text-xs leading-none">{invoice.company.bankName}</div>
+                    )}
+                    <div className="font-mono text-neutral-900 font-extrabold text-[11px] sm:text-xs tracking-wider mt-0.5 break-all">
+                      IBAN: {invoice.company.iban}
+                    </div>
+                    <div className="text-[10px] text-neutral-500 mt-1 leading-snug">
+                      Transferencia o emisión directa.<br />
+                      Indicar nº factura como concepto.
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-neutral-400 italic text-[11px] print:hidden">
+                    (Configura tu IBAN en la pestaña de configuración para que aparezca aquí)
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="flex sm:flex-col items-center sm:items-end gap-2 shrink-0 print:hidden">
-              <span className="text-[11px] text-amber-700 font-medium flex items-center gap-1 hover:underline">
-                <span>Inspeccionar Veri*Factu</span>
-                <ExternalLink className="w-3 h-3" />
-              </span>
-              <span className="text-[9px] text-neutral-400">Escaneable con móvil</span>
+            {/* Column 2: VERI*FACTU OFFICIAL VALIDATION BLOCK (AEAT Compliant) */}
+            <div className="space-y-1.5 flex flex-col">
+              <div className="flex items-center gap-1.5 text-neutral-800 font-semibold">
+                <ShieldCheck className="w-4 h-4 text-neutral-500" />
+                <span>Validación Oficial Veri*Factu</span>
+              </div>
+              <div
+                id="verifactu-validation-box"
+                onClick={onOpenVeriFactuModal}
+                className="p-3.5 rounded-xl border border-neutral-300 bg-neutral-50/80 flex items-center gap-3 cursor-pointer hover:border-amber-400 hover:bg-neutral-50 transition-all print:bg-white print:border-neutral-300 w-full h-full min-h-[90px]"
+                title="Factura validada por Veri*Factu. Clic para examinar huella digital y datos tributarios"
+              >
+                {/* Veri*Factu QR Code */}
+                <div className="w-14 h-14 bg-white p-1 rounded-lg border border-neutral-300 shrink-0 shadow-sm flex items-center justify-center">
+                  {invoice.veriFactu.qrDataUrl ? (
+                    <img
+                      src={invoice.veriFactu.qrDataUrl}
+                      alt="Código QR Veri*Factu AEAT"
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <QrCode className="w-6 h-6 text-neutral-400" />
+                  )}
+                </div>
+
+                {/* Text Badge and Legal Info */}
+                <div className="space-y-0.5 text-left min-w-0 flex-1">
+                  <div className="flex items-center gap-1 flex-wrap">
+                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 font-bold text-[8px] sm:text-[9px] tracking-wide uppercase">
+                      <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
+                      VERI*FACTU OK
+                    </span>
+                    <span className="text-[9px] text-neutral-500 font-mono truncate max-w-[80px] hidden sm:inline">
+                      {invoice.veriFactu.systemId}
+                    </span>
+                  </div>
+                  <p className="text-[10px] font-semibold text-neutral-900 leading-tight">
+                    Verificable en sede AEAT
+                  </p>
+                  <p className="text-[9px] text-neutral-500 leading-tight truncate">
+                    Huella: <span className="font-mono text-neutral-700">{invoice.veriFactu.chainHash ? `${invoice.veriFactu.chainHash.slice(0, 10)}...` : 'En proceso'}</span>
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -885,7 +841,7 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
         </div>
 
           {/* PIE DE LA HOJA A4: BOTONES DE GUARDAR, IMPRIMIR Y ENVIAR POR WHATSAPP O EMAIL SEGÚN ENVÍO PREFERENTE */}
-          <div className="pt-4 border-t-2 border-neutral-200 print:hidden space-y-3">
+          <div className="pt-4 border-t-2 border-neutral-200 print:hidden space-y-3 portrait:px-[10px]">
             {/* Canales de envío preferente del cliente */}
             {(() => {
               const preferredChannel =
@@ -900,27 +856,27 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                       type="button"
                       id="a4-footer-save-btn"
                       onClick={handleSave}
-                      className={`w-full py-4 sm:py-5 px-4 sm:px-6 rounded-2xl font-black text-lg sm:text-2xl flex items-center justify-center gap-3 sm:gap-4 border shadow-md transition-all active:scale-[0.98] cursor-pointer ${
+                      className={`w-full py-4 sm:py-5 px-4 sm:px-6 rounded-2xl font-black text-lg sm:text-2xl flex items-center justify-center gap-3 sm:gap-4 border-2 transition-all active:scale-[0.98] cursor-pointer shadow-md ${
                         isSavedLocal
-                          ? 'bg-neutral-900 text-emerald-400 border-emerald-500/50 hover:bg-neutral-850'
-                          : 'bg-neutral-900 hover:bg-neutral-850 text-stone-100 border-neutral-700 hover:shadow-xl'
+                          ? 'border-emerald-400 bg-emerald-50 text-emerald-950 hover:bg-emerald-100/70'
+                          : 'border-emerald-500 bg-transparent text-emerald-600 hover:bg-emerald-50/50'
                       }`}
                       title="Guardar factura y activar los botones de impresión y envío"
                     >
                       {isSavedLocal ? (
                         <>
-                          <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-400 shrink-0" />
+                          <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-800 shrink-0" />
                           <span>Factura Guardada</span>
                         </>
                       ) : (
                         <>
-                          <Save className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-400 shrink-0" />
+                          <Save className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-600 shrink-0" />
                           <span>Guardar Factura</span>
                         </>
                       )}
                     </button>
 
-                    {/* 2. Botón de Imprimir Factura: Activo cuando está guardada, o gris 50% cuando no */}
+                    {/* 2. Botón de Imprimir Factura: Activo cuando está guardada (verde muy clarito/borde verde), o gris cuando no */}
                     <button
                       type="button"
                       id="a4-footer-print-btn"
@@ -929,14 +885,11 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                         if (!isSavedLocal) return;
                         handlePrint();
                       }}
-                      className={`w-full py-4 sm:py-5 px-4 sm:px-6 rounded-2xl font-black text-lg sm:text-2xl flex items-center justify-center gap-3 sm:gap-4 border transition-all ${
+                      className={`w-full py-4 sm:py-5 px-4 sm:px-6 rounded-2xl font-black text-lg sm:text-2xl flex items-center justify-center gap-3 sm:gap-4 border-2 transition-all ${
                         isSavedLocal
-                          ? 'bg-neutral-900 hover:bg-neutral-850 text-stone-100 hover:text-white border-neutral-700 hover:border-amber-400 shadow-md active:scale-[0.98] cursor-pointer ring-1 ring-amber-400/30'
-                          : 'bg-neutral-100 border-neutral-300 cursor-not-allowed shadow-none select-none'
+                          ? 'border-emerald-400 bg-emerald-50 text-emerald-950 hover:bg-emerald-100/70 active:scale-[0.98] cursor-pointer shadow-md'
+                          : 'border-neutral-200 bg-neutral-100 text-neutral-400 cursor-not-allowed select-none shadow-none'
                       }`}
-                      style={{
-                        color: isSavedLocal ? undefined : '#808080',
-                      }}
                       title={
                         isSavedLocal
                           ? 'Imprimir documento en la impresora preconfigurada del dispositivo'
@@ -946,10 +899,10 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                       <Printer
                         className="w-8 h-8 sm:w-10 sm:h-10 shrink-0 transition-colors"
                         style={{
-                          color: isSavedLocal ? '#F59E0B' : '#808080',
+                          color: isSavedLocal ? '#059669' : '#a3a3a3',
                         }}
                       />
-                      <span style={{ color: isSavedLocal ? undefined : '#808080' }}>
+                      <span>
                         Imprimir
                       </span>
                     </button>
@@ -961,10 +914,10 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                         id="a4-footer-send-btn"
                         disabled={!isSavedLocal}
                         onClick={handleWhatsApp}
-                        className={`w-full py-4 sm:py-5 px-4 sm:px-6 rounded-2xl font-black text-lg sm:text-2xl uppercase tracking-wider flex items-center justify-center gap-3 sm:gap-4 transition-all ${
+                        className={`w-full py-4 sm:py-5 px-4 sm:px-6 rounded-2xl font-black text-lg sm:text-2xl uppercase tracking-wider flex items-center justify-center gap-3 sm:gap-4 border-2 transition-all ${
                           isSavedLocal
-                            ? 'bg-[#25D366] hover:bg-[#20bd5a] text-neutral-950 shadow-lg hover:shadow-[#25D366]/30 active:scale-[0.98] cursor-pointer ring-2 ring-[#25D366]/40'
-                            : 'bg-neutral-200 text-neutral-400 border border-neutral-300 cursor-not-allowed shadow-none'
+                            ? 'border-emerald-400 bg-emerald-50 text-emerald-950 hover:bg-emerald-100/70 active:scale-[0.98] cursor-pointer shadow-md'
+                            : 'border-neutral-200 bg-neutral-100 text-neutral-400 cursor-not-allowed select-none shadow-none'
                         }`}
                         title={
                           isSavedLocal
@@ -972,7 +925,12 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                             : 'Debes pulsar "Guardar Factura" para activar el botón de envío por WhatsApp'
                         }
                       >
-                        <WhatsAppIcon className="w-8 h-8 sm:w-10 sm:h-10 shrink-0" />
+                        <WhatsAppIcon
+                          className="w-8 h-8 sm:w-10 sm:h-10 shrink-0"
+                          style={{
+                            filter: isSavedLocal ? undefined : 'grayscale(1) opacity(0.5)',
+                          }}
+                        />
                         <span className="truncate">Enviar WhatsApp</span>
                       </button>
                     ) : (
@@ -981,10 +939,10 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                         id="a4-footer-send-btn"
                         disabled={!isSavedLocal}
                         onClick={handleEmail}
-                        className={`w-full py-4 sm:py-5 px-4 sm:px-6 rounded-2xl font-black text-lg sm:text-2xl uppercase tracking-wider flex items-center justify-center gap-3 sm:gap-4 transition-all ${
+                        className={`w-full py-4 sm:py-5 px-4 sm:px-6 rounded-2xl font-black text-lg sm:text-2xl uppercase tracking-wider flex items-center justify-center gap-3 sm:gap-4 border-2 transition-all ${
                           isSavedLocal
-                            ? 'bg-sky-400 hover:bg-sky-300 text-neutral-950 shadow-lg hover:shadow-sky-400/30 active:scale-[0.98] cursor-pointer ring-2 ring-sky-400/40'
-                            : 'bg-neutral-200 text-neutral-400 border border-neutral-300 cursor-not-allowed shadow-none'
+                            ? 'border-emerald-400 bg-emerald-50 text-emerald-950 hover:bg-emerald-100/70 active:scale-[0.98] cursor-pointer shadow-md'
+                            : 'border-neutral-200 bg-neutral-100 text-neutral-400 cursor-not-allowed select-none shadow-none'
                         }`}
                         title={
                           isSavedLocal
@@ -993,9 +951,10 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                         }
                       >
                         <Mail
-                          className={`w-8 h-8 sm:w-10 sm:h-10 shrink-0 ${
-                            isSavedLocal ? 'text-neutral-950' : 'text-neutral-400'
-                          }`}
+                          className="w-8 h-8 sm:w-10 sm:h-10 shrink-0 transition-colors"
+                          style={{
+                            color: isSavedLocal ? '#059669' : '#a3a3a3',
+                          }}
                         />
                         <span className="truncate">Enviar Email</span>
                       </button>
@@ -1023,6 +982,21 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
         </div>
       </div>
 
+      {/* Botón Volver al final de la pantalla, fuera de la hoja A4 y limpio */}
+      {onBack && (
+        <div className="w-full max-w-[840px] mt-6 flex justify-center print:hidden">
+          <button
+            type="button"
+            onClick={onBack}
+            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-950 border-2 border-purple-400 font-extrabold text-sm sm:text-base transition-all active:scale-95 cursor-pointer shadow-md"
+            title="Volver a la lista de Facturas"
+          >
+            <ArrowLeft className="w-4.5 h-4.5 text-purple-700 stroke-[2.5]" />
+            <span>Volver a Facturas Emitidas</span>
+          </button>
+        </div>
+      )}
+
       {/* Modal de Vista de Impresión (solo si no lo controla el componente padre) */}
       {propIsPrintPreviewOpen === undefined && isPrintPreviewOpen && (
         <PrintPreviewModal
@@ -1046,6 +1020,140 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
             });
           }}
         />
+      )}
+
+      {/* Modal de Calendario Personalizado */}
+      {showCalendarModal && (
+        <CustomCalendarModal
+          isOpen={showCalendarModal}
+          onClose={() => setShowCalendarModal(false)}
+          selectedDate={invoice.date}
+          onSelectDate={(dateIso) => {
+            onChangeInvoice({ ...invoice, date: dateIso });
+          }}
+          title="Fecha de Emisión"
+        />
+      )}
+
+      {/* Floating Bottom Numeric Keyboard: sticks to viewport bottom with dual inputs (Cantidad and Precio) */}
+      {editingItemIndex !== null && (
+        <div 
+          className="fixed bottom-0 left-0 right-0 bg-neutral-950 border-t-2 border-neutral-800 p-4 pb-6 z-[120] shadow-[0_-15px_40px_rgba(0,0,0,0.65)] animate-in slide-in-from-bottom duration-200 print:hidden text-white"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="max-w-md mx-auto space-y-3">
+            {/* Active Line Indicator */}
+            <div className="text-center truncate">
+              <span className="text-xs font-bold text-amber-400 uppercase tracking-wide font-sans">Ajustar: </span>
+              <span className="text-xs font-extrabold text-neutral-200 truncate max-w-[250px] inline-block align-bottom font-sans">
+                Línea {editingItemIndex + 1}: {invoice.items[editingItemIndex]?.concept || 'Concepto'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {/* Cantidad input */}
+              <div>
+                <label className="block text-[10px] font-bold uppercase text-neutral-400 tracking-wider mb-1 text-center">Cantidad</label>
+                <input
+                  type="text"
+                  inputMode="none"
+                  value={editCantidad}
+                  onClick={() => setEditingField('units')}
+                  onFocus={() => setEditingField('units')}
+                  className={`w-full px-3 py-2 bg-neutral-900 text-white rounded-lg border focus:outline-none text-center font-mono font-bold text-sm ${
+                    editingField === 'units' ? 'border-amber-400 ring-1 ring-amber-400/30 bg-amber-950/20' : 'border-neutral-700'
+                  }`}
+                  readOnly
+                />
+              </div>
+              
+              {/* Precio input */}
+              <div>
+                <label className="block text-[10px] font-bold uppercase text-neutral-400 tracking-wider mb-1 text-center">Precio (€)</label>
+                <input
+                  type="text"
+                  inputMode="none"
+                  value={editPrecio}
+                  onClick={() => setEditingField('unitPrice')}
+                  onFocus={() => setEditingField('unitPrice')}
+                  className={`w-full px-3 py-2 bg-neutral-900 text-white rounded-lg border focus:outline-none text-center font-mono font-bold text-sm ${
+                    editingField === 'unitPrice' ? 'border-amber-400 ring-1 ring-amber-400/30 bg-amber-950/20' : 'border-neutral-700'
+                  }`}
+                  readOnly
+                />
+              </div>
+            </div>
+
+            {/* NUMERICAL KEYBOARD right under the inputs */}
+            <div className="flex flex-col items-center">
+              <div className="grid grid-cols-4 gap-1.5 w-full max-w-xs mx-auto">
+                {['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.'].map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => {
+                      let current = editingField === 'units' ? editCantidad : editPrecio;
+                      if (current === '0' && key !== '.') {
+                        current = '';
+                      }
+                      if (key === '.') {
+                        if (!current.includes('.')) {
+                          current = current === '' ? '0.' : current + '.';
+                        }
+                      } else {
+                        current += key;
+                      }
+                      if (editingField === 'units') {
+                        setEditCantidad(current);
+                      } else {
+                        setEditPrecio(current);
+                      }
+                    }}
+                    className="h-10 bg-neutral-900 hover:bg-neutral-800 text-white font-bold text-base rounded-lg border border-neutral-800 shadow-sm flex items-center justify-center cursor-pointer transition-all active:scale-95 select-none"
+                  >
+                    {key}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    let current = editingField === 'units' ? editCantidad : editPrecio;
+                    if (current.length > 0) {
+                      current = current.slice(0, -1);
+                    }
+                    if (editingField === 'units') {
+                      setEditCantidad(current || '0');
+                    } else {
+                      setEditPrecio(current || '0');
+                    }
+                  }}
+                  className="h-10 bg-neutral-950 hover:bg-rose-950 text-rose-400 font-bold text-xs rounded-lg border border-neutral-800 shadow-sm flex items-center justify-center cursor-pointer transition-all active:scale-95 select-none"
+                >
+                  Borrar
+                </button>
+              </div>
+
+              {/* Confirm & Cancel buttons */}
+              <div className="flex items-center gap-2 w-full max-w-xs mt-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingItemIndex(null)}
+                  className="flex-1 py-2 px-3 bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-sm rounded border border-neutral-700 shadow-sm transition-all active:scale-95 cursor-pointer select-none"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmEditInline}
+                  className="flex-2 py-2 px-4 bg-amber-400 hover:bg-amber-350 text-neutral-950 font-black text-sm rounded-lg shadow-md transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer select-none"
+                >
+                  <Check className="w-4 h-4 stroke-[3]" />
+                  <span>OK</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

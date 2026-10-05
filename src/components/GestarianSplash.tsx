@@ -184,26 +184,68 @@ export const GestarianSplash: React.FC<GestarianSplashProps> = ({
               duration: 2.0,
               ease: [0.16, 1, 0.3, 1],
             }}
-            className="w-full flex flex-col items-center justify-center relative text-center"
+            className="w-full flex flex-col items-end justify-center relative text-right"
           >
-            <div className="flex flex-col items-end mx-auto text-center w-full">
+            {/* Custom Responsive Typography Styles for perfect K and N alignment & size multipliers */}
+            <style dangerouslySetInnerHTML={{ __html: `
+              .splash-logo-container {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-end;
+                text-align: right;
+                width: 100%;
+              }
+
+              .gestarian-text {
+                width: 100%;
+                text-align: right !important;
+                margin-right: -0.05em !important; /* Offset trailing tracking */
+              }
+
+              .quick-text {
+                display: inline-block;
+                text-align: right !important;
+                margin-right: -0.2em !important; /* Offset trailing tracking */
+                /* Mobile Portrait Size (x0.8) */
+                font-size: calc(0.8 * clamp(2rem, 6.4vw, 6rem)) !important;
+              }
+
+              @media (min-width: 640px) {
+                .gestarian-text {
+                  margin-right: -0.1em !important; /* Offset trailing tracking */
+                }
+                .quick-text {
+                  margin-right: -0.35em !important; /* Offset trailing tracking */
+                  /* Tablet/Standard Size (1.0x) */
+                  font-size: clamp(2rem, 6.4vw, 6rem) !important;
+                }
+              }
+
+              /* PC Landscape (Width >= 1024px and landscape) */
+              @media (min-width: 1024px) and (orientation: landscape) {
+                .quick-text {
+                  /* PC Landscape Size (x2) */
+                  font-size: calc(2 * clamp(2rem, 6.4vw, 6rem)) !important;
+                }
+              }
+            `}} />
+
+            <div className="splash-logo-container mx-auto">
               <h1
-                className="w-full text-[clamp(2.2rem,11.8vw,11rem)] font-[100] tracking-[0.08em] sm:tracking-[0.15em] uppercase leading-none select-none text-[#FEFCE9] text-center"
+                className="gestarian-text text-[clamp(2.5rem,12vw,12rem)] font-black tracking-[0.05em] sm:tracking-[0.1em] uppercase leading-none select-none text-[#FEFCE9]"
                 style={{
                   fontFamily: "'Montserrat', sans-serif",
-                  fontWeight: 100,
-                  WebkitTextStroke: '2px #FEFCE9',
-                  paintOrder: 'stroke fill',
+                  fontWeight: 900,
+                  textShadow: '0 0 30px rgba(254, 252, 233, 0.25)',
                 }}
               >
                 GESTARIAN
               </h1>
               <span
-                className="text-[clamp(1rem,3.2vw,3rem)] font-[100] tracking-[0.15em] sm:tracking-[0.25em] text-[#808080] text-right self-end mt-1 sm:mt-2"
+                className="quick-text font-black uppercase tracking-[0.2em] sm:tracking-[0.35em] text-[#F59E0B] mt-3 sm:mt-4 filter drop-shadow-[0_0_20px_rgba(245,158,11,0.4)]"
                 style={{
                   fontFamily: "'Montserrat', 'Plus Jakarta Sans', system-ui, sans-serif",
-                  fontWeight: 100,
-                  color: '#808080',
+                  fontWeight: 950,
                 }}
               >
                 Quick

@@ -1659,7 +1659,7 @@ export default function App() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 15 }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
-            className="fixed inset-0 z-50 overflow-y-auto bg-neutral-950/95 backdrop-blur-md pt-2 sm:pt-4 pb-12 px-2 sm:px-4"
+            className="fixed inset-0 z-50 overflow-y-auto bg-neutral-950/95 backdrop-blur-md pt-2 sm:pt-4 pb-12 px-0 sm:px-4 portrait:px-0 portrait:pt-0"
           >
             <A4InvoiceDocument
               invoice={currentInvoice}

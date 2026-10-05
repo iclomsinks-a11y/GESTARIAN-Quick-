@@ -112,7 +112,7 @@ export const NewProviderFullScreenForm: React.FC<NewProviderFullScreenFormProps>
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Nombre */}
           <div>
-            <div className="relative flex items-center justify-between w-full rounded-2xl border border-neutral-800 bg-neutral-900 focus-within:border-sky-400 focus-within:bg-sky-950/20 p-4 transition-all">
+            <div className="relative flex items-center justify-between w-full rounded-2xl border-2 border-neutral-300 bg-white focus-within:border-sky-500 p-4 transition-all shadow-sm">
               <input
                 type="text"
                 value={formData.name}
@@ -122,10 +122,10 @@ export const NewProviderFullScreenForm: React.FC<NewProviderFullScreenFormProps>
                 }}
                 onFocus={(e) => centerInTop60Viewer(e.currentTarget)}
                 placeholder="Nombre o Razón Social"
-                className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-xl sm:text-2xl font-extrabold text-white placeholder-neutral-600 pr-3"
+                className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-xl sm:text-2xl font-extrabold text-neutral-900 placeholder-neutral-400 pr-3"
                 autoFocus
               />
-              <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-400 shrink-0 pl-3 border-l border-neutral-800 select-none pointer-events-none">
+              <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-600 shrink-0 pl-3 border-l-2 border-neutral-300 select-none pointer-events-none">
                 Nombre
               </span>
             </div>
@@ -134,7 +134,7 @@ export const NewProviderFullScreenForm: React.FC<NewProviderFullScreenFormProps>
 
           {/* DNI/CIF/NIF */}
           <div>
-            <div className="relative flex items-center justify-between w-full rounded-2xl border border-neutral-800 bg-neutral-900 focus-within:border-sky-400 focus-within:bg-sky-950/20 p-4 transition-all">
+            <div className="relative flex items-center justify-between w-full rounded-2xl border-2 border-neutral-300 bg-white focus-within:border-sky-500 p-4 transition-all shadow-sm">
               <input
                 type="text"
                 value={formData.cif}
@@ -144,9 +144,9 @@ export const NewProviderFullScreenForm: React.FC<NewProviderFullScreenFormProps>
                 }}
                 onFocus={(e) => centerInTop60Viewer(e.currentTarget)}
                 placeholder="DNI, CIF o NIF"
-                className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-xl sm:text-2xl font-mono font-extrabold text-amber-300 uppercase placeholder-neutral-600 pr-3"
+                className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-xl sm:text-2xl font-mono font-extrabold text-neutral-900 uppercase placeholder-neutral-400 pr-3"
               />
-              <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-400 shrink-0 pl-3 border-l border-neutral-800 select-none pointer-events-none">
+              <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-600 shrink-0 pl-3 border-l-2 border-neutral-300 select-none pointer-events-none">
                 CIF / NIF
               </span>
             </div>
@@ -154,76 +154,76 @@ export const NewProviderFullScreenForm: React.FC<NewProviderFullScreenFormProps>
           </div>
 
           {/* Teléfono */}
-          <div className="relative flex items-center justify-between w-full rounded-2xl border border-neutral-800 bg-neutral-900 focus-within:border-sky-400 focus-within:bg-sky-950/20 p-4 transition-all">
+          <div className="relative flex items-center justify-between w-full rounded-2xl border-2 border-neutral-300 bg-white focus-within:border-sky-500 p-4 transition-all shadow-sm">
             <input
               type="tel"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               onFocus={(e) => centerInTop60Viewer(e.currentTarget)}
               placeholder="Teléfono de contacto"
-              className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-xl sm:text-2xl font-mono font-extrabold text-emerald-300 placeholder-neutral-600 pr-3"
+              className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-xl sm:text-2xl font-mono font-extrabold text-neutral-900 placeholder-neutral-400 pr-3"
             />
-            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-400 shrink-0 pl-3 border-l border-neutral-800 select-none pointer-events-none">
+            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-600 shrink-0 pl-3 border-l-2 border-neutral-300 select-none pointer-events-none">
               Teléfono
             </span>
           </div>
 
           {/* Email */}
-          <div className="relative flex items-center justify-between w-full rounded-2xl border border-neutral-800 bg-neutral-900 focus-within:border-sky-400 focus-within:bg-sky-950/20 p-4 transition-all">
+          <div className="relative flex items-center justify-between w-full rounded-2xl border-2 border-neutral-300 bg-white focus-within:border-sky-500 p-4 transition-all shadow-sm">
             <input
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               onFocus={(e) => centerInTop60Viewer(e.currentTarget)}
               placeholder="Correo electrónico"
-              className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-xl sm:text-2xl font-extrabold text-sky-300 placeholder-neutral-600 pr-3"
+              className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-xl sm:text-2xl font-extrabold text-neutral-900 placeholder-neutral-400 pr-3"
             />
-            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-400 shrink-0 pl-3 border-l border-neutral-800 select-none pointer-events-none">
+            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-600 shrink-0 pl-3 border-l-2 border-neutral-300 select-none pointer-events-none">
               Email
             </span>
           </div>
 
           {/* Dirección */}
-          <div className="relative flex items-center justify-between w-full rounded-2xl border border-neutral-800 bg-neutral-900 focus-within:border-sky-400 focus-within:bg-sky-950/20 p-4 transition-all">
+          <div className="relative flex items-center justify-between w-full rounded-2xl border-2 border-neutral-300 bg-white focus-within:border-sky-500 p-4 transition-all shadow-sm">
             <input
               type="text"
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               onFocus={(e) => centerInTop60Viewer(e.currentTarget)}
               placeholder="Dirección fiscal"
-              className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-xl sm:text-2xl font-extrabold text-white placeholder-neutral-600 pr-3"
+              className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-xl sm:text-2xl font-extrabold text-neutral-900 placeholder-neutral-400 pr-3"
             />
-            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-400 shrink-0 pl-3 border-l border-neutral-800 select-none pointer-events-none">
+            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-600 shrink-0 pl-3 border-l-2 border-neutral-300 select-none pointer-events-none">
               Dirección
             </span>
           </div>
 
           {/* Banco */}
-          <div className="relative flex items-center justify-between w-full rounded-2xl border border-neutral-800 bg-neutral-900 focus-within:border-sky-400 focus-within:bg-sky-950/20 p-4 transition-all">
+          <div className="relative flex items-center justify-between w-full rounded-2xl border-2 border-neutral-300 bg-white focus-within:border-sky-500 p-4 transition-all shadow-sm">
             <input
               type="text"
               value={formData.bankName}
               onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
               onFocus={(e) => centerInTop60Viewer(e.currentTarget)}
               placeholder="Nombre de la entidad bancaria"
-              className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-xl sm:text-2xl font-extrabold text-white placeholder-neutral-600 pr-3"
+              className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-xl sm:text-2xl font-extrabold text-neutral-900 placeholder-neutral-400 pr-3"
             />
-            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-400 shrink-0 pl-3 border-l border-neutral-800 select-none pointer-events-none">
+            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-600 shrink-0 pl-3 border-l-2 border-neutral-300 select-none pointer-events-none">
               Banco
             </span>
           </div>
 
           {/* Número de Cuenta / IBAN */}
-          <div className="relative flex items-center justify-between w-full rounded-2xl border border-neutral-800 bg-neutral-900 focus-within:border-sky-400 focus-within:bg-sky-950/20 p-4 transition-all">
+          <div className="relative flex items-center justify-between w-full rounded-2xl border-2 border-neutral-300 bg-white focus-within:border-sky-500 p-4 transition-all shadow-sm">
             <input
               type="text"
               value={formData.iban}
               onChange={(e) => setFormData({ ...formData, iban: e.target.value.toUpperCase() })}
               onFocus={(e) => centerInTop60Viewer(e.currentTarget)}
               placeholder="ES00 0000 0000 0000 0000 0000"
-              className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-xl sm:text-2xl font-mono font-extrabold text-amber-300 uppercase placeholder-neutral-600 pr-3"
+              className="w-full bg-transparent border-0 outline-none focus:outline-none focus:ring-0 text-xl sm:text-2xl font-mono font-extrabold text-neutral-900 uppercase placeholder-neutral-400 pr-3"
             />
-            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-400 shrink-0 pl-3 border-l border-neutral-800 select-none pointer-events-none">
+            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-neutral-600 shrink-0 pl-3 border-l-2 border-neutral-300 select-none pointer-events-none">
               Número de Cuenta
             </span>
           </div>

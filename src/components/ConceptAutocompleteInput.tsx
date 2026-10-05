@@ -157,7 +157,8 @@ export const ConceptAutocompleteInput: React.FC<ConceptAutocompleteInputProps> =
           if (onBlurInput) onBlurInput(e);
         }}
         onKeyDown={handleKeyDown}
-        className="w-full px-2.5 py-2 text-sm text-neutral-900 bg-transparent border border-transparent hover:border-neutral-300 focus:border-amber-400 focus:bg-amber-50/20 focus:ring-1 focus:ring-amber-300 focus:outline-none rounded transition-colors duration-150 print:border-none print:p-0 print:bg-transparent font-medium print:text-base print:sm:text-[17px] print:font-semibold"
+        title={value}
+        className="w-full px-2.5 py-2 text-sm portrait:text-[12.5px] portrait:sm:text-[14px] portrait:font-semibold portrait:p-0 portrait:border-0 portrait:bg-transparent text-neutral-900 bg-transparent border border-transparent hover:border-neutral-300 focus:border-amber-400 focus:bg-amber-50/20 focus:ring-1 focus:ring-amber-300 focus:outline-none rounded transition-colors duration-150 print:border-none print:p-0 print:bg-transparent font-medium print:text-base print:sm:text-[17px] print:font-semibold truncate text-ellipsis overflow-hidden"
       />
 
       {/* Autocomplete Dropdown Popup */}

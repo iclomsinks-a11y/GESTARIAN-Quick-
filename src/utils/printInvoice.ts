@@ -82,10 +82,12 @@ export async function printElement(element: HTMLElement | null, title = 'Factura
     position: 'fixed',
     right: '0',
     bottom: '0',
-    width: '0',
-    height: '0',
+    width: '1px',
+    height: '1px',
     border: '0',
-    visibility: 'hidden',
+    opacity: '0',
+    pointerEvents: 'none',
+    zIndex: '-1',
   } as CSSStyleDeclaration);
   document.body.appendChild(iframe);
 
@@ -144,10 +146,14 @@ export async function printElement(element: HTMLElement | null, title = 'Factura
 
 export const PRINT_SHEET_ELEMENT_ID = 'a4-print-sheet-preview';
 
-/** Imprime la hoja A4 de la vista de impresión abierta. */
+/** Imprime la hoja A4 de la vista de impresión abierta o de la hoja del documento. */
 export function printInvoiceSheet(invoiceNumber?: string): Promise<void> {
+  const element =
+    document.getElementById(PRINT_SHEET_ELEMENT_ID) ||
+    document.getElementById('a4-invoice-sheet');
+
   return printElement(
-    document.getElementById(PRINT_SHEET_ELEMENT_ID),
+    element,
     invoiceNumber ? `Factura ${invoiceNumber}` : 'Factura'
   );
 }
