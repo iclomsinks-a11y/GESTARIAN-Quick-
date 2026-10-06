@@ -360,22 +360,11 @@ export function generateEmailInvoiceBody(payload: EmailNotificationPayload): str
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-
   return [
     `Estimado/a ${payload.clientName || 'Cliente'},`,
     ``,
-    `Le remitimos adjunta la información de su factura emitida por ${payload.companyName || 'nuestra empresa'}:`,
+    `Le remitimos adjunta la factura emitida por ${payload.companyName || 'nuestra empresa'} (${payload.invoiceNumber} por ${formattedAmount} €).`,
     ``,
-    `• Número de Factura: ${payload.invoiceNumber}`,
-    `• Fecha de Emisión: ${payload.issueDate}`,
-    `• Importe Total: ${formattedAmount} € (IVA 21% inc.)`,
-    `• Emisor: ${payload.companyName} (CIF/NIF: ${payload.companyCif || 'Sin especificar'})`,
-    `• Registro Veri*Factu AEAT: ${payload.veriFactuHash ? payload.veriFactuHash.slice(0, 16) + '...' : 'VF-AEAT-OK'}`,
-    ``,
-    `Puede consultar y descargar su factura oficial en PDF en el siguiente enlace seguro:`,
-    `${hostedUrl}`,
-    ``,
-    payload.customNotes ? `Observaciones: ${payload.customNotes}\n` : '',
     `Quedamos a su entera disposición para cualquier consulta.`,
     ``,
     `Atentamente,`,

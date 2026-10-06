@@ -108,6 +108,12 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
   const cuotaIrpf = baseImponible * ((invoice.irpfRate || 0) / 100);
   const totalFactura = baseImponible + cuotaIva - cuotaIrpf;
 
+  const isRectificative =
+    invoice.number?.toUpperCase().startsWith('FR') ||
+    invoice.number?.toUpperCase().startsWith('R') ||
+    invoice.notes?.toLowerCase().includes('rectificativ') ||
+    invoice.items?.some((it) => it.concept?.toLowerCase().includes('rectificaci'));
+
   return (
     <div
       id="print-preview-modal"
@@ -289,10 +295,10 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
             <div className="space-y-6">
               {/* Top Row: FACTURA on the left (50%), Número y Fecha on the right (50%) in two lines, left-aligned, aligning perfectly with top/bottom of FACTURA */}
               <div className="grid grid-cols-2 gap-4 pb-4 h-[72px]" style={{ fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" }}>
-                {/* Left 50% - FACTURA in 30% gray (#b3b3b3), left-aligned, height-matching container */}
+                {/* Left 50% - FACTURA vs FACTURA RECTIFICATIVA in 30% gray (#b3b3b3), left-aligned */}
                 <div className="flex items-center justify-start h-full">
-                  <h1 className="text-[72px] font-black tracking-tight uppercase leading-none" style={{ color: '#b3b3b3' }}>
-                    FACTURA
+                  <h1 className={`${isRectificative ? 'text-[44px]' : 'text-[72px]'} font-black tracking-tight uppercase leading-none`} style={{ color: '#b3b3b3' }}>
+                    {isRectificative ? 'FACTURA RECTIFICATIVA' : 'FACTURA'}
                   </h1>
                 </div>
                 {/* Right 50% - Número & Fecha left-aligned, size x0.8 (text-[19.68px]), shifted 20px right, Fecha fixed at bottom, Número lowered with half gap */}

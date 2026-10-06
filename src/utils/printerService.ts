@@ -30,13 +30,13 @@ export function generateInvoicePrintHtml(invoice: Invoice): string {
             ${item.concept}
             ${item.productImageUrl ? `<div style="margin-top: 4px;"><img src="${item.productImageUrl}" style="max-height: 40px; border-radius: 4px; border: 1px solid #e5e7eb;" /></div>` : ''}
           </td>
-          <td style="padding: 10px 8px; font-family: monospace; font-weight: bold; color: #1f2937; text-align: center; vertical-align: top;">
+          <td style="padding: 10px 8px; font-family: monospace; font-weight: bold; font-size: 19.5px; color: #000000; text-align: center; vertical-align: top;">
             ${units}
           </td>
-          <td style="padding: 10px 8px; font-family: monospace; color: #374151; text-align: right; vertical-align: top;">
+          <td style="padding: 10px 8px; font-family: monospace; font-size: 19.5px; color: #000000; text-align: right; vertical-align: top;">
             ${formatCurrency(unitPrice)}
           </td>
-          <td style="padding: 10px 8px; font-family: monospace; font-weight: bold; color: #111827; text-align: right; vertical-align: top;">
+          <td style="padding: 10px 8px; font-family: monospace; font-weight: bold; font-size: 19.5px; color: #000000; text-align: right; vertical-align: top;">
             ${formatCurrency(total)}
           </td>
         </tr>
@@ -186,6 +186,16 @@ export function generateInvoicePrintHtml(invoice: Invoice): string {
       letter-spacing: 0.05em;
       border-bottom: 2px solid #d1d5db;
     }
+    table.items-table td {
+        font-size: 29.25px;
+        color: #000000;
+        padding: 8px 8px;
+    }
+    table.items-table td {
+        font-size: 29.25px;
+        color: #000000;
+        padding: 8px 8px;
+    }
     .totals-wrapper {
       display: flex;
       justify-content: space-between;
@@ -251,42 +261,34 @@ export function generateInvoicePrintHtml(invoice: Invoice): string {
       <div class="header-box">
         <div class="header-left">
           ${invoice.company.logoUrl ? `<div><img src="${invoice.company.logoUrl}" style="max-height: 70px; max-width: 90px; object-contain: contain;" /></div>` : ''}
-          <div>
-            <div class="company-name">${invoice.company.name || 'Empresa Emisora'}</div>
-            ${invoice.company.cif ? `<div style="color: #4b5563;"><strong>CIF/NIF:</strong> ${invoice.company.cif}</div>` : ''}
-            ${invoice.company.address ? `<div style="color: #6b7280;">${invoice.company.address}</div>` : ''}
-            ${invoice.company.phone ? `<div style="color: #6b7280;">Tel: ${invoice.company.phone}</div>` : ''}
-            ${invoice.company.email ? `<div style="color: #6b7280;">Email: ${invoice.company.email}</div>` : ''}
-          </div>
+          <div style="font-size: ${isRectificative ? '36px' : '68px'}; font-weight: 600; text-align: left; margin-top: 8px; color: #9ca3af;">${isRectificative ? 'FACTURA RECTIFICATIVA' : 'FACTURA'}</div>
         </div>
-
-        <div class="header-right">
-          ${isRectificative ? `<div class="rectificativa-badge">FACTURA RECTIFICATIVA</div>` : ''}
-          <div class="invoice-title-block">
-            <span class="invoice-title">FACTURA</span>
-            <span class="invoice-number">${invoice.number || 'S/N'}</span>
-          </div>
-          <div class="date-block">
-            <span style="color: #6b7280; font-weight: bold; text-transform: uppercase;">FECHA:</span>
-            <span style="font-weight: 800; font-size: 15px; color: #111827;">${formatDate(invoice.date)}</span>
-          </div>
-          ${invoice.dueDate ? `
-          <div class="date-block" style="margin-top: 2px;">
-            <span style="color: #9ca3af; font-size: 11px;">Vencimiento:</span>
-            <span style="font-weight: 600; font-size: 12px; color: #4b5563;">${formatDate(invoice.dueDate)}</span>
-          </div>` : ''}
+        <div class="header-right" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;">
+          <div class="invoice-number" style="font-size: 20px; font-weight: 400;">N° ${invoice.number || 'S/N'}</div>
+          <div class="date-block" style="font-size: 20px; font-weight: 400;">Fecha ${formatDate(invoice.date)}</div>
         </div>
       </div>
 
-      <!-- Datos del Cliente -->
-      <div class="client-box">
-        <div class="client-title">CLIENTE</div>
-        <div class="client-name">${invoice.client?.name || 'Cliente sin asignar'}</div>
-        <div style="display: flex; gap: 20px; flex-wrap: wrap; color: #4b5563; font-size: 12px;">
-          ${invoice.client?.nif ? `<div><strong>CIF/NIF:</strong> ${invoice.client.nif}</div>` : ''}
-          ${invoice.client?.address ? `<div><strong>Dirección:</strong> ${invoice.client.address}</div>` : ''}
-          ${invoice.client?.phone ? `<div><strong>Tel:</strong> ${invoice.client.phone}</div>` : ''}
-          ${invoice.client?.email ? `<div><strong>Email:</strong> ${invoice.client.email}</div>` : ''}
+      <div class="client-box" style="display:flex; gap:20px; margin-bottom:20px;">
+        <div style="flex:1; border:1px solid #e5e5e5; background:#f9fafb; border-radius:8px; padding:14px;">
+          <div class="client-title">EMISOR</div>
+          <div class="client-name">${invoice.company.name || 'Empresa Emisora'}</div>
+          <div style="color:#4b5563; font-size:12px;">
+            ${invoice.company.cif ? `<strong>CIF/NIF:</strong> ${invoice.company.cif}<br/>` : ''}
+            ${invoice.company.address ? `<strong>Dirección:</strong> ${invoice.company.address}<br/>` : ''}
+            ${invoice.company.phone ? `<strong>Tel:</strong> ${invoice.company.phone}<br/>` : ''}
+            ${invoice.company.email ? `<strong>Email:</strong> ${invoice.company.email}<br/>` : ''}
+          </div>
+        </div>
+        <div style="flex:1; border:1px solid #e5e5e5; background:#f9fafb; border-radius:8px; padding:14px;">
+          <div class="client-title">CLIENTE</div>
+          <div class="client-name">${invoice.client?.name || 'Cliente sin asignar'}</div>
+          <div style="color:#4b5563; font-size:12px;">
+            ${invoice.client?.nif ? `<strong>CIF/NIF:</strong> ${invoice.client.nif}<br/>` : ''}
+            ${invoice.client?.address ? `<strong>Dirección:</strong> ${invoice.client.address}<br/>` : ''}
+            ${invoice.client?.phone ? `<strong>Tel:</strong> ${invoice.client.phone}<br/>` : ''}
+            ${invoice.client?.email ? `<strong>Email:</strong> ${invoice.client.email}<br/>` : ''}
+          </div>
         </div>
       </div>
 
@@ -315,39 +317,39 @@ export function generateInvoicePrintHtml(invoice: Invoice): string {
         <table class="totals-table">
           <tr>
             <td style="color: #6b7280;">Base Imponible:</td>
-            <td style="text-align: right; font-family: monospace; font-weight: bold;">${formatCurrency(baseImponible)}</td>
+            <td style="text-align: right; font-family: monospace; font-weight: bold; font-size: 19.5px; color: #000000;">${formatCurrency(baseImponible)}</td>
           </tr>
           <tr>
             <td style="color: #6b7280;">IVA (${invoice.ivaRate ?? 21}%):</td>
-            <td style="text-align: right; font-family: monospace; font-weight: bold; color: #059669;">+ ${formatCurrency(cuotaIva)}</td>
+            <td style="text-align: right; font-family: monospace; font-weight: bold; font-size: 19.5px; color: #000000;">+ ${formatCurrency(cuotaIva)}</td>
           </tr>
           ${invoice.irpfRate ? `
           <tr>
             <td style="color: #6b7280;">Retención IRPF (${invoice.irpfRate}%):</td>
-            <td style="text-align: right; font-family: monospace; font-weight: bold; color: #dc2626;">- ${formatCurrency(cuotaIrpf)}</td>
+            <td style="text-align: right; font-family: monospace; font-weight: bold; font-size: 19.5px; color: #000000;">- ${formatCurrency(cuotaIrpf)}</td>
           </tr>` : ''}
           <tr class="grand-total-row">
             <td style="padding: 10px 8px;">TOTAL FACTURA:</td>
-            <td style="padding: 10px 8px; text-align: right; font-family: monospace;">${formatCurrency(totalFactura)}</td>
+            <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-size: 19.5px; color: #000000;">${formatCurrency(totalFactura)}</td>
           </tr>
         </table>
       </div>
     </div>
 
     <!-- Pie: Datos bancarios + Veri*Factu -->
-    <div>
-      <div class="payment-box">
+    <div class="footer-box" style="display:flex; gap:20px; margin-bottom:20px;">
+      <div class="payment-box" style="flex:1;">
         <div style="font-weight: bold; color: #111827; margin-bottom: 2px;">Forma de pago y datos bancarios:</div>
         <div style="color: #374151;">
           ${invoice.company.bankName ? `<span>${invoice.company.bankName} - </span>` : ''}
           <strong style="font-family: monospace; font-size: 13px;">${invoice.company.iban || 'IBAN no configurado'}</strong>
         </div>
         <div style="font-size: 10px; color: #6b7280; margin-top: 2px;">
-          Transferencia bancaria o ingreso en cuenta. Indicar nº factura ${invoice.number || ''} como concepto.
+          Transferencia bancaria o ingreso en cuenta. Indicar N° factura ${invoice.number || ''} y CIF ${invoice.client?.nif || ''} como concepto.
         </div>
       </div>
 
-      <div class="verifactu-box">
+      <div class="verifactu-box" style="flex:1;">
         ${invoice.veriFactu?.qrDataUrl ? `<img src="${invoice.veriFactu.qrDataUrl}" style="width: 56px; height: 56px; object-fit: contain;" />` : ''}
         <div style="font-size: 10px; color: #4b5563; line-height: 1.3;">
           <div style="font-weight: bold; color: #111827;">VERI*FACTU VALIDADA - AGENCIA TRIBUTARIA (AEAT)</div>
@@ -355,10 +357,10 @@ export function generateInvoicePrintHtml(invoice: Invoice): string {
           <div style="font-family: monospace; font-size: 9px; color: #6b7280;">${invoice.veriFactu?.chainHash ? `Huella: ${invoice.veriFactu.chainHash.slice(0, 24)}...` : ''}</div>
         </div>
       </div>
+    </div>
 
-      <div class="footer-legal">
-        Documento emitido conforme a la legislación fiscal española. Gestarian Quick · Soluciones de Facturación Inteligente.
-      </div>
+    <div class="footer-legal">
+      Documento emitido conforme a la legislación fiscal española. Gestarian Quick · Soluciones de Facturación Inteligente.
     </div>
   </div>
 </body>

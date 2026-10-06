@@ -12,7 +12,6 @@ import {
   MapPin,
   Phone,
   Mail,
-  Edit3,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Invoice } from '../types';
@@ -24,7 +23,7 @@ interface IssuedInvoicesScreenProps {
   invoices: Invoice[];
   onNewInvoice: () => void;
   onViewInvoice: (invoice: Invoice) => void;
-  onEditInvoice: (invoice: Invoice) => void;
+  onEditInvoice?: (invoice: Invoice) => void;
   onRectifyInvoice: (invoice: Invoice) => void;
   onDeleteInvoice: (id: string) => void;
   onOpenWhatsApp: (invoice: Invoice) => void;
@@ -259,8 +258,8 @@ export const IssuedInvoicesScreen: React.FC<IssuedInvoicesScreenProps> = ({
                   </div>
                 </div>
 
-                {/* LÍNEA 2: Fila de Iconos Grandes FLOTANTES SIN ENVOLTORIO (x1.5 más grandes, trazo 1.5px): Ver, Editar, Rectificativa, WhatsApp, Imprimir, Eliminar */}
-                <div className="px-3 pt-1 pb-3.5 grid grid-cols-6 place-items-center gap-1">
+                {/* LÍNEA 2: Fila de Iconos Grandes FLOTANTES SIN ENVOLTORIO (x1.5 más grandes, trazo 1.5px): Ver, Rectificativa, WhatsApp, Imprimir, Eliminar */}
+                <div className="px-3 pt-1 pb-3.5 grid grid-cols-5 place-items-center gap-1">
                   {/* Icono 1: Ver Factura (Abre vista de impresión/PDF) */}
                   <button
                     type="button"
@@ -272,29 +271,6 @@ export const IssuedInvoicesScreen: React.FC<IssuedInvoicesScreenProps> = ({
                     title={`Ver factura ${inv.number} en PDF`}
                   >
                     <Eye className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm" />
-                  </button>
-
-                  {/* Icono 1.5: Editar Factura (Gris 50%, 1.5px) */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (isSent) {
-                        const confirmRectify = window.confirm(
-                          `La factura ${inv.number} ya ha sido enviada al cliente y está cerrada. No se puede editar.\n\n¿Quieres generar una nueva factura rectificativa copiando estos datos?`
-                        );
-                        if (confirmRectify) {
-                          onRectifyInvoice(inv);
-                        }
-                      } else {
-                        onEditInvoice(inv);
-                      }
-                    }}
-                    className="p-1 hover:scale-120 active:scale-90 transition-all duration-200 cursor-pointer bg-transparent border-0 focus:outline-none"
-                    style={{ color: '#808080' }}
-                    title={isSent ? `Factura enviada. Pulsar para crear Rectificativa` : `Editar factura ${inv.number}`}
-                  >
-                    <Edit3 className="w-8 h-8 sm:w-9 sm:h-9 stroke-[1.5] drop-shadow-sm text-[#808080]" style={{ color: '#808080' }} />
                   </button>
 
                   {/* Icono 2: Factura Rectificativa */}

@@ -529,6 +529,7 @@ export default function App() {
   const [isProductsModalOpen, setIsProductsModalOpen] = useState(false);
   const [isInvoiceEditorOpen, setIsInvoiceEditorOpen] = useState(false);
   const [isPrintPreviewOpen, setIsPrintPreviewOpen] = useState(false);
+  const [isViewOnlyInvoice, setIsViewOnlyInvoice] = useState(false);
   const [productsModalMode, setProductsModalMode] = useState<'select' | 'manage'>('select');
   const [targetLineIndexForProduct, setTargetLineIndexForProduct] = useState<number | null>(null);
 
@@ -784,6 +785,7 @@ export default function App() {
     setSequence(nextSeq);
     localStorage.setItem(STORAGE_SEQ_KEY, nextSeq.toString());
     setIsInvoiceSaved(false);
+    setIsViewOnlyInvoice(false);
     setIsFullScreenInvoiceOpen(true);
     showToast(`Nueva factura ${autoNumber} lista para cumplimentar.`);
   };
@@ -792,6 +794,7 @@ export default function App() {
   const handleViewInvoice = (invoice: Invoice) => {
     setCurrentInvoice(invoice);
     setIsInvoiceSaved(true);
+    setIsViewOnlyInvoice(true);
     setIsFullScreenInvoiceOpen(true);
   };
 
@@ -841,6 +844,7 @@ export default function App() {
     const finalRectificative = await updateVeriFactu(rectificative);
     setCurrentInvoice(finalRectificative);
     setIsInvoiceSaved(false);
+    setIsViewOnlyInvoice(false);
     setIsFullScreenInvoiceOpen(true);
     showToast(`Factura Rectificativa ${autoNumber} creada referenciando a ${originalInvoice.number}`);
   };
@@ -896,6 +900,7 @@ export default function App() {
   const handleSelectFromHistory = (selected: Invoice) => {
     setCurrentInvoice(selected);
     setIsInvoiceSaved(true);
+    setIsViewOnlyInvoice(true);
     setIsFullScreenInvoiceOpen(true);
     showToast(`Cargada la factura ${selected.number}`);
   };
@@ -1688,6 +1693,7 @@ export default function App() {
               onOpenEmailModal={() => setIsEmailModalOpen(true)}
               onPrint={handlePrint}
               isSaved={isInvoiceSaved}
+              isViewOnly={isViewOnlyInvoice}
               isPrintPreviewOpen={isPrintPreviewOpen}
               onOpenPrintPreview={() => setIsPrintPreviewOpen(true)}
               onClosePrintPreview={() => setIsPrintPreviewOpen(false)}

@@ -42,10 +42,13 @@ import {
   generateWhatsAppInvoiceMessage,
   getWhatsAppDirectUrl,
   sendGestarianWhatsAppNotification,
+  getStoredWhatsAppDispatches,
+  getStoredEmailDispatches,
 } from '../services/notificationService';
 import { ConceptAutocompleteInput } from './ConceptAutocompleteInput';
 import { PrintPreviewModal } from './PrintPreviewModal';
 import { ClientEditorModal, ClientInputField } from './ClientEditorModal';
+import { printInvoiceUniversal } from '../utils/printerService';
 import { LineasComplejasDropdown } from './LineasComplejasDropdown';
 import { ProductosClienteDropdown } from './ProductosClienteDropdown';
 import { CustomCalendarModal } from './CustomCalendarModal';
@@ -69,6 +72,7 @@ interface A4InvoiceDocumentProps {
   onOpenEmailModal?: () => void;
   onPrint?: () => void;
   isSaved?: boolean;
+  isViewOnly?: boolean;
   isPrintPreviewOpen?: boolean;
   onOpenPrintPreview?: () => void;
   onClosePrintPreview?: () => void;
@@ -93,6 +97,7 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
   onOpenEmailModal,
   onPrint,
   isSaved = false,
+  isViewOnly = false,
   isPrintPreviewOpen: propIsPrintPreviewOpen,
   onOpenPrintPreview,
   onClosePrintPreview,
@@ -228,8 +233,9 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
   // Pulsar "Imprimir" abre la vista de impresión; ésta lanza automáticamente el diálogo
   // nativo del sistema (impresora predeterminada, nº de copias, PDF) imprimiendo solo la hoja A4.
   const handlePrint = () => {
-    handleOpenPrintPreview();
-  };
+  // Use the universal printer service to ensure the preconfigured print version
+  printInvoiceUniversal(invoice);
+};
 
   const handleWhatsApp = () => {
     if (!isSavedLocal) return;
@@ -298,9 +304,7 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
 
     if (email.trim()) {
       const subject = encodeURIComponent(`Factura ${invoice.number} - ${invoice.company.name}`);
-      const body = encodeURIComponent(
-        `Estimado/a ${invoice.client.name},\n\nLe remitimos su factura ${invoice.number} con fecha ${invoice.date} por un importe total de ${formatCurrency(totalCalc)}.\n\nPuede consultar y descargar su factura aquí:\nhttps://notificaciones.gestarian.com/f/${encodeURIComponent(invoice.number)}\n\nAtentamente,\n${invoice.company.name}`
-      );
+      const body = encodeURIComponent(`Estimado/a ${invoice.client.name}\n\nLe remitimos adjunta la factura emitida por ${invoice.company.name}:\n\nQuedamos a su entera disposición para cualquier consulta.\n\nAtentamente,\n${invoice.company.name}`);
       window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
     }
 
@@ -406,10 +410,14 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
       >
         {/* Top Row: FACTURA on the left (50%), Número y Fecha on the right (50%) in two lines, left-aligned, aligning perfectly with top/bottom of FACTURA */}
         <div className="grid grid-cols-2 gap-2 sm:gap-4 pb-3 sm:pb-4 h-[72px] portrait:h-[32.4px] w-full items-stretch portrait:px-[10px]" style={{ fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" }}>
-          {/* Left 50% - FACTURA in 30% gray (text-neutral-400), left-aligned, height-matching container, reduced to x0.9 (32.4px) on mobile portrait, x0.70 (50.4px) on mobile landscape */}
+          {/* Left 50% - FACTURA vs FACTURA RECTIFICATIVA in 30% gray (text-neutral-400), left-aligned, height-matching container */}
           <div className="flex items-center justify-start h-full">
-            <h1 className="text-[72px] portrait:text-[32.4px] landscape:max-sm:text-[50.4px] landscape:max-md:text-[50.4px] font-black tracking-tight text-neutral-400 uppercase leading-none text-left">
-              FACTURA
+            <h1 className={`font-black tracking-tight text-neutral-400 uppercase leading-none text-left ${
+              isRectificative
+                ? 'text-[36px] sm:text-[44px] md:text-[50px] portrait:text-[20px] landscape:max-sm:text-[26px] landscape:max-md:text-[30px]'
+                : 'text-[72px] portrait:text-[32.4px] landscape:max-sm:text-[50.4px] landscape:max-md:text-[50.4px]'
+            }`}>
+              {isRectificative ? 'FACTURA RECTIFICATIVA' : 'FACTURA'}
             </h1>
           </div>
           {/* Right 50% - Número & Fecha left-aligned, size x0.8 (text-[19.68px] on desktop, 9.44px on mobile portrait), Fecha fixed at bottom, Número lowered with half gap */}
@@ -848,58 +856,57 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                 invoice.client.preferredDispatchChannel ||
                 (invoice.client.defaultSendEmail && !invoice.client.defaultSendWhatsApp ? 'email' : 'whatsapp');
 
+              const isActionActive = isViewOnly || isSavedLocal;
+
               return (
                 <>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {/* 1. Botón de Guardar Factura */}
-                    <button
-                      type="button"
-                      id="a4-footer-save-btn"
-                      onClick={handleSave}
-                      className={`w-full py-4 sm:py-5 px-4 sm:px-6 rounded-2xl font-black text-lg sm:text-2xl flex items-center justify-center gap-3 sm:gap-4 border-2 transition-all active:scale-[0.98] cursor-pointer shadow-md ${
-                        isSavedLocal
-                          ? 'border-emerald-400 bg-emerald-50 text-emerald-950 hover:bg-emerald-100/70'
-                          : 'border-emerald-500 bg-transparent text-emerald-600 hover:bg-emerald-50/50'
-                      }`}
-                      title="Guardar factura y activar los botones de impresión y envío"
-                    >
-                      {isSavedLocal ? (
-                        <>
-                          <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-800 shrink-0" />
-                          <span>Factura Guardada</span>
-                        </>
-                      ) : (
-                        <>
-                          <Save className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-600 shrink-0" />
-                          <span>Guardar Factura</span>
-                        </>
-                      )}
-                    </button>
+                  <div className={`grid grid-cols-1 ${isViewOnly ? 'sm:grid-cols-2' : 'sm:grid-cols-3'} gap-3`}>
+                    {/* 1. Botón de Guardar Factura (Solo se muestra si NO se accede en modo ver factura) */}
+                    {!isViewOnly && (
+                      <button
+                        type="button"
+                        id="a4-footer-save-btn"
+                        onClick={handleSave}
+                        className={`w-full py-4 sm:py-5 px-4 sm:px-6 rounded-2xl font-black text-lg sm:text-2xl flex items-center justify-center gap-3 sm:gap-4 border-2 transition-all active:scale-[0.98] cursor-pointer shadow-md ${
+                          isSavedLocal
+                            ? 'border-emerald-400 bg-emerald-50 text-emerald-950 hover:bg-emerald-100/70'
+                            : 'border-emerald-500 bg-transparent text-emerald-600 hover:bg-emerald-50/50'
+                        }`}
+                        title="Guardar factura y activar los botones de impresión y envío"
+                      >
+                        {isSavedLocal ? (
+                          <>
+                            <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-800 shrink-0" />
+                            <span>Factura Guardada</span>
+                          </>
+                        ) : (
+                          <>
+                            <Save className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-600 shrink-0" />
+                            <span>Guardar Factura</span>
+                          </>
+                        )}
+                      </button>
+                    )}
 
-                    {/* 2. Botón de Imprimir Factura: Activo cuando está guardada (verde muy clarito/borde verde), o gris cuando no */}
+                    {/* 2. Botón de Imprimir Factura */}
                     <button
                       type="button"
                       id="a4-footer-print-btn"
-                      disabled={!isSavedLocal}
+                      disabled={!isActionActive}
                       onClick={() => {
-                        if (!isSavedLocal) return;
                         handlePrint();
                       }}
                       className={`w-full py-4 sm:py-5 px-4 sm:px-6 rounded-2xl font-black text-lg sm:text-2xl flex items-center justify-center gap-3 sm:gap-4 border-2 transition-all ${
-                        isSavedLocal
+                        isActionActive
                           ? 'border-emerald-400 bg-emerald-50 text-emerald-950 hover:bg-emerald-100/70 active:scale-[0.98] cursor-pointer shadow-md'
                           : 'border-neutral-200 bg-neutral-100 text-neutral-400 cursor-not-allowed select-none shadow-none'
                       }`}
-                      title={
-                        isSavedLocal
-                          ? 'Imprimir documento en la impresora preconfigurada del dispositivo'
-                          : 'Debes pulsar "Guardar Factura" para activar la impresión'
-                      }
+                      title="Imprimir documento en la impresora preconfigurada del dispositivo"
                     >
                       <Printer
                         className="w-8 h-8 sm:w-10 sm:h-10 shrink-0 transition-colors"
                         style={{
-                          color: isSavedLocal ? '#059669' : '#a3a3a3',
+                          color: isActionActive ? '#059669' : '#a3a3a3',
                         }}
                       />
                       <span>
@@ -912,23 +919,62 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                       <button
                         type="button"
                         id="a4-footer-send-btn"
-                        disabled={!isSavedLocal}
-                        onClick={handleWhatsApp}
+                        disabled={!isActionActive}
+                        onClick={() => {
+                          if (isViewOnly) {
+                            const phone = invoice.client?.phone || '';
+                            const baseImp = invoice.items.reduce((sum, item) => sum + (item.total || 0), 0);
+                            const ivaAmt = baseImp * (invoice.ivaRate / 100);
+                            const irpfAmt = baseImp * ((invoice.irpfRate || 0) / 100);
+                            const totalCalc = baseImp + ivaAmt - irpfAmt;
+                            const messageText = generateWhatsAppInvoiceMessage({
+                              invoiceId: invoice.id,
+                              invoiceNumber: invoice.number,
+                              clientPhone: phone,
+                              clientName: invoice.client?.name || 'Cliente',
+                              clientEmail: invoice.client?.email,
+                              companyName: invoice.company?.name || 'Nuestra Empresa',
+                              companyCif: invoice.company?.cif || '',
+                              totalAmount: totalCalc,
+                              issueDate: invoice.date,
+                              veriFactuHash: invoice.veriFactu?.chainHash || 'VF-AEAT-OK',
+                              pdfHostedUrl: `https://notificaciones.gestarian.com/f/${encodeURIComponent(invoice.number)}`,
+                            });
+
+                            if (phone.trim()) {
+                              sendGestarianWhatsAppNotification({
+                                invoiceId: invoice.id,
+                                invoiceNumber: invoice.number,
+                                clientPhone: phone,
+                                clientName: invoice.client.name,
+                                clientEmail: invoice.client.email,
+                                companyName: invoice.company.name,
+                                companyCif: invoice.company.cif,
+                                totalAmount: totalCalc,
+                                issueDate: invoice.date,
+                                veriFactuHash: invoice.veriFactu?.chainHash || 'VF-AEAT-OK',
+                                pdfHostedUrl: `https://notificaciones.gestarian.com/f/${encodeURIComponent(invoice.number)}`,
+                              }, { sendResendEmail: false });
+                              const directUrl = getWhatsAppDirectUrl(phone, messageText);
+                              window.open(directUrl, '_blank', 'noopener,noreferrer');
+                            } else if (onOpenWhatsAppModal) {
+                              onOpenWhatsAppModal();
+                            }
+                          } else {
+                            handleWhatsApp();
+                          }
+                        }}
                         className={`w-full py-4 sm:py-5 px-4 sm:px-6 rounded-2xl font-black text-lg sm:text-2xl uppercase tracking-wider flex items-center justify-center gap-3 sm:gap-4 border-2 transition-all ${
-                          isSavedLocal
+                          isActionActive
                             ? 'border-emerald-400 bg-emerald-50 text-emerald-950 hover:bg-emerald-100/70 active:scale-[0.98] cursor-pointer shadow-md'
                             : 'border-neutral-200 bg-neutral-100 text-neutral-400 cursor-not-allowed select-none shadow-none'
                         }`}
-                        title={
-                          isSavedLocal
-                            ? 'Enviar factura por WhatsApp al cliente'
-                            : 'Debes pulsar "Guardar Factura" para activar el botón de envío por WhatsApp'
-                        }
+                        title="Enviar factura por WhatsApp al cliente"
                       >
                         <WhatsAppIcon
                           className="w-8 h-8 sm:w-10 sm:h-10 shrink-0"
                           style={{
-                            filter: isSavedLocal ? undefined : 'grayscale(1) opacity(0.5)',
+                            filter: isActionActive ? undefined : 'grayscale(1) opacity(0.5)',
                           }}
                         />
                         <span className="truncate">Enviar WhatsApp</span>
@@ -937,23 +983,33 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                       <button
                         type="button"
                         id="a4-footer-send-btn"
-                        disabled={!isSavedLocal}
-                        onClick={handleEmail}
+                        disabled={!isActionActive}
+                        onClick={() => {
+                          if (isViewOnly) {
+                            const email = invoice.client?.email || '';
+                            if (email.trim()) {
+                              const subject = encodeURIComponent(`Factura ${invoice.number} - ${invoice.company.name}`);
+                              const body = encodeURIComponent(`Estimado/a ${invoice.client.name}\n\nLe remitimos adjunta la factura emitida por ${invoice.company.name}:\n\nQuedamos a su entera disposición para cualquier consulta.\n\nAtentamente,\n${invoice.company.name}`);
+                              window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+                            }
+                            if (onOpenEmailModal) {
+                              onOpenEmailModal();
+                            }
+                          } else {
+                            handleEmail();
+                          }
+                        }}
                         className={`w-full py-4 sm:py-5 px-4 sm:px-6 rounded-2xl font-black text-lg sm:text-2xl uppercase tracking-wider flex items-center justify-center gap-3 sm:gap-4 border-2 transition-all ${
-                          isSavedLocal
+                          isActionActive
                             ? 'border-emerald-400 bg-emerald-50 text-emerald-950 hover:bg-emerald-100/70 active:scale-[0.98] cursor-pointer shadow-md'
                             : 'border-neutral-200 bg-neutral-100 text-neutral-400 cursor-not-allowed select-none shadow-none'
                         }`}
-                        title={
-                          isSavedLocal
-                            ? 'Enviar factura por Correo Electrónico al cliente'
-                            : 'Debes pulsar "Guardar Factura" para activar el botón de envío por Email'
-                        }
+                        title="Enviar factura por Correo Electrónico al cliente"
                       >
                         <Mail
                           className="w-8 h-8 sm:w-10 sm:h-10 shrink-0 transition-colors"
                           style={{
-                            color: isSavedLocal ? '#059669' : '#a3a3a3',
+                            color: isActionActive ? '#059669' : '#a3a3a3',
                           }}
                         />
                         <span className="truncate">Enviar Email</span>
@@ -962,25 +1018,66 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
                   </div>
 
                   {/* Informative helper text */}
-                  <div className="flex items-center justify-between text-[11px] text-neutral-500 pt-1 px-1">
-                    <div>
-                      {!isSavedLocal ? (
-                        <span className="text-amber-700 font-medium">
-                          * Pulsa <strong>"Guardar Factura"</strong> para activar la impresión y el envío por {preferredChannel === 'whatsapp' ? 'WhatsApp' : 'Email'}.
-                        </span>
-                      ) : (
-                        <span className="text-emerald-700 font-bold inline-flex items-center gap-1">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 inline" />
-                          <span>Factura guardada. Impresión y envío por {preferredChannel === 'whatsapp' ? 'WhatsApp' : 'Email'} activados.</span>
-                        </span>
-                      )}
+                  {!isViewOnly && (
+                    <div className="flex items-center justify-between text-[11px] text-neutral-500 pt-1 px-1">
+                      <div>
+                        {!isSavedLocal ? (
+                          <span className="text-amber-700 font-medium">
+                            * Pulsa <strong>"Guardar Factura"</strong> para activar la impresión y el envío por {preferredChannel === 'whatsapp' ? 'WhatsApp' : 'Email'}.
+                          </span>
+                        ) : (
+                          <span className="text-emerald-700 font-bold inline-flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 inline" />
+                            <span>Factura guardada. Impresión y envío por {preferredChannel === 'whatsapp' ? 'WhatsApp' : 'Email'} activados.</span>
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </>
               );
             })()}
         </div>
       </div>
+
+      {/* Recuadro con registro de anotaciones de envíos anteriores si el documento ha sido enviado por email o whatsapp */}
+      {(() => {
+        const invId = invoice.id || invoice.number;
+        const waDispatches = getStoredWhatsAppDispatches().filter(
+          (d) => d.invoiceId === invId || d.invoiceNumber === invoice.number
+        );
+        const mailDispatches = getStoredEmailDispatches().filter(
+          (d) => d.invoiceId === invId || d.invoiceNumber === invoice.number
+        );
+        const hasDispatches = waDispatches.length > 0 || mailDispatches.length > 0;
+
+        if (!hasDispatches) return null;
+
+        return (
+          <div className="w-full max-w-[840px] mt-5 p-4 rounded-2xl bg-neutral-900 border-2 border-emerald-500/60 text-neutral-100 shadow-xl space-y-2.5 print:hidden">
+            <div className="flex items-center gap-2 text-emerald-400 font-extrabold text-sm sm:text-base border-b border-neutral-800 pb-2">
+              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+              <span>Registro de Envíos Anteriores del Documento</span>
+            </div>
+            <div className="space-y-2 pt-0.5 text-xs sm:text-sm">
+              {waDispatches.map((d, idx) => (
+                <div key={`wa-${d.id || idx}`} className="flex flex-wrap items-center gap-2 text-emerald-300 bg-emerald-950/40 p-2.5 rounded-xl border border-emerald-800/50">
+                  <WhatsAppIcon className="w-4.5 h-4.5 shrink-0" />
+                  <span className="font-extrabold uppercase text-[11px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-md border border-emerald-500/30">WhatsApp</span>
+                  <span>Enviado a <strong className="text-white">{d.recipientName || 'Cliente'}</strong> ({d.recipientPhone}) el <span className="font-mono font-bold text-emerald-200">{new Date(d.createdAt).toLocaleString('es-ES')}</span></span>
+                </div>
+              ))}
+              {mailDispatches.map((d, idx) => (
+                <div key={`mail-${d.id || idx}`} className="flex flex-wrap items-center gap-2 text-sky-300 bg-sky-950/40 p-2.5 rounded-xl border border-sky-800/50">
+                  <Mail className="w-4.5 h-4.5 shrink-0 text-sky-400" />
+                  <span className="font-extrabold uppercase text-[11px] bg-sky-500/20 text-sky-300 px-2 py-0.5 rounded-md border border-sky-500/30">Email</span>
+                  <span>Enviado a <strong className="text-white">{d.recipientName || 'Cliente'}</strong> ({d.recipientEmail}) el <span className="font-mono font-bold text-sky-200">{new Date(d.createdAt).toLocaleString('es-ES')}</span></span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Botón Volver al final de la pantalla, fuera de la hoja A4 y limpio */}
       {onBack && (
