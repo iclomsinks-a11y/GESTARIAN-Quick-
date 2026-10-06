@@ -1054,24 +1054,52 @@ export const A4InvoiceDocument: React.FC<A4InvoiceDocumentProps> = ({
         if (!hasDispatches) return null;
 
         return (
-          <div className="w-full max-w-[840px] mt-5 p-4 rounded-2xl bg-neutral-900 border-2 border-emerald-500/60 text-neutral-100 shadow-xl space-y-2.5 print:hidden">
-            <div className="flex items-center gap-2 text-emerald-400 font-extrabold text-sm sm:text-base border-b border-neutral-800 pb-2">
-              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-              <span>Registro de Envíos Anteriores del Documento</span>
+          <div className="w-full max-w-[840px] mt-5 p-4 sm:p-5 rounded-2xl bg-[#e6fffa] border-2 border-[#047857] text-[#064e3b] shadow-xl space-y-3 print:hidden">
+            <div className="flex items-center gap-2.5 text-[#047857] font-black text-sm sm:text-base border-b border-[#047857]/30 pb-2.5">
+              <div className="w-7 h-7 rounded-lg bg-white border border-[#047857] flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-5 h-5 text-[#047857]" />
+              </div>
+              <span className="uppercase tracking-wide">REGISTRO DE ENVÍOS DEL DOCUMENTO</span>
             </div>
             <div className="space-y-2 pt-0.5 text-xs sm:text-sm">
-              {waDispatches.map((d, idx) => (
-                <div key={`wa-${d.id || idx}`} className="flex flex-wrap items-center gap-2 text-emerald-300 bg-emerald-950/40 p-2.5 rounded-xl border border-emerald-800/50">
-                  <WhatsAppIcon className="w-4.5 h-4.5 shrink-0" />
-                  <span className="font-extrabold uppercase text-[11px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-md border border-emerald-500/30">WhatsApp</span>
-                  <span>Enviado a <strong className="text-white">{d.recipientName || 'Cliente'}</strong> ({d.recipientPhone}) el <span className="font-mono font-bold text-emerald-200">{new Date(d.createdAt).toLocaleString('es-ES')}</span></span>
+              {mailDispatches.map((d, idx) => (
+                <div key={`mail-${d.id || idx}`} className="flex flex-wrap items-center justify-between gap-2.5 bg-white p-3 rounded-xl border border-[#047857] shadow-xs text-[#064e3b]">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <div className="p-1.5 rounded-lg bg-[#e6fffa] border border-[#047857] shrink-0">
+                      <Mail className="w-4.5 h-4.5 text-[#047857]" />
+                    </div>
+                    <div className="space-y-0.5 min-w-0 flex-1">
+                      <span className="font-black text-xs sm:text-sm text-[#064e3b] block uppercase tracking-tight">
+                        DOCUMENTO ENVIADO CORRECTAMENTE POR CORREO ELECTRÓNICO
+                      </span>
+                      <span className="text-xs text-[#047857] font-bold block truncate">
+                        Destinatario: <strong className="text-[#064e3b] font-black">{d.recipientName || 'Cliente'}</strong> ({d.recipientEmail})
+                      </span>
+                    </div>
+                  </div>
+                  <div className="font-mono text-xs font-black text-[#047857] bg-[#e6fffa] px-3 py-1.5 rounded-lg border border-[#047857] shrink-0">
+                    {new Date(d.createdAt).toLocaleString('es-ES')}
+                  </div>
                 </div>
               ))}
-              {mailDispatches.map((d, idx) => (
-                <div key={`mail-${d.id || idx}`} className="flex flex-wrap items-center gap-2 text-sky-300 bg-sky-950/40 p-2.5 rounded-xl border border-sky-800/50">
-                  <Mail className="w-4.5 h-4.5 shrink-0 text-sky-400" />
-                  <span className="font-extrabold uppercase text-[11px] bg-sky-500/20 text-sky-300 px-2 py-0.5 rounded-md border border-sky-500/30">Email</span>
-                  <span>Enviado a <strong className="text-white">{d.recipientName || 'Cliente'}</strong> ({d.recipientEmail}) el <span className="font-mono font-bold text-sky-200">{new Date(d.createdAt).toLocaleString('es-ES')}</span></span>
+              {waDispatches.map((d, idx) => (
+                <div key={`wa-${d.id || idx}`} className="flex flex-wrap items-center justify-between gap-2.5 bg-white p-3 rounded-xl border border-[#047857] shadow-xs text-[#064e3b]">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <div className="p-1.5 rounded-lg bg-[#e6fffa] border border-[#047857] shrink-0">
+                      <WhatsAppIcon className="w-4.5 h-4.5" style={{ color: '#047857' }} />
+                    </div>
+                    <div className="space-y-0.5 min-w-0 flex-1">
+                      <span className="font-black text-xs sm:text-sm text-[#064e3b] block uppercase tracking-tight">
+                        DOCUMENTO ENVIADO CORRECTAMENTE POR WHATSAPP
+                      </span>
+                      <span className="text-xs text-[#047857] font-bold block truncate">
+                        Destinatario: <strong className="text-[#064e3b] font-black">{d.recipientName || 'Cliente'}</strong> ({d.recipientPhone})
+                      </span>
+                    </div>
+                  </div>
+                  <div className="font-mono text-xs font-black text-[#047857] bg-[#e6fffa] px-3 py-1.5 rounded-lg border border-[#047857] shrink-0">
+                    {new Date(d.createdAt).toLocaleString('es-ES')}
+                  </div>
                 </div>
               ))}
             </div>

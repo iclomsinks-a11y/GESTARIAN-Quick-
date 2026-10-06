@@ -230,15 +230,15 @@ export const WhatsAppDispatchModal: React.FC<WhatsAppDispatchModalProps> = ({
           {sentRecord ? (
             /* Sent Confirmation View */
             <div className="space-y-6 py-2">
-              <div className="p-5 rounded-2xl bg-emerald-950/40 border border-emerald-600/50 flex flex-col items-center text-center space-y-3">
-                <div className="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-400">
+              <div className="p-5 rounded-2xl bg-[#e6fffa] border-2 border-[#047857] text-[#064e3b] flex flex-col items-center text-center space-y-3 shadow-md">
+                <div className="w-12 h-12 rounded-full bg-white border-2 border-[#047857] flex items-center justify-center text-[#047857]">
                   <CheckCircle2 className="w-7 h-7" />
                 </div>
-                <h3 className="text-base sm:text-lg font-bold text-emerald-300">
-                  Notificación enviada y registrada con éxito
+                <h3 className="text-base sm:text-lg font-black text-[#064e3b] uppercase tracking-wide">
+                  DOCUMENTO ENVIADO CORRECTAMENTE POR WHATSAPP
                 </h3>
-                <p className="text-xs text-neutral-300 max-w-md">
-                  La factura <strong className="text-white">{invoice.number}</strong> ({formatCurrency(totalAmount)}) ha sido tramitada a través de la arquitectura de Notificaciones Gestarian hacia el número <strong className="text-emerald-400">{sentRecord.recipientPhone}</strong>.
+                <p className="text-xs text-[#047857] font-semibold max-w-md">
+                  La factura <strong className="text-[#064e3b] font-black">{invoice.number}</strong> ({formatCurrency(totalAmount)}) ha sido tramitada hacia el número <strong className="text-[#064e3b] font-black">{sentRecord.recipientPhone}</strong> el <span className="font-mono font-bold text-[#064e3b]">{new Date(sentRecord.createdAt).toLocaleString('es-ES')}</span>.
                 </p>
               </div>
 

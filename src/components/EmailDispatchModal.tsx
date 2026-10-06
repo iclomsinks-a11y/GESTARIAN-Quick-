@@ -189,14 +189,16 @@ export const EmailDispatchModal: React.FC<EmailDispatchModalProps> = ({
 
         {/* Success Banner if already sent */}
         {sentRecord && (
-          <div className="mx-6 mt-4 p-4 rounded-xl bg-emerald-950/60 border border-emerald-500/50 flex items-start gap-3">
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <h4 className="text-xs font-bold text-emerald-300 uppercase tracking-wider">
-                Documento Enviado Correctamente por Correo Electrónico
+          <div className="mx-6 mt-4 p-4 rounded-2xl bg-[#e6fffa] border-2 border-[#047857] text-[#064e3b] flex items-center gap-3.5 shadow-md">
+            <div className="w-9 h-9 rounded-xl bg-white border border-[#047857] flex items-center justify-center shrink-0 shadow-xs">
+              <CheckCircle2 className="w-5 h-5 text-[#047857]" />
+            </div>
+            <div className="space-y-1 min-w-0 flex-1">
+              <h4 className="text-xs sm:text-sm font-black text-[#064e3b] uppercase tracking-wide">
+                DOCUMENTO ENVIADO CORRECTAMENTE POR CORREO ELECTRÓNICO
               </h4>
-              <p className="text-xs text-neutral-300">
-                La factura ha sido tramitada hacia <strong>{sentRecord.recipientEmail}</strong> y registrada en la auditoría de envíos de Gestarian Quick.
+              <p className="text-xs text-[#047857] font-semibold">
+                Tramitado hacia <strong className="text-[#064e3b] font-black">{sentRecord.recipientEmail}</strong> el <span className="font-mono font-bold text-[#064e3b]">{new Date(sentRecord.createdAt).toLocaleString('es-ES')}</span>.
               </p>
             </div>
           </div>
